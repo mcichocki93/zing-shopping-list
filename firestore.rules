@@ -1,0 +1,63 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Helpers ----------
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(resource) {
+      return request.auth.uid == resource.data.ownerId;
+    }
+
+    function isMember(resource) {
+      return request.auth.uid in resource.data.memberIds;
+    }
+
+    function isValidListWrite() {
+      return request.resource.data.keys().hasAll([
+        'title',
+        'ownerId',
+        'memberIds',
+        'isArchived',
+        'createdAt',
+        'updatedAt',
+        'items'
+      ]);
+    }
+
+    // ---------- Users ----------
+
+    match /users/{userId} {
+
+      allow read, write: if isAuthenticated()
+        && request.auth.uid == userId;
+    }
+
+    // ---------- Shopping Lists ----------
+
+    match /shoppingLists/{listId} {
+
+      // Read: only members
+      allow read: if isAuthenticated()
+        && isMember(resource);
+
+      // Create: authenticated user must be owner
+      allow create: if isAuthenticated()
+        && request.resource.data.ownerId == request.auth.uid
+        && isValidListWrite();
+
+      // Update: members only
+      allow update: if isAuthenticated()
+        && isMember(resource)
+        && isValidListWrite();
+
+      // Delete: owner only
+      allow delete: if isAuthenticated()
+        && isOwner(resource);
+    }
+  }
+}

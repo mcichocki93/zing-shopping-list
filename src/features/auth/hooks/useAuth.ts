@@ -1,0 +1,126 @@
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import type { User, AuthState } from '../../../types/user';
+import { signUp, signIn, signOut, onAuthChanged } from '../services';
+
+interface AuthContextValue extends AuthState {
+  handleSignUp: (email: string, password: string, displayName: string) => Promise<void>;
+  handleSignIn: (email: string, password: string) => Promise<void>;
+  handleSignOut: () => Promise<void>;
+}
+
+const initialState: AuthState = {
+  user: null,
+  isLoading: true,
+  isAuthenticated: false,
+  error: null,
+};
+
+export const AuthContext = createContext<AuthContextValue>({
+  ...initialState,
+  handleSignUp: async () => {},
+  handleSignIn: async () => {},
+  handleSignOut: async () => {},
+});
+
+export function useAuthProvider(): AuthContextValue {
+  const [state, setState] = useState<AuthState>(initialState);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    const unsubscribe = onAuthChanged((user: User | null) => {
+      if (!mountedRef.current) return;
+      setState({
+        user,
+        isLoading: false,
+        isAuthenticated: !!user,
+        error: null,
+      });
+    });
+
+    return () => {
+      mountedRef.current = false;
+      unsubscribe();
+    };
+  }, []);
+
+  const handleSignUp = useCallback(
+    async (email: string, password: string, displayName: string) => {
+      setState((prev) => ({ ...prev, isLoading: true, error: null }));
+      try {
+        const user = await signUp(email, password, displayName);
+        if (!mountedRef.current) return;
+        setState({ user, isLoading: false, isAuthenticated: true, error: null });
+      } catch (err) {
+        if (!mountedRef.current) return;
+        setState((prev) => ({
+          ...prev,
+          isLoading: false,
+          error: getErrorMessage(err),
+        }));
+      }
+    },
+    [],
+  );
+
+  const handleSignIn = useCallback(async (email: string, password: string) => {
+    setState((prev) => ({ ...prev, isLoading: true, error: null }));
+    try {
+      const user = await signIn(email, password);
+      if (!mountedRef.current) return;
+      setState({ user, isLoading: false, isAuthenticated: true, error: null });
+    } catch (err) {
+      if (!mountedRef.current) return;
+      setState((prev) => ({
+        ...prev,
+        isLoading: false,
+        error: getErrorMessage(err),
+      }));
+    }
+  }, []);
+
+  const handleSignOut = useCallback(async () => {
+    setState((prev) => ({ ...prev, isLoading: true, error: null }));
+    try {
+      await signOut();
+      if (!mountedRef.current) return;
+      setState({ user: null, isLoading: false, isAuthenticated: false, error: null });
+    } catch (err) {
+      if (!mountedRef.current) return;
+      setState((prev) => ({
+        ...prev,
+        isLoading: false,
+        error: getErrorMessage(err),
+      }));
+    }
+  }, []);
+
+  return { ...state, handleSignUp, handleSignIn, handleSignOut };
+}
+
+export function useAuth(): AuthContextValue {
+  return useContext(AuthContext);
+}
+
+function getErrorMessage(err: unknown): string {
+  if (err instanceof Error) {
+    const code = (err as { code?: string }).code;
+    switch (code) {
+      case 'auth/email-already-in-use':
+        return 'Ten email jest już zajęty.';
+      case 'auth/invalid-email':
+        return 'Nieprawidłowy adres email.';
+      case 'auth/weak-password':
+        return 'Hasło musi mieć min. 6 znaków.';
+      case 'auth/user-not-found':
+      case 'auth/wrong-password':
+      case 'auth/invalid-credential':
+        return 'Nieprawidłowy email lub hasło.';
+      case 'auth/too-many-requests':
+        return 'Za dużo prób. Spróbuj później.';
+      default:
+        return err.message;
+    }
+  }
+  return 'Wystąpił nieoczekiwany błąd.';
+}
