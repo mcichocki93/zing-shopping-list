@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Text, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { Text, ScrollView, Pressable, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { PixelButton, PixelInput, PixelCard } from '../../../components/ui';
-import { COLORS, SPACING, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
+import { COLORS, SPACING, FONT_SIZE, FONT_WEIGHT, TOUCH } from '../../../constants';
 import { useAuth } from '../hooks';
 import type { AuthStackParamList } from '../../../types/navigation';
 
@@ -62,12 +62,14 @@ export function LoginScreen({ navigation }: Props) {
             />
           </PixelCard>
 
-          <PixelButton
-            title="Nie masz konta? Zarejestruj się"
+          <Pressable
             onPress={() => navigation.navigate('Register')}
-            variant="primary"
+            accessibilityRole="button"
+            accessibilityLabel="Nie masz konta? Zarejestruj się"
             style={styles.linkButton}
-          />
+          >
+            <Text style={styles.linkText}>Nie masz konta? Zarejestruj się</Text>
+          </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -114,7 +116,14 @@ const styles = StyleSheet.create({
   },
   linkButton: {
     marginTop: SPACING.md,
-    borderWidth: 0,
-    backgroundColor: 'transparent',
+    minHeight: TOUCH.minTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  linkText: {
+    color: COLORS.accent,
+    fontSize: FONT_SIZE.body,
+    fontWeight: FONT_WEIGHT.bold,
+    textAlign: 'center',
   },
 });

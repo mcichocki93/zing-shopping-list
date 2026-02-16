@@ -16,7 +16,7 @@ interface UseShoppingListsReturn {
   isLoading: boolean;
   error: string | null;
   handleCreate: (title: string) => Promise<string | null>;
-  handleDelete: (listId: string, memberIds: string[]) => Promise<void>;
+  handleDelete: (listId: string) => Promise<void>;
   handleArchive: (listId: string) => Promise<void>;
   handleRestore: (listId: string) => Promise<void>;
 }
@@ -78,16 +78,17 @@ export function useShoppingLists(): UseShoppingListsReturn {
   );
 
   const handleDelete = useCallback(
-    async (listId: string, memberIds: string[]) => {
+    async (listId: string) => {
+      if (!user) return;
       setError(null);
       try {
-        await deleteList(listId, memberIds);
+        await deleteList(listId, user.id);
       } catch (err) {
         if (!mountedRef.current) return;
         setError(err instanceof Error ? err.message : 'Nie udało się usunąć listy.');
       }
     },
-    [],
+    [user],
   );
 
   const handleArchive = useCallback(async (listId: string) => {

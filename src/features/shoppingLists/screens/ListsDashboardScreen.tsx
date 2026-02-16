@@ -48,7 +48,7 @@ export function ListsDashboardScreen({ navigation }: Props) {
         {
           text: 'Usuń',
           style: 'destructive',
-          onPress: () => handleDelete(list.id, list.memberIds),
+          onPress: () => handleDelete(list.id),
         },
       ],
     );

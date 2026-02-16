@@ -72,15 +72,14 @@ export async function restoreList(listId: string): Promise<void> {
 
 // ─── Delete ──────────────────────────────────────────────
 
-export async function deleteList(listId: string, memberIds: string[]): Promise<void> {
+export async function deleteList(listId: string, ownerId: string): Promise<void> {
   await deleteDoc(listDoc(listId));
 
-  const removePromises = memberIds.map((uid) =>
-    updateDoc(userDoc(uid), {
-      sharedListIds: arrayRemove(listId),
-    }),
-  );
-  await Promise.all(removePromises);
+  // Only clean up the owner's sharedListIds — Firestore rules prevent
+  // updating other users' documents from the client.
+  await updateDoc(userDoc(ownerId), {
+    sharedListIds: arrayRemove(listId),
+  });
 }
 
 // ─── Sharing ─────────────────────────────────────────────

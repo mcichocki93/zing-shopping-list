@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, StyleSheet, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -32,6 +32,13 @@ export function ListDetailScreen({ route, navigation }: Props) {
   const { parsedItems, isParsing, error: aiError, canRetry, parse, retry, removeItem: removePreviewItem, clear: clearPreview } = useAIParser();
   const [inputClearTrigger, setInputClearTrigger] = useState(0);
   const showPreview = parsedItems.length > 0;
+
+  // Navigate back when list is deleted (becomes null after initial load)
+  useEffect(() => {
+    if (!isLoading && !list) {
+      navigation.goBack();
+    }
+  }, [isLoading, list, navigation]);
 
   const onAddManual = useCallback((name: string) => {
     if (!user) return;
