@@ -1,10 +1,11 @@
 import { Pressable, View, Text, StyleSheet, type ViewStyle } from 'react-native';
-import { COLORS, SPACING, BORDERS, TOUCH } from '../../constants';
+import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE } from '../../constants';
 
 interface PixelCheckboxProps {
   checked: boolean;
   onToggle: (checked: boolean) => void;
   label?: string;
+  accessibilityLabel?: string;
   disabled?: boolean;
   style?: ViewStyle;
 }
@@ -13,6 +14,7 @@ export function PixelCheckbox({
   checked,
   onToggle,
   label,
+  accessibilityLabel,
   disabled = false,
   style,
 }: PixelCheckboxProps) {
@@ -21,6 +23,9 @@ export function PixelCheckbox({
       onPress={() => !disabled && onToggle(!checked)}
       style={[styles.container, style]}
       disabled={disabled}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked, disabled }}
+      accessibilityLabel={accessibilityLabel || label || 'Zaznacz'}
     >
       <View
         style={[
@@ -45,6 +50,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     minHeight: TOUCH.minTarget,
+    minWidth: TOUCH.minTarget,
     gap: SPACING.sm,
   },
   box: {
@@ -69,7 +75,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.accent,
   },
   label: {
-    fontSize: 16,
+    fontSize: FONT_SIZE.body,
     color: COLORS.primary,
   },
   labelChecked: {

@@ -1,11 +1,12 @@
 import { Pressable, Text, StyleSheet, type ViewStyle } from 'react-native';
-import { COLORS, SPACING, BORDERS, TOUCH } from '../../constants';
+import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../constants';
 
 interface PixelButtonProps {
   title: string;
   onPress: () => void;
   variant?: 'primary' | 'accent' | 'danger';
   disabled?: boolean;
+  accessibilityLabel?: string;
   style?: ViewStyle;
 }
 
@@ -14,6 +15,7 @@ export function PixelButton({
   onPress,
   variant = 'accent',
   disabled = false,
+  accessibilityLabel,
   style,
 }: PixelButtonProps) {
   const bgColor = disabled ? COLORS.disabled : COLORS[variant];
@@ -22,6 +24,9 @@ export function PixelButton({
     <Pressable
       onPress={onPress}
       disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel || title}
+      accessibilityState={{ disabled }}
       style={({ pressed }) => [
         styles.button,
         { backgroundColor: bgColor },
@@ -50,7 +55,7 @@ const styles = StyleSheet.create({
   },
   text: {
     color: COLORS.white,
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: FONT_SIZE.body,
+    fontWeight: FONT_WEIGHT.bold,
   },
 });

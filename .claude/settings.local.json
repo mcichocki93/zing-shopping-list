@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-expo-app@latest:*)",
+      "Bash(npx expo install:*)",
+      "Bash(node -e:*)",
+      "Bash(npx expo start)",
+      "Bash(npx expo start:*)",
+      "Bash(git init:*)",
+      "Bash(git remote add:*)",
+      "Bash(git status:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nInitial commit: Zing shopping list app\n\nExpo + TypeScript + Firebase project with feature-based architecture:\n- Auth: login/register screens, Firebase Auth + Firestore profiles\n- Shopping lists: CRUD service, real-time subscriptions, categorized items\n- Pixel UI system: PixelButton, PixelInput, PixelCheckbox, PixelCard\n- Navigation: protected routing \\(auth/main stacks\\)\n- Docs: product spec, data model, security, UI system, Claude skills\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git config:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}

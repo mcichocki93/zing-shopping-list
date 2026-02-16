@@ -1,5 +1,5 @@
 import { TextInput, StyleSheet, type TextInputProps, type ViewStyle } from 'react-native';
-import { COLORS, SPACING, BORDERS, TOUCH } from '../../constants';
+import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE } from '../../constants';
 
 interface PixelInputProps extends TextInputProps {
   style?: ViewStyle;
@@ -25,6 +25,6 @@ const styles = StyleSheet.create({
     borderRadius: BORDERS.radius,
     backgroundColor: COLORS.white,
     color: COLORS.primary,
-    fontSize: 16,
+    fontSize: FONT_SIZE.body,
   },
 });

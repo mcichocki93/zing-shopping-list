@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { PixelCheckbox } from '../../../components/ui';
-import { COLORS, SPACING, BORDERS, TOUCH } from '../../../constants';
+import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
 import type { ShoppingItem } from '../../../types/shoppingList';
 
 interface ShoppingItemRowProps {
@@ -16,20 +16,24 @@ export function ShoppingItemRow({ item, onToggle, onRemove }: ShoppingItemRowPro
       <PixelCheckbox
         checked={item.isCompleted}
         onToggle={() => onToggle(item.id)}
+        accessibilityLabel={item.isCompleted ? `${item.name}, kupione` : `${item.name}, do kupienia`}
         style={styles.checkbox}
       />
       <View style={styles.info}>
         <Text style={[styles.name, item.isCompleted && styles.nameCompleted]}>
           {item.name}
         </Text>
-        <Text style={styles.quantity}>
-          {item.quantity}{item.unit ? ` ${item.unit}` : ''}
-        </Text>
+        {(item.quantity > 1 || item.unit) && (
+          <Text style={styles.quantity}>
+            {item.quantity}{item.unit ? ` ${item.unit}` : ''}
+          </Text>
+        )}
       </View>
       <Pressable
         onPress={() => onRemove(item.id)}
         style={styles.removeBtn}
-        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel={`Usuń ${item.name}`}
       >
         <Text style={styles.removeText}>X</Text>
       </Pressable>
@@ -47,9 +51,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.background,
   },
-  checkbox: {
-    minHeight: 0,
-  },
+  checkbox: {},
   info: {
     flex: 1,
     flexDirection: 'row',
@@ -57,7 +59,7 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
   },
   name: {
-    fontSize: 16,
+    fontSize: FONT_SIZE.body,
     color: COLORS.primary,
     flexShrink: 1,
   },
@@ -66,20 +68,20 @@ const styles = StyleSheet.create({
     color: COLORS.disabled,
   },
   quantity: {
-    fontSize: 14,
+    fontSize: FONT_SIZE.caption,
     color: COLORS.disabled,
   },
   removeBtn: {
-    width: 32,
-    height: 32,
+    minWidth: TOUCH.minTarget,
+    minHeight: TOUCH.minTarget,
     borderWidth: BORDERS.width,
     borderColor: COLORS.danger,
     alignItems: 'center',
     justifyContent: 'center',
   },
   removeText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: FONT_SIZE.caption,
+    fontWeight: FONT_WEIGHT.bold,
     color: COLORS.danger,
   },
 });

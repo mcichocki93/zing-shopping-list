@@ -1,1 +1,2 @@
-// AIInput components barrel export
+export { AIInputBar } from './AIInputBar';
+export { PreviewModal } from './PreviewModal';

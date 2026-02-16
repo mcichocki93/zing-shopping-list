@@ -28,9 +28,12 @@ export function AddItemInput({ onAdd, disabled = false }: AddItemInputProps) {
         returnKeyType="done"
         style={styles.input}
         editable={!disabled}
+        accessibilityLabel="Nazwa produktu"
+        accessibilityHint="Wpisz nazwę produktu do dodania"
       />
       <PixelButton
         title="+"
+        accessibilityLabel="Dodaj produkt"
         onPress={handleSubmit}
         disabled={disabled || !text.trim()}
         style={styles.button}

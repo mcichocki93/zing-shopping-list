@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { ShoppingItemRow } from './ShoppingItemRow';
-import { COLORS, SPACING, BORDERS } from '../../../constants';
+import { COLORS, SPACING, BORDERS, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
 import type { ShoppingItem } from '../../../types/shoppingList';
 
 interface CategorySectionProps {
@@ -14,7 +14,11 @@ interface CategorySectionProps {
 export function CategorySection({ category, items, onToggle, onRemove }: CategorySectionProps) {
   return (
     <View style={styles.section}>
-      <View style={styles.header}>
+      <View
+        style={styles.header}
+        accessibilityRole="header"
+        accessibilityLabel={`${category}, ${items.length} produktów`}
+      >
         <Text style={styles.title}>{category}</Text>
         <Text style={styles.count}>{items.length}</Text>
       </View>
@@ -46,13 +50,13 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
   },
   title: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: FONT_SIZE.caption,
+    fontWeight: FONT_WEIGHT.bold,
     color: COLORS.white,
     textTransform: 'uppercase',
   },
   count: {
-    fontSize: 14,
+    fontSize: FONT_SIZE.caption,
     color: COLORS.white,
   },
 });

@@ -1,1 +1,1 @@
-// AIInput hooks barrel export
+export { useAIParser } from './useAIParser';

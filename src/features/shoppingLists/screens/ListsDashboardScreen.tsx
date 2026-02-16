@@ -8,9 +8,10 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { PixelButton, PixelInput, PixelCard } from '../../../components/ui';
-import { COLORS, SPACING, BORDERS, TOUCH } from '../../../constants';
+import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
 import { useShoppingLists } from '../hooks';
 import { useAuth } from '../../auth/hooks';
 import type { ShoppingListsStackParamList } from '../../../types/navigation';
@@ -19,6 +20,7 @@ import type { ShoppingList } from '../../../types/shoppingList';
 type Props = NativeStackScreenProps<ShoppingListsStackParamList, 'ListsDashboard'>;
 
 export function ListsDashboardScreen({ navigation }: Props) {
+  const insets = useSafeAreaInsets();
   const { user, handleSignOut } = useAuth();
   const { lists, isLoading, error, handleCreate, handleDelete } = useShoppingLists();
   const [newTitle, setNewTitle] = useState('');
@@ -57,7 +59,12 @@ export function ListsDashboardScreen({ navigation }: Props) {
     const completedCount = item.items.filter((i) => i.isCompleted).length;
 
     return (
-      <Pressable onPress={() => navigation.navigate('ListDetail', { listId: item.id })}>
+      <Pressable
+        onPress={() => navigation.navigate('ListDetail', { listId: item.id })}
+        accessibilityRole="button"
+        accessibilityLabel={`${item.title}, ${completedCount} z ${itemCount} produktów kupione`}
+        accessibilityHint="Otwórz listę zakupów"
+      >
         <PixelCard style={styles.listCard}>
           <View style={styles.listRow}>
             <View style={styles.listInfo}>
@@ -70,7 +77,8 @@ export function ListsDashboardScreen({ navigation }: Props) {
               <Pressable
                 onPress={() => onDeleteList(item)}
                 style={styles.deleteBtn}
-                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel={`Usuń listę ${item.title}`}
               >
                 <Text style={styles.deleteText}>X</Text>
               </Pressable>
@@ -83,7 +91,7 @@ export function ListsDashboardScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + SPACING.sm }]}>
         <Text style={styles.title}>Zing</Text>
         <Text style={styles.greeting}>Cześć, {user?.displayName}!</Text>
       </View>
@@ -96,9 +104,12 @@ export function ListsDashboardScreen({ navigation }: Props) {
           onSubmitEditing={onCreateList}
           returnKeyType="done"
           style={styles.createInput}
+          accessibilityLabel="Nazwa nowej listy"
+          accessibilityHint="Wpisz nazwę i naciśnij Utwórz"
         />
         <PixelButton
           title="Utwórz"
+          accessibilityLabel="Utwórz nową listę"
           onPress={onCreateList}
           disabled={isCreating || !newTitle.trim()}
           style={styles.createBtn}
@@ -109,7 +120,7 @@ export function ListsDashboardScreen({ navigation }: Props) {
 
       {isLoading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={COLORS.accent} />
+          <ActivityIndicator size="large" color={COLORS.accent} accessibilityLabel="Ładowanie list" />
         </View>
       ) : lists.length === 0 ? (
         <View style={styles.center}>
@@ -124,7 +135,7 @@ export function ListsDashboardScreen({ navigation }: Props) {
         />
       )}
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: insets.bottom + SPACING.sm }]}>
         <PixelButton
           title="Wyloguj"
           onPress={handleSignOut}
@@ -141,18 +152,17 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   header: {
-    paddingTop: SPACING.xl + SPACING.md,
     paddingHorizontal: SPACING.md,
     paddingBottom: SPACING.sm,
     backgroundColor: COLORS.primary,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '900',
+    fontSize: FONT_SIZE.h1,
+    fontWeight: FONT_WEIGHT.black,
     color: COLORS.white,
   },
   greeting: {
-    fontSize: 14,
+    fontSize: FONT_SIZE.caption,
     color: COLORS.disabled,
     marginTop: SPACING.xs,
   },
@@ -172,7 +182,7 @@ const styles = StyleSheet.create({
   },
   error: {
     color: COLORS.danger,
-    fontSize: 14,
+    fontSize: FONT_SIZE.caption,
     textAlign: 'center',
     padding: SPACING.sm,
   },
@@ -182,7 +192,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: FONT_SIZE.body,
     color: COLORS.disabled,
   },
   listContent: {
@@ -200,26 +210,26 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: FONT_SIZE.h3,
+    fontWeight: FONT_WEIGHT.bold,
     color: COLORS.primary,
   },
   listMeta: {
-    fontSize: 13,
+    fontSize: FONT_SIZE.caption,
     color: COLORS.disabled,
     marginTop: SPACING.xs,
   },
   deleteBtn: {
-    width: 32,
-    height: 32,
+    minWidth: TOUCH.minTarget,
+    minHeight: TOUCH.minTarget,
     borderWidth: BORDERS.width,
     borderColor: COLORS.danger,
     alignItems: 'center',
     justifyContent: 'center',
   },
   deleteText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: FONT_SIZE.caption,
+    fontWeight: FONT_WEIGHT.bold,
     color: COLORS.danger,
   },
   footer: {

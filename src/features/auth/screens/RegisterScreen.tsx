@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { Text, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { PixelButton, PixelInput, PixelCard } from '../../../components/ui';
-import { COLORS, SPACING } from '../../../constants';
+import { COLORS, SPACING, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
 import { useAuth } from '../hooks';
 import type { AuthStackParamList } from '../../../types/navigation';
 
@@ -42,91 +43,101 @@ export function RegisterScreen({ navigation }: Props) {
   const displayedError = localError || error;
 
   return (
-    <KeyboardAvoidingView
-      style={styles.wrapper}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <View style={styles.container}>
-        <Text style={styles.title}>Zing</Text>
-        <Text style={styles.subtitle}>Utwórz konto</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        style={styles.wrapper}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={styles.title}>Zing</Text>
+          <Text style={styles.subtitle}>Utwórz konto</Text>
 
-        <PixelCard style={styles.card}>
-          {displayedError && <Text style={styles.error}>{displayedError}</Text>}
+          <PixelCard style={styles.card}>
+            {displayedError && <Text style={styles.error}>{displayedError}</Text>}
 
-          <PixelInput
-            placeholder="Nazwa użytkownika"
-            value={displayName}
-            onChangeText={setDisplayName}
-            autoCapitalize="words"
-            textContentType="name"
-            style={styles.input}
-          />
+            <PixelInput
+              placeholder="Nazwa użytkownika"
+              value={displayName}
+              onChangeText={setDisplayName}
+              autoCapitalize="words"
+              textContentType="name"
+              style={styles.input}
+            />
 
-          <PixelInput
-            placeholder="Email"
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            textContentType="emailAddress"
-            style={styles.input}
-          />
+            <PixelInput
+              placeholder="Email"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              textContentType="emailAddress"
+              style={styles.input}
+            />
 
-          <PixelInput
-            placeholder="Hasło"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            textContentType="newPassword"
-            style={styles.input}
-          />
+            <PixelInput
+              placeholder="Hasło"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              textContentType="newPassword"
+              style={styles.input}
+            />
 
-          <PixelInput
-            placeholder="Powtórz hasło"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            secureTextEntry
-            textContentType="newPassword"
-            style={styles.input}
-          />
+            <PixelInput
+              placeholder="Powtórz hasło"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+              textContentType="newPassword"
+              style={styles.input}
+            />
+
+            <PixelButton
+              title={isLoading ? 'Rejestracja...' : 'Zarejestruj'}
+              onPress={onSubmit}
+              disabled={isLoading}
+            />
+          </PixelCard>
 
           <PixelButton
-            title={isLoading ? 'Rejestracja...' : 'Zarejestruj'}
-            onPress={onSubmit}
-            disabled={isLoading}
+            title="Masz już konto? Zaloguj się"
+            onPress={() => navigation.navigate('Login')}
+            variant="primary"
+            style={styles.linkButton}
           />
-        </PixelCard>
-
-        <PixelButton
-          title="Masz już konto? Zaloguj się"
-          onPress={() => navigation.navigate('Login')}
-          variant="primary"
-          style={styles.linkButton}
-        />
-      </View>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
+  safeArea: {
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  container: {
+  wrapper: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.lg,
   },
   title: {
-    fontSize: 40,
-    fontWeight: '900',
+    fontSize: FONT_SIZE.display,
+    fontWeight: FONT_WEIGHT.black,
     color: COLORS.primary,
     textAlign: 'center',
     marginBottom: SPACING.xs,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: FONT_SIZE.body,
     color: COLORS.disabled,
     textAlign: 'center',
     marginBottom: SPACING.lg,
@@ -139,7 +150,7 @@ const styles = StyleSheet.create({
   },
   error: {
     color: COLORS.danger,
-    fontSize: 14,
+    fontSize: FONT_SIZE.caption,
     textAlign: 'center',
   },
   linkButton: {

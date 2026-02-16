@@ -1,4 +1,5 @@
-import { View, StyleSheet, type ViewStyle, type PropsWithChildren } from 'react-native';
+import type { PropsWithChildren } from 'react';
+import { View, StyleSheet, type ViewStyle } from 'react-native';
 import { COLORS, SPACING, BORDERS } from '../../constants';
 
 interface PixelCardProps extends PropsWithChildren {

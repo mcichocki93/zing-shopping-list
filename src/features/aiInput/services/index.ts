@@ -1,1 +1,1 @@
-// AIInput services barrel export
+export { parseItemsWithAI } from '../../../services/ai';

@@ -17,4 +17,4 @@ export const CATEGORIES = [
 
 export type Category = (typeof CATEGORIES)[number];
 
-export { COLORS, SPACING, BORDERS, TOUCH } from './theme';
+export { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT, TEXT_STYLES } from './theme';
