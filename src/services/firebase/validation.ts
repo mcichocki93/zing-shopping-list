@@ -7,6 +7,7 @@ export function validateShoppingItem(item: Partial<ShoppingItem>): item is Shopp
     item.name.trim().length > 0 &&
     typeof item.quantity === 'number' &&
     item.quantity > 0 &&
+    (item.unit === undefined || (typeof item.unit === 'string' && item.unit.trim().length > 0)) &&
     typeof item.isCompleted === 'boolean' &&
     typeof item.createdBy === 'string'
   );

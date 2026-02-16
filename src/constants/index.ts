@@ -1,6 +1,7 @@
 export const COLLECTIONS = {
   USERS: 'users',
   SHOPPING_LISTS: 'shoppingLists',
+  INVITES: 'invites',
 } as const;
 
 export const CATEGORIES = [

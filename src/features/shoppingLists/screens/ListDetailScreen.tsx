@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, StyleSheet, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, Share, Alert, StyleSheet, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { AIInputBar } from '../../aiInput/components/AIInputBar';
+import { AIInputBar, type ManualItemData } from '../../aiInput/components/AIInputBar';
 import { PreviewModal } from '../../aiInput/components/PreviewModal';
 import { useAIParser } from '../../aiInput/hooks/useAIParser';
 import { PixelButton } from '../../../components/ui';
@@ -10,6 +10,7 @@ import { CategorySection } from '../components/CategorySection';
 import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
 import { useShoppingList } from '../hooks';
 import { useAuth } from '../../auth/hooks';
+import { createInvite } from '../../../services/firebase/invites';
 import type { ShoppingListsStackParamList } from '../../../types/navigation';
 
 type Props = NativeStackScreenProps<ShoppingListsStackParamList, 'ListDetail'>;
@@ -40,11 +41,13 @@ export function ListDetailScreen({ route, navigation }: Props) {
     }
   }, [isLoading, list, navigation]);
 
-  const onAddManual = useCallback((name: string) => {
+  const onAddManual = useCallback((item: ManualItemData) => {
     if (!user) return;
     handleAddItem({
-      name,
-      quantity: 1,
+      name: item.name,
+      quantity: item.quantity,
+      unit: item.unit,
+      category: item.category,
       isCompleted: false,
       createdBy: user.id,
     });
@@ -64,6 +67,21 @@ export function ListDetailScreen({ route, navigation }: Props) {
     clearPreview();
     setInputClearTrigger((c) => c + 1);
   }, [user, parsedItems, handleAddItems, clearPreview]);
+
+  const onShare = useCallback(async () => {
+    if (!list || !user) return;
+    try {
+      let code = list.inviteCode;
+      if (!code) {
+        code = await createInvite(list.id, list.title, user.displayName, user.id);
+      }
+      await Share.share({
+        message: `Dołącz do mojej listy zakupów "${list.title}" w Zing! Kod: ${code}`,
+      });
+    } catch {
+      Alert.alert('Błąd', 'Nie udało się udostępnić listy.');
+    }
+  }, [list, user]);
 
   if (isLoading) {
     return (
@@ -95,6 +113,17 @@ export function ListDetailScreen({ route, navigation }: Props) {
           <Text style={styles.backText}>{'<'}</Text>
         </Pressable>
         <Text style={styles.title} numberOfLines={1} accessibilityRole="header">{list.title}</Text>
+        {list.ownerId === user?.id && (
+          <Pressable
+            onPress={onShare}
+            style={styles.shareBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Udostępnij listę"
+          >
+            <Text style={styles.shareIcon}>{'↗'}</Text>
+            <Text style={styles.shareLabel}>Zaproś</Text>
+          </Pressable>
+        )}
         <Text
           style={styles.count}
           accessibilityLabel={`${list.items.filter((i) => i.isCompleted).length} z ${list.items.length} produktów kupione`}
@@ -188,6 +217,26 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: FONT_SIZE.h2,
     fontWeight: FONT_WEIGHT.black,
+    color: COLORS.white,
+  },
+  shareBtn: {
+    minHeight: TOUCH.minTarget,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs,
+    paddingHorizontal: SPACING.sm,
+    borderWidth: BORDERS.width,
+    borderColor: COLORS.white,
+  },
+  shareIcon: {
+    fontSize: FONT_SIZE.h3,
+    fontWeight: FONT_WEIGHT.bold,
+    color: COLORS.white,
+  },
+  shareLabel: {
+    fontSize: FONT_SIZE.caption,
+    fontWeight: FONT_WEIGHT.bold,
     color: COLORS.white,
   },
   count: {

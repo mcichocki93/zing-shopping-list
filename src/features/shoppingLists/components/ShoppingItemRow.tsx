@@ -23,11 +23,9 @@ export function ShoppingItemRow({ item, onToggle, onRemove }: ShoppingItemRowPro
         <Text style={[styles.name, item.isCompleted && styles.nameCompleted]}>
           {item.name}
         </Text>
-        {(item.quantity > 1 || item.unit) && (
-          <Text style={styles.quantity}>
-            {item.quantity}{item.unit ? ` ${item.unit}` : ''}
-          </Text>
-        )}
+        <Text style={styles.quantity}>
+          {item.quantity}{item.unit ? ` ${item.unit}` : ' szt'}
+        </Text>
       </View>
       <Pressable
         onPress={() => onRemove(item.id)}

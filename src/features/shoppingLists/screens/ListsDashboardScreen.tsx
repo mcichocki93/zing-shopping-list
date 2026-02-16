@@ -14,6 +14,7 @@ import { PixelButton, PixelInput, PixelCard } from '../../../components/ui';
 import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
 import { useShoppingLists } from '../hooks';
 import { useAuth } from '../../auth/hooks';
+import { lookupInvite, joinList } from '../../../services/firebase/invites';
 import type { ShoppingListsStackParamList } from '../../../types/navigation';
 import type { ShoppingList } from '../../../types/shoppingList';
 
@@ -25,6 +26,55 @@ export function ListsDashboardScreen({ navigation }: Props) {
   const { lists, isLoading, error, handleCreate, handleDelete } = useShoppingLists();
   const [newTitle, setNewTitle] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [joinCode, setJoinCode] = useState('');
+  const [isJoining, setIsJoining] = useState(false);
+  const [showJoin, setShowJoin] = useState(false);
+
+  const onJoinByCode = async () => {
+    const trimmed = joinCode.trim().toUpperCase();
+    if (trimmed.length !== 6 || !user) return;
+
+    setIsJoining(true);
+    try {
+      const invite = await lookupInvite(trimmed);
+
+      if (!invite) {
+        Alert.alert('Błąd', 'Nieprawidłowy kod zaproszenia.');
+        setIsJoining(false);
+        return;
+      }
+
+      if (lists.some((l) => l.id === invite.listId)) {
+        Alert.alert('Info', 'Jesteś już członkiem tej listy.');
+        setJoinCode('');
+        setIsJoining(false);
+        return;
+      }
+
+      Alert.alert(
+        'Dołącz do listy',
+        `Dołączyć do "${invite.listTitle}" (od ${invite.ownerName})?`,
+        [
+          { text: 'Anuluj', style: 'cancel', onPress: () => setIsJoining(false) },
+          {
+            text: 'Dołącz',
+            onPress: async () => {
+              try {
+                await joinList(invite.listId, user.id);
+                setJoinCode('');
+              } catch {
+                Alert.alert('Błąd', 'Nie udało się dołączyć do listy.');
+              }
+              setIsJoining(false);
+            },
+          },
+        ],
+      );
+    } catch {
+      Alert.alert('Błąd', 'Nie udało się sprawdzić kodu.');
+      setIsJoining(false);
+    }
+  };
 
   const onCreateList = async () => {
     const trimmed = newTitle.trim();
@@ -116,6 +166,42 @@ export function ListsDashboardScreen({ navigation }: Props) {
         />
       </View>
 
+      <View style={styles.joinSection}>
+        <Pressable
+          onPress={() => setShowJoin((v) => !v)}
+          style={styles.joinToggle}
+          accessibilityRole="button"
+          accessibilityLabel={showJoin ? 'Ukryj pole kodu zaproszenia' : 'Pokaż pole kodu zaproszenia'}
+        >
+          <Text style={styles.joinToggleText}>
+            {showJoin ? 'Ukryj' : 'Masz kod zaproszenia?'}
+          </Text>
+        </Pressable>
+        {showJoin && (
+          <View style={styles.joinRow}>
+            <PixelInput
+              placeholder="Kod zaproszenia..."
+              value={joinCode}
+              onChangeText={setJoinCode}
+              onSubmitEditing={onJoinByCode}
+              returnKeyType="done"
+              maxLength={6}
+              autoCapitalize="characters"
+              style={styles.joinInput}
+              accessibilityLabel="Kod zaproszenia do listy"
+              accessibilityHint="Wpisz 6-znakowy kod i naciśnij Dołącz"
+            />
+            <PixelButton
+              title="Dołącz"
+              accessibilityLabel="Dołącz do listy"
+              onPress={onJoinByCode}
+              disabled={isJoining || joinCode.trim().length !== 6}
+              style={styles.joinBtn}
+            />
+          </View>
+        )}
+      </View>
+
       {error && <Text style={styles.error}>{error}</Text>}
 
       {isLoading ? (
@@ -178,6 +264,33 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   createBtn: {
+    paddingHorizontal: SPACING.md,
+  },
+  joinSection: {
+    paddingHorizontal: SPACING.sm,
+    paddingBottom: SPACING.sm,
+    backgroundColor: COLORS.white,
+    borderBottomWidth: BORDERS.width,
+    borderBottomColor: COLORS.border,
+  },
+  joinToggle: {
+    minHeight: TOUCH.minTarget,
+    justifyContent: 'center',
+  },
+  joinToggleText: {
+    color: COLORS.accent,
+    fontSize: FONT_SIZE.caption,
+    fontWeight: FONT_WEIGHT.bold,
+  },
+  joinRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginTop: SPACING.xs,
+  },
+  joinInput: {
+    flex: 1,
+  },
+  joinBtn: {
     paddingHorizontal: SPACING.md,
   },
   error: {

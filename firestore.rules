@@ -29,6 +29,16 @@ service cloud.firestore {
       ]);
     }
 
+    // Self-join: non-member adds ONLY themselves to memberIds
+    function isSelfJoinOnly() {
+      let after = request.resource.data;
+      let before = resource.data;
+      return after.memberIds.hasAll(before.memberIds)
+        && after.memberIds.size() == before.memberIds.size() + 1
+        && request.auth.uid in after.memberIds
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds', 'updatedAt']);
+    }
+
     // ---------- Users ----------
 
     match /users/{userId} {
@@ -55,9 +65,34 @@ service cloud.firestore {
         && isMember(resource)
         && isValidListWrite();
 
+      // Update: self-join via invite code
+      allow update: if isAuthenticated()
+        && !isMember(resource)
+        && isSelfJoinOnly();
+
       // Delete: owner only
       allow delete: if isAuthenticated()
         && isOwner(resource);
+    }
+
+    // ---------- Invites ----------
+
+    match /invites/{code} {
+
+      // Any authenticated user can look up an invite
+      allow read: if isAuthenticated();
+
+      // Only the list owner can create an invite
+      allow create: if isAuthenticated()
+        && request.resource.data.keys().hasAll(['listId', 'listTitle', 'ownerName', 'ownerId', 'createdAt'])
+        && request.resource.data.ownerId == request.auth.uid;
+
+      // Only the invite creator can delete
+      allow delete: if isAuthenticated()
+        && resource.data.ownerId == request.auth.uid;
+
+      // Invites are immutable
+      allow update: if false;
     }
   }
 }

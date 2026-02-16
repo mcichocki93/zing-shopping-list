@@ -108,13 +108,20 @@ export async function removeMember(listId: string, userId: string): Promise<void
 
 // ─── Items ───────────────────────────────────────────────
 
+function normalizeItemFields(item: Omit<ShoppingItem, 'id' | 'createdAt'>): Omit<ShoppingItem, 'id' | 'createdAt'> {
+  const quantity = typeof item.quantity === 'number' && item.quantity > 0 ? item.quantity : 1;
+  const unit = typeof item.unit === 'string' && item.unit.trim() ? item.unit.trim().slice(0, 20) : undefined;
+  return { ...item, quantity, unit };
+}
+
 export async function addItem(
   listId: string,
   item: Omit<ShoppingItem, 'id' | 'createdAt'>,
 ): Promise<void> {
+  const normalized = normalizeItemFields(item);
   const newItem: ShoppingItem = {
-    ...item,
-    name: sanitizeString(item.name),
+    ...normalized,
+    name: sanitizeString(normalized.name),
     id: doc(listsRef()).id,
     createdAt: new Date(),
   };
@@ -129,12 +136,15 @@ export async function addItems(
   listId: string,
   items: Omit<ShoppingItem, 'id' | 'createdAt'>[],
 ): Promise<void> {
-  const newItems: ShoppingItem[] = items.map((item) => ({
-    ...item,
-    name: sanitizeString(item.name),
-    id: doc(listsRef()).id,
-    createdAt: new Date(),
-  }));
+  const newItems: ShoppingItem[] = items.map((item) => {
+    const normalized = normalizeItemFields(item);
+    return {
+      ...normalized,
+      name: sanitizeString(normalized.name),
+      id: doc(listsRef()).id,
+      createdAt: new Date(),
+    };
+  });
 
   await updateDoc(listDoc(listId), {
     items: arrayUnion(...newItems),
