@@ -19,3 +19,5 @@ export const CATEGORIES = [
 export type Category = (typeof CATEGORIES)[number];
 
 export { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT, TEXT_STYLES } from './theme';
+export { THEMES, THEME_NAMES, DEFAULT_THEME, type ThemeName, type AppTheme } from './themes';
+export { CATEGORY_HEADER_COLORS, getCategoryColor } from './categoryColors';

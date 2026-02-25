@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, StyleSheet, Modal } from 'react-native';
-import { PixelInput, PixelButton } from '../../../components/ui';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { PixelInput, PixelButton, PixelTabs, QuantityStepper } from '../../../components/ui';
 import { CATEGORIES, COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
+import { useTheme } from '../../../contexts/ThemeContext';
 import type { Category } from '../../../constants';
 
 const DEFAULT_CATEGORY: Category = 'Inne';
-const UNITS = ['szt', 'kg', 'g', 'l', 'ml', 'opak'] as const;
+const TABS = ['RĘCZNIE', 'AI TEKST'];
 
 export interface ManualItemData {
   name: string;
@@ -23,158 +25,132 @@ interface AIInputBarProps {
 }
 
 export function AIInputBar({ onParse, onAddManual, isParsing, disabled = false, clearTrigger = 0 }: AIInputBarProps) {
-  const [text, setText] = useState('');
-  const [qtyText, setQtyText] = useState('1');
-  const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
+  const { theme } = useTheme();
+  const [activeTab, setActiveTab] = useState(0);
+
+  // Manual tab state
+  const [manualName, setManualName] = useState('');
+  const [quantity, setQuantity] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState<Category>(DEFAULT_CATEGORY);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
 
+  // AI tab state
+  const [aiText, setAiText] = useState('');
+
   useEffect(() => {
     if (clearTrigger > 0) {
-      setText('');
-      setQtyText('1');
-      setSelectedUnit(null);
+      setManualName('');
+      setQuantity(1);
       setSelectedCategory(DEFAULT_CATEGORY);
       setShowCategoryPicker(false);
-      setQtyError('');
+      setAiText('');
     }
   }, [clearTrigger]);
 
-  const [qtyError, setQtyError] = useState('');
-
-  const parseQuantity = (): number | null => {
-    const n = parseFloat(qtyText.replace(',', '.'));
-    if (Number.isNaN(n) || n <= 0) return null;
-    if (n > 9999) return null;
-    return n;
+  const handleQuickAdd = () => {
+    const trimmed = manualName.trim();
+    if (!trimmed || isParsing) return;
+    onAddManual({
+      name: trimmed,
+      quantity,
+      category: selectedCategory,
+    });
+    setManualName('');
+    setQuantity(1);
   };
 
   const handleAIParse = () => {
-    const trimmed = text.trim();
+    const trimmed = aiText.trim();
     if (!trimmed || isParsing) return;
-    setQtyError('');
     onParse(trimmed);
   };
 
-  const handleQuickAdd = () => {
-    const trimmed = text.trim();
-    if (!trimmed || isParsing) return;
-    const qty = parseQuantity();
-    if (qty === null) {
-      setQtyError('Podaj liczbę > 0');
-      return;
-    }
-    setQtyError('');
-    onAddManual({
-      name: trimmed,
-      quantity: qty,
-      unit: selectedUnit ?? undefined,
-      category: selectedCategory,
-    });
-    setText('');
-    setQtyText('1');
-    setSelectedUnit(null);
-  };
-
-  const toggleUnit = (unit: string) => {
-    setSelectedUnit((prev) => (prev === unit ? null : unit));
-  };
-
-  const canSubmit = text.trim().length > 0 && !isParsing && !disabled;
-
   return (
     <View style={styles.container}>
-      <View style={styles.inputRow}>
-        <PixelInput
-          placeholder="Wpisz produkty, np. jabłka, mleko, chleb..."
-          value={text}
-          onChangeText={setText}
-          multiline
-          numberOfLines={2}
-          style={styles.input}
-          editable={!isParsing && !disabled}
-          returnKeyType="default"
-          accessibilityLabel="Nazwa produktu"
-          accessibilityHint="Wpisz produkt i wybierz ilość, jednostkę i kategorię"
-        />
-        <View style={styles.actions}>
+      <PixelTabs tabs={TABS} activeIndex={activeTab} onChangeIndex={setActiveTab} />
+
+      {activeTab === 0 ? (
+        <View style={styles.tabContent}>
+          <View style={styles.field}>
+            <Text style={styles.label}>NAZWA:</Text>
+            <PixelInput
+              placeholder="Nazwa produktu"
+              value={manualName}
+              onChangeText={setManualName}
+              editable={!isParsing && !disabled}
+              accessibilityLabel="Nazwa produktu"
+            />
+          </View>
+
+          <View style={styles.fieldRow}>
+            <View style={styles.fieldHalf}>
+              <Text style={styles.label}>SZTUKI:</Text>
+              <QuantityStepper
+                value={quantity}
+                onChange={setQuantity}
+                min={0.1}
+                max={999}
+                step={1}
+                accessibilityLabel="Ilość"
+              />
+            </View>
+          </View>
+
+          <View style={styles.field}>
+            <Text style={styles.label}>KATEGORIA:</Text>
+            <Pressable
+              onPress={() => setShowCategoryPicker(true)}
+              style={styles.categoryTrigger}
+              accessibilityRole="button"
+              accessibilityLabel={`Kategoria: ${selectedCategory}. Zmień kategorię`}
+            >
+              <Text style={styles.categoryValue} numberOfLines={1}>{selectedCategory}</Text>
+              <MaterialCommunityIcons name="chevron-down" size={20} color={COLORS.disabled} />
+            </Pressable>
+          </View>
+
+          <PixelButton
+            title="+ DODAJ"
+            onPress={handleQuickAdd}
+            disabled={!manualName.trim() || isParsing || disabled}
+            accessibilityLabel="Dodaj produkt"
+          />
+        </View>
+      ) : (
+        <View style={styles.tabContent}>
+          <Text style={styles.aiHint}>
+            Wpisz listę produktów oddzielonych przecinkami lub w osobnych liniach. AI rozpozna nazwy, ilości i kategorie.
+          </Text>
+
+          <View style={styles.field}>
+            <Text style={styles.label}>TEKST:</Text>
+            <PixelInput
+              placeholder="np. 2x mleko, 3 jabłka, chleb..."
+              value={aiText}
+              onChangeText={setAiText}
+              multiline
+              numberOfLines={3}
+              editable={!isParsing && !disabled}
+              accessibilityLabel="Tekst do rozpoznania AI"
+            />
+          </View>
+
           {isParsing ? (
-            <View style={styles.loader}>
-              <ActivityIndicator size="small" color={COLORS.accent} accessibilityLabel="Przetwarzanie AI" />
+            <View style={styles.loaderRow}>
+              <ActivityIndicator size="small" color={theme.accent} accessibilityLabel="Przetwarzanie AI" />
+              <Text style={styles.loaderText}>Rozpoznawanie...</Text>
             </View>
           ) : (
-            <>
-              <PixelButton
-                title="+"
-                onPress={handleQuickAdd}
-                disabled={!canSubmit}
-                accessibilityLabel="Dodaj produkt"
-                style={styles.addBtn}
-              />
-              <PixelButton
-                title="AI"
-                onPress={handleAIParse}
-                disabled={!canSubmit}
-                accessibilityLabel="Dodaj produkty przez AI"
-                style={styles.aiBtn}
-              />
-            </>
+            <PixelButton
+              title="ROZPOZNAJ AI"
+              onPress={handleAIParse}
+              disabled={!aiText.trim() || disabled}
+              icon={<MaterialCommunityIcons name="auto-fix" size={18} color={COLORS.white} />}
+              accessibilityLabel="Rozpoznaj produkty przez AI"
+            />
           )}
         </View>
-      </View>
-
-      <View style={styles.qtyRow}>
-        <PixelInput
-          value={qtyText}
-          onChangeText={(v) => { setQtyText(v); if (qtyError) setQtyError(''); }}
-          keyboardType="decimal-pad"
-          selectTextOnFocus
-          style={{ ...styles.qtyInput, ...(qtyError ? styles.qtyInputError : undefined) }}
-          editable={!isParsing && !disabled}
-          accessibilityLabel="Ilość"
-        />
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.unitChips}
-          accessibilityLabel="Jednostka"
-        >
-          {UNITS.map((unit) => {
-            const isSelected = unit === selectedUnit;
-            return (
-              <Pressable
-                key={unit}
-                onPress={() => toggleUnit(unit)}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: isSelected }}
-                accessibilityLabel={unit}
-                style={[styles.chip, isSelected && styles.chipSelected]}
-              >
-                <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
-                  {unit}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-      </View>
-
-      {qtyError !== '' && (
-        <Text style={styles.qtyError} accessibilityLiveRegion="polite">{qtyError}</Text>
       )}
-
-      <View style={styles.categoryRow}>
-        <Pressable
-          onPress={() => setShowCategoryPicker(true)}
-          style={styles.categoryTrigger}
-          accessibilityRole="button"
-          accessibilityLabel={`Kategoria: ${selectedCategory}. Zmień kategorię`}
-        >
-          <Text style={styles.categoryLabel}>Kategoria:</Text>
-          <Text style={styles.categoryValue} numberOfLines={1}>{selectedCategory}</Text>
-          <Text style={styles.categoryArrow}>{'▼'}</Text>
-        </Pressable>
-      </View>
 
       <Modal
         visible={showCategoryPicker}
@@ -194,7 +170,7 @@ export function AIInputBar({ onParse, onAddManual, isParsing, disabled = false, 
                   accessibilityRole="radio"
                   accessibilityState={{ selected: isSelected }}
                   accessibilityLabel={cat}
-                  style={[styles.modalOption, isSelected && styles.modalOptionSelected]}
+                  style={[styles.modalOption, isSelected && { backgroundColor: theme.accent }]}
                 >
                   <Text style={[styles.modalOptionText, isSelected && styles.modalOptionTextSelected]}>
                     {cat}
@@ -216,85 +192,25 @@ const styles = StyleSheet.create({
     borderBottomWidth: BORDERS.width,
     borderBottomColor: COLORS.border,
   },
-  inputRow: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
+  tabContent: {
     padding: SPACING.sm,
-    paddingBottom: SPACING.sm,
-    alignItems: 'flex-end',
-  },
-  input: {
-    flex: 1,
-    textAlignVertical: 'top',
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: SPACING.xs,
-  },
-  loader: {
-    width: TOUCH.minTarget,
-    height: TOUCH.minTarget,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addBtn: {
-    width: TOUCH.minTarget,
-    paddingHorizontal: 0,
-  },
-  aiBtn: {
-    width: TOUCH.minTarget,
-    paddingHorizontal: 0,
-  },
-  qtyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: SPACING.sm,
-    paddingHorizontal: SPACING.sm,
-    paddingBottom: SPACING.sm,
   },
-  qtyInput: {
-    width: 56,
-    minHeight: TOUCH.minTarget,
-    paddingVertical: SPACING.xs,
-    textAlign: 'center',
-  },
-  qtyInputError: {
-    borderColor: COLORS.danger,
-  },
-  qtyError: {
-    fontSize: FONT_SIZE.caption,
-    color: COLORS.danger,
-    paddingHorizontal: SPACING.sm,
-    paddingBottom: SPACING.xs,
-  },
-  unitChips: {
+  field: {
     gap: SPACING.xs,
-    alignItems: 'center',
   },
-  chip: {
-    minHeight: TOUCH.minTarget,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderWidth: BORDERS.width,
-    borderColor: COLORS.border,
-    justifyContent: 'center',
+  fieldRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
   },
-  chipSelected: {
-    backgroundColor: COLORS.accent,
-    borderColor: COLORS.accent,
+  fieldHalf: {
+    flex: 1,
+    gap: SPACING.xs,
   },
-  chipText: {
+  label: {
     fontSize: FONT_SIZE.caption,
     fontWeight: FONT_WEIGHT.bold,
-    color: COLORS.primary,
-  },
-  chipTextSelected: {
-    color: COLORS.white,
-  },
-  categoryRow: {
-    paddingHorizontal: SPACING.sm,
-    paddingBottom: SPACING.sm,
-    paddingTop: SPACING.xs,
+    color: COLORS.disabled,
   },
   categoryTrigger: {
     flexDirection: 'row',
@@ -305,21 +221,27 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     backgroundColor: COLORS.white,
   },
-  categoryLabel: {
-    fontSize: FONT_SIZE.caption,
-    color: COLORS.disabled,
-    marginRight: SPACING.xs,
-  },
   categoryValue: {
     flex: 1,
     fontSize: FONT_SIZE.body,
     fontWeight: FONT_WEIGHT.bold,
     color: COLORS.primary,
   },
-  categoryArrow: {
+  aiHint: {
     fontSize: FONT_SIZE.caption,
     color: COLORS.disabled,
-    marginLeft: SPACING.xs,
+    lineHeight: FONT_SIZE.caption * 1.4,
+  },
+  loaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    minHeight: TOUCH.minTarget,
+  },
+  loaderText: {
+    fontSize: FONT_SIZE.caption,
+    color: COLORS.disabled,
   },
   modalOverlay: {
     flex: 1,
@@ -347,9 +269,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     minHeight: TOUCH.minTarget,
     paddingHorizontal: SPACING.md,
-  },
-  modalOptionSelected: {
-    backgroundColor: COLORS.accent,
   },
   modalOptionText: {
     flex: 1,

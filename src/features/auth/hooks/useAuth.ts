@@ -1,11 +1,13 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { Alert } from 'react-native';
 import type { User, AuthState } from '../../../types/user';
-import { signUp, signIn, signOut, onAuthChanged } from '../services';
+import { signUp, signIn, signOut, onAuthChanged, resetPassword } from '../services';
 
 interface AuthContextValue extends AuthState {
   handleSignUp: (email: string, password: string, displayName: string) => Promise<void>;
   handleSignIn: (email: string, password: string) => Promise<void>;
   handleSignOut: () => Promise<void>;
+  handleResetPassword: (email: string) => Promise<void>;
 }
 
 const initialState: AuthState = {
@@ -20,6 +22,7 @@ export const AuthContext = createContext<AuthContextValue>({
   handleSignUp: async () => {},
   handleSignIn: async () => {},
   handleSignOut: async () => {},
+  handleResetPassword: async () => {},
 });
 
 export function useAuthProvider(): AuthContextValue {
@@ -95,7 +98,16 @@ export function useAuthProvider(): AuthContextValue {
     }
   }, []);
 
-  return { ...state, handleSignUp, handleSignIn, handleSignOut };
+  const handleResetPassword = useCallback(async (email: string) => {
+    try {
+      await resetPassword(email);
+      Alert.alert('Sukces', 'Link do resetowania hasła został wysłany na podany adres email.');
+    } catch (err) {
+      Alert.alert('Błąd', getErrorMessage(err));
+    }
+  }, []);
+
+  return { ...state, handleSignUp, handleSignIn, handleSignOut, handleResetPassword };
 }
 
 export function useAuth(): AuthContextValue {

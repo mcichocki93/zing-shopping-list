@@ -3,6 +3,7 @@ export interface User {
   email: string;
   displayName: string;
   sharedListIds: string[];
+  theme?: string;
   createdAt: Date;
   lastActiveAt: Date;
 }

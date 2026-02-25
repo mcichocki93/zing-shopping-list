@@ -1,22 +1,34 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, Share, Alert, StyleSheet, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AIInputBar, type ManualItemData } from '../../aiInput/components/AIInputBar';
 import { PreviewModal } from '../../aiInput/components/PreviewModal';
 import { useAIParser } from '../../aiInput/hooks/useAIParser';
 import { PixelButton } from '../../../components/ui';
+import { ThemePickerModal } from '../../../components/ThemePickerModal';
 import { CategorySection } from '../components/CategorySection';
+import { EditItemModal } from '../components/EditItemModal';
 import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
+import { useTheme } from '../../../contexts/ThemeContext';
 import { useShoppingList } from '../hooks';
+import type { CategoryGroup } from '../hooks/useShoppingList';
 import { useAuth } from '../../auth/hooks';
+import { isExpoGo } from '../../../utils/platform';
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const DraggableFlatList = !isExpoGo ? require('react-native-draggable-flatlist').default : null;
+const ScaleDecorator = !isExpoGo ? require('react-native-draggable-flatlist').ScaleDecorator : null;
 import { createInvite } from '../../../services/firebase/invites';
 import type { ShoppingListsStackParamList } from '../../../types/navigation';
+import type { ShoppingItem } from '../../../types/shoppingList';
 
 type Props = NativeStackScreenProps<ShoppingListsStackParamList, 'ListDetail'>;
 
 export function ListDetailScreen({ route, navigation }: Props) {
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
   const { listId } = route.params;
   const { user } = useAuth();
   const {
@@ -28,14 +40,19 @@ export function ListDetailScreen({ route, navigation }: Props) {
     handleAddItems,
     handleToggleItem,
     handleRemoveItem,
+    handleUpdateItem,
     handleReorderCategory,
+    handleSetCategoryOrder,
+    allCompleted,
+    handleResetAll,
   } = useShoppingList(listId);
 
   const { parsedItems, isParsing, error: aiError, canRetry, parse, retry, removeItem: removePreviewItem, clear: clearPreview } = useAIParser();
   const [inputClearTrigger, setInputClearTrigger] = useState(0);
+  const [showThemePicker, setShowThemePicker] = useState(false);
+  const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
   const showPreview = parsedItems.length > 0;
 
-  // Navigate back when list is deleted (becomes null after initial load)
   useEffect(() => {
     if (!isLoading && !list) {
       navigation.goBack();
@@ -84,10 +101,19 @@ export function ListDetailScreen({ route, navigation }: Props) {
     }
   }, [list, user]);
 
+  const onEditItem = useCallback((itemId: string) => {
+    const item = list?.items.find((i) => i.id === itemId);
+    if (item) setEditingItem(item);
+  }, [list]);
+
+  const onSaveEdit = useCallback((itemId: string, updates: { name: string; quantity: number; unit?: string; category: string }) => {
+    handleUpdateItem(itemId, updates);
+  }, [handleUpdateItem]);
+
   if (isLoading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color={COLORS.accent} accessibilityLabel="Ładowanie listy" />
+        <ActivityIndicator size="large" color={theme.accent} accessibilityLabel="Ładowanie listy" />
       </View>
     );
   }
@@ -101,37 +127,53 @@ export function ListDetailScreen({ route, navigation }: Props) {
   }
 
   const movableCategories = sortedCategories.filter((g) => g.category !== 'Kupione');
+  const kupioneGroup = sortedCategories.find((g) => g.category === 'Kupione');
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + SPACING.sm }]}>
+    <View style={[styles.container, { backgroundColor: theme.accentLight }]}>
+      <View style={[styles.header, { backgroundColor: theme.accent, paddingTop: insets.top + SPACING.sm }]}>
         <Pressable
           onPress={() => navigation.goBack()}
           style={styles.backBtn}
           accessibilityRole="button"
           accessibilityLabel="Wróć do list"
         >
-          <Text style={styles.backText}>{'<'}</Text>
+          <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.white} />
         </Pressable>
         <Text style={styles.title} numberOfLines={1} accessibilityRole="header">{list.title}</Text>
-        {list.ownerId === user?.id && (
-          <Pressable
-            onPress={onShare}
-            style={styles.shareBtn}
-            accessibilityRole="button"
-            accessibilityLabel="Udostępnij listę"
-          >
-            <Text style={styles.shareIcon}>{'↗'}</Text>
-            <Text style={styles.shareLabel}>Zaproś</Text>
-          </Pressable>
-        )}
-        <Text
-          style={styles.count}
-          accessibilityLabel={`${list.items.filter((i) => i.isCompleted).length} z ${list.items.length} produktów kupione`}
+        <Pressable
+          onPress={() => setShowThemePicker(true)}
+          style={styles.iconBtn}
+          accessibilityRole="button"
+          accessibilityLabel="Wybierz motyw"
         >
-          {list.items.filter((i) => i.isCompleted).length}/{list.items.length}
-        </Text>
+          <MaterialCommunityIcons name="palette-outline" size={24} color={COLORS.white} />
+        </Pressable>
       </View>
+
+      {list.inviteCode && (
+        <Pressable
+          onPress={onShare}
+          style={[styles.codeRow, { backgroundColor: theme.accent }]}
+          accessibilityRole="button"
+          accessibilityLabel={`Kod: ${list.inviteCode}. Udostępnij listę`}
+        >
+          <Text style={styles.codeLabel}>Kod: {list.inviteCode}</Text>
+          <MaterialCommunityIcons name="share-variant-outline" size={20} color={COLORS.white} />
+        </Pressable>
+      )}
+
+      {!list.inviteCode && list.ownerId === user?.id && (
+        <Pressable
+          onPress={onShare}
+          style={[styles.codeRow, { backgroundColor: theme.accent, opacity: 0.8 }]}
+          accessibilityRole="button"
+          accessibilityLabel="Udostępnij listę"
+        >
+          <Text style={styles.codeLabel}>Udostępnij listę</Text>
+          <MaterialCommunityIcons name="share-variant-outline" size={20} color={COLORS.white} />
+        </Pressable>
+      )}
 
       <KeyboardAvoidingView
         style={styles.keyboardAvoiding}
@@ -162,14 +204,71 @@ export function ListDetailScreen({ route, navigation }: Props) {
           </View>
         )}
 
+        {allCompleted && (
+          <View style={[styles.completedBanner, { backgroundColor: theme.accent }]}>
+            <View style={styles.completedRow}>
+              <MaterialCommunityIcons name="check-circle-outline" size={28} color={COLORS.white} />
+              <View style={styles.completedTextCol}>
+                <Text style={styles.completedTitle}>Lista zrealizowana!</Text>
+                <Text style={styles.completedSubtitle}>Wszystkie produkty kupione.</Text>
+              </View>
+            </View>
+            <Pressable
+              onPress={handleResetAll}
+              style={styles.resetBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Resetuj listę"
+            >
+              <Text style={[styles.resetBtnText, { color: theme.accent }]}>Resetuj listę</Text>
+            </Pressable>
+          </View>
+        )}
+
         {list.items.length === 0 ? (
           <View style={styles.center}>
             <Text style={styles.emptyText}>Lista jest pusta.</Text>
-            <Text style={styles.emptyHint}>Użyj + aby dodać produkt lub AI dla wielu.</Text>
+            <Text style={styles.emptyHint}>Użyj zakładki RĘCZNIE lub AI TEKST aby dodać produkty.</Text>
           </View>
+        ) : !isExpoGo && DraggableFlatList ? (
+          <ScrollView style={styles.scroll} contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + SPACING.sm }]}>
+            <DraggableFlatList
+              data={movableCategories}
+              keyExtractor={(item: CategoryGroup) => item.category}
+              scrollEnabled={false}
+              onDragEnd={({ data }: { data: CategoryGroup[] }) => {
+                handleSetCategoryOrder(data.map((g) => g.category));
+              }}
+              renderItem={({ item, drag, isActive, getIndex }: { item: CategoryGroup; drag: () => void; isActive: boolean; getIndex: () => number | undefined }) => {
+                const index = getIndex() ?? 0;
+                return (
+                  <ScaleDecorator>
+                    <CategorySection
+                      category={item.category}
+                      items={item.items}
+                      colorIndex={index}
+                      onToggle={handleToggleItem}
+                      onRemove={handleRemoveItem}
+                      onEdit={onEditItem}
+                      drag={drag}
+                    />
+                  </ScaleDecorator>
+                );
+              }}
+            />
+            {kupioneGroup && (
+              <CategorySection
+                category={kupioneGroup.category}
+                items={kupioneGroup.items}
+                colorIndex={sortedCategories.length - 1}
+                onToggle={handleToggleItem}
+                onRemove={handleRemoveItem}
+                onEdit={onEditItem}
+              />
+            )}
+          </ScrollView>
         ) : (
           <ScrollView style={styles.scroll} contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + SPACING.sm }]}>
-            {sortedCategories.map((group) => {
+            {sortedCategories.map((group, index) => {
               const isKupione = group.category === 'Kupione';
               const movableIdx = isKupione ? -1 : movableCategories.indexOf(group);
               return (
@@ -177,8 +276,10 @@ export function ListDetailScreen({ route, navigation }: Props) {
                   key={group.category}
                   category={group.category}
                   items={group.items}
+                  colorIndex={index}
                   onToggle={handleToggleItem}
                   onRemove={handleRemoveItem}
+                  onEdit={onEditItem}
                   onMoveUp={isKupione ? undefined : () => handleReorderCategory(group.category, 'up')}
                   onMoveDown={isKupione ? undefined : () => handleReorderCategory(group.category, 'down')}
                   isFirst={movableIdx === 0}
@@ -189,6 +290,15 @@ export function ListDetailScreen({ route, navigation }: Props) {
           </ScrollView>
         )}
       </KeyboardAvoidingView>
+
+      <EditItemModal
+        visible={editingItem !== null}
+        item={editingItem}
+        onSave={onSaveEdit}
+        onClose={() => setEditingItem(null)}
+      />
+
+      <ThemePickerModal visible={showThemePicker} onClose={() => setShowThemePicker(false)} />
     </View>
   );
 }
@@ -196,7 +306,6 @@ export function ListDetailScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   keyboardAvoiding: {
     flex: 1,
@@ -207,20 +316,14 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
     paddingHorizontal: SPACING.sm,
     paddingBottom: SPACING.sm,
-    backgroundColor: COLORS.primary,
   },
   backBtn: {
     minWidth: TOUCH.minTarget,
     minHeight: TOUCH.minTarget,
     borderWidth: BORDERS.width,
-    borderColor: COLORS.white,
+    borderColor: 'rgba(255,255,255,0.3)',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  backText: {
-    fontSize: FONT_SIZE.h3,
-    fontWeight: FONT_WEIGHT.bold,
-    color: COLORS.white,
   },
   title: {
     flex: 1,
@@ -228,29 +331,26 @@ const styles = StyleSheet.create({
     fontWeight: FONT_WEIGHT.black,
     color: COLORS.white,
   },
-  shareBtn: {
+  iconBtn: {
+    minWidth: TOUCH.minTarget,
     minHeight: TOUCH.minTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: BORDERS.width,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  codeRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: SPACING.xs,
+    gap: SPACING.sm,
+    paddingVertical: SPACING.xs,
     paddingHorizontal: SPACING.sm,
-    borderWidth: BORDERS.width,
-    borderColor: COLORS.white,
   },
-  shareIcon: {
-    fontSize: FONT_SIZE.h3,
-    fontWeight: FONT_WEIGHT.bold,
-    color: COLORS.white,
-  },
-  shareLabel: {
+  codeLabel: {
     fontSize: FONT_SIZE.caption,
     fontWeight: FONT_WEIGHT.bold,
     color: COLORS.white,
-  },
-  count: {
-    fontSize: FONT_SIZE.caption,
-    color: COLORS.disabled,
   },
   errorRow: {
     flexDirection: 'row',
@@ -281,11 +381,50 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.caption,
     color: COLORS.disabled,
     marginTop: SPACING.xs,
+    textAlign: 'center',
+    paddingHorizontal: SPACING.lg,
   },
   scroll: {
     flex: 1,
   },
   scrollContent: {
     padding: SPACING.sm,
+  },
+  completedBanner: {
+    padding: SPACING.md,
+    gap: SPACING.sm,
+    alignItems: 'center',
+  },
+  completedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  completedTextCol: {
+    flex: 1,
+  },
+  completedTitle: {
+    fontSize: FONT_SIZE.h3,
+    fontWeight: FONT_WEIGHT.bold,
+    color: COLORS.white,
+  },
+  completedSubtitle: {
+    fontSize: FONT_SIZE.caption,
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 2,
+  },
+  resetBtn: {
+    backgroundColor: COLORS.white,
+    paddingVertical: SPACING.xs,
+    paddingHorizontal: SPACING.md,
+    borderWidth: BORDERS.width,
+    borderColor: COLORS.white,
+    minHeight: TOUCH.minTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  resetBtnText: {
+    fontSize: FONT_SIZE.body,
+    fontWeight: FONT_WEIGHT.bold,
   },
 });

@@ -1,16 +1,21 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { PixelCheckbox } from '../../../components/ui';
 import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
+import { useTheme } from '../../../contexts/ThemeContext';
 import type { ShoppingItem } from '../../../types/shoppingList';
 
 interface ShoppingItemRowProps {
   item: ShoppingItem;
   onToggle: (itemId: string) => void;
   onRemove: (itemId: string) => void;
+  onEdit?: (itemId: string) => void;
 }
 
-export function ShoppingItemRow({ item, onToggle, onRemove }: ShoppingItemRowProps) {
+export function ShoppingItemRow({ item, onToggle, onRemove, onEdit }: ShoppingItemRowProps) {
+  const { theme } = useTheme();
+
   return (
     <View style={styles.row}>
       <PixelCheckbox
@@ -24,17 +29,29 @@ export function ShoppingItemRow({ item, onToggle, onRemove }: ShoppingItemRowPro
           {item.name}
         </Text>
         <Text style={styles.quantity}>
-          {item.quantity}{item.unit ? ` ${item.unit}` : ' szt'}
+          SZTUKI: {item.quantity}{item.unit ? ` ${item.unit}` : ''}
         </Text>
       </View>
-      <Pressable
-        onPress={() => onRemove(item.id)}
-        style={styles.removeBtn}
-        accessibilityRole="button"
-        accessibilityLabel={`Usuń ${item.name}`}
-      >
-        <Text style={styles.removeText}>X</Text>
-      </Pressable>
+      <View style={styles.actions}>
+        {onEdit && (
+          <Pressable
+            onPress={() => onEdit(item.id)}
+            style={[styles.actionBtn, { borderColor: theme.accent }]}
+            accessibilityRole="button"
+            accessibilityLabel={`Edytuj ${item.name}`}
+          >
+            <MaterialCommunityIcons name="pencil-outline" size={18} color={theme.accent} />
+          </Pressable>
+        )}
+        <Pressable
+          onPress={() => onRemove(item.id)}
+          style={[styles.actionBtn, styles.removeBtn]}
+          accessibilityRole="button"
+          accessibilityLabel={`Usuń ${item.name}`}
+        >
+          <MaterialCommunityIcons name="delete-outline" size={18} color={COLORS.danger} />
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -52,14 +69,11 @@ const styles = StyleSheet.create({
   checkbox: {},
   info: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
+    marginLeft: SPACING.xs,
   },
   name: {
     fontSize: FONT_SIZE.body,
     color: COLORS.primary,
-    flexShrink: 1,
   },
   nameCompleted: {
     textDecorationLine: 'line-through',
@@ -68,18 +82,20 @@ const styles = StyleSheet.create({
   quantity: {
     fontSize: FONT_SIZE.caption,
     color: COLORS.disabled,
+    marginTop: 2,
   },
-  removeBtn: {
-    minWidth: TOUCH.minTarget,
-    minHeight: TOUCH.minTarget,
+  actions: {
+    flexDirection: 'row',
+    gap: SPACING.xs,
+  },
+  actionBtn: {
+    width: 36,
+    height: 36,
     borderWidth: BORDERS.width,
-    borderColor: COLORS.danger,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  removeText: {
-    fontSize: FONT_SIZE.caption,
-    fontWeight: FONT_WEIGHT.bold,
-    color: COLORS.danger,
+  removeBtn: {
+    borderColor: COLORS.danger,
   },
 });

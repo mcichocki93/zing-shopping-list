@@ -2,6 +2,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
+  sendPasswordResetEmail,
   onAuthStateChanged,
   updateProfile,
   type User as FirebaseUser,
@@ -59,6 +60,10 @@ export async function signIn(
 
 export async function signOut(): Promise<void> {
   await firebaseSignOut(auth);
+}
+
+export async function resetPassword(email: string): Promise<void> {
+  await sendPasswordResetEmail(auth, email);
 }
 
 export function onAuthChanged(callback: (user: User | null) => void): Unsubscribe {

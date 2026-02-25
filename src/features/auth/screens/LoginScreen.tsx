@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
-import { Text, ScrollView, Pressable, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { Text, ScrollView, Pressable, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { PixelButton, PixelInput, PixelCard } from '../../../components/ui';
 import { COLORS, SPACING, FONT_SIZE, FONT_WEIGHT, TOUCH } from '../../../constants';
+import { useTheme } from '../../../contexts/ThemeContext';
 import { useAuth } from '../hooks';
 import type { AuthStackParamList } from '../../../types/navigation';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
 export function LoginScreen({ navigation }: Props) {
-  const { handleSignIn, isLoading, error } = useAuth();
+  const { theme } = useTheme();
+  const { handleSignIn, handleResetPassword, isLoading, error } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -19,8 +22,17 @@ export function LoginScreen({ navigation }: Props) {
     handleSignIn(email.trim(), password);
   };
 
+  const onForgotPassword = () => {
+    const trimmed = email.trim();
+    if (!trimmed) {
+      Alert.alert('Uwaga', 'Wpisz adres email, a następnie kliknij "Nie pamiętam hasła".');
+      return;
+    }
+    handleResetPassword(trimmed);
+  };
+
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.accentLight }]}>
       <KeyboardAvoidingView
         style={styles.wrapper}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -30,33 +42,44 @@ export function LoginScreen({ navigation }: Props) {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.title}>Zing</Text>
-          <Text style={styles.subtitle}>Zaloguj się</Text>
+          <Text style={[styles.title, { color: theme.accent }]}>LISTA ZAKUPÓW</Text>
+          <Text style={styles.subtitle}>Twoja pixelowa lista.</Text>
 
           <PixelCard style={styles.card}>
             {error && <Text style={styles.error}>{error}</Text>}
 
             <PixelInput
-              placeholder="Email"
+              label="Email"
+              placeholder="twoj@email.com"
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
               keyboardType="email-address"
               textContentType="emailAddress"
-              style={styles.input}
+              leftIcon={<MaterialCommunityIcons name="email-outline" size={20} color={COLORS.disabled} />}
             />
 
             <PixelInput
-              placeholder="Hasło"
+              label="Hasło"
+              placeholder="••••••••"
               value={password}
               onChangeText={setPassword}
               secureTextEntry
               textContentType="password"
-              style={styles.input}
+              leftIcon={<MaterialCommunityIcons name="lock-outline" size={20} color={COLORS.disabled} />}
             />
 
+            <Pressable
+              onPress={onForgotPassword}
+              accessibilityRole="button"
+              accessibilityLabel="Nie pamiętam hasła"
+              style={styles.forgotRow}
+            >
+              <Text style={[styles.forgotText, { color: theme.accent }]}>Nie pamiętam hasła</Text>
+            </Pressable>
+
             <PixelButton
-              title={isLoading ? 'Logowanie...' : 'Zaloguj'}
+              title={isLoading ? 'Logowanie...' : 'Zaloguj się'}
               onPress={onSubmit}
               disabled={isLoading}
             />
@@ -68,7 +91,9 @@ export function LoginScreen({ navigation }: Props) {
             accessibilityLabel="Nie masz konta? Zarejestruj się"
             style={styles.linkButton}
           >
-            <Text style={styles.linkText}>Nie masz konta? Zarejestruj się</Text>
+            <Text style={styles.linkText}>
+              Nie masz konta? <Text style={[styles.linkTextBold, { color: theme.accent }]}>Zarejestruj się</Text>
+            </Text>
           </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -79,7 +104,6 @@ export function LoginScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   wrapper: {
     flex: 1,
@@ -93,7 +117,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: FONT_SIZE.display,
     fontWeight: FONT_WEIGHT.black,
-    color: COLORS.primary,
     textAlign: 'center',
     marginBottom: SPACING.xs,
   },
@@ -106,13 +129,17 @@ const styles = StyleSheet.create({
   card: {
     gap: SPACING.sm,
   },
-  input: {
-    width: '100%',
-  },
   error: {
     color: COLORS.danger,
     fontSize: FONT_SIZE.caption,
     textAlign: 'center',
+  },
+  forgotRow: {
+    alignSelf: 'flex-end',
+  },
+  forgotText: {
+    fontSize: FONT_SIZE.caption,
+    fontWeight: FONT_WEIGHT.bold,
   },
   linkButton: {
     marginTop: SPACING.md,
@@ -121,9 +148,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   linkText: {
-    color: COLORS.accent,
+    color: COLORS.disabled,
     fontSize: FONT_SIZE.body,
-    fontWeight: FONT_WEIGHT.bold,
     textAlign: 'center',
+  },
+  linkTextBold: {
+    fontWeight: FONT_WEIGHT.bold,
   },
 });

@@ -1,14 +1,17 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { ShoppingItemRow } from './ShoppingItemRow';
-import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
+import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT, getCategoryColor } from '../../../constants';
 import type { ShoppingItem } from '../../../types/shoppingList';
 
 interface CategorySectionProps {
   category: string;
   items: ShoppingItem[];
+  colorIndex: number;
   onToggle: (itemId: string) => void;
   onRemove: (itemId: string) => void;
+  onEdit?: (itemId: string) => void;
+  drag?: () => void;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
   isFirst?: boolean;
@@ -18,28 +21,37 @@ interface CategorySectionProps {
 export function CategorySection({
   category,
   items,
+  colorIndex,
   onToggle,
   onRemove,
+  onEdit,
+  drag,
   onMoveUp,
   onMoveDown,
   isFirst = false,
   isLast = false,
 }: CategorySectionProps) {
-  const showControls = onMoveUp != null || onMoveDown != null;
+  const showArrows = !drag && (onMoveUp != null || onMoveDown != null);
+  const isKupione = category === 'Kupione';
+  const headerColor = isKupione ? COLORS.disabled : getCategoryColor(colorIndex);
 
   return (
     <View style={styles.section}>
       <View
-        style={styles.header}
+        style={[styles.header, { backgroundColor: headerColor }]}
         accessibilityRole="header"
         accessibilityLabel={`${category}, ${items.length} produktów`}
       >
-        {showControls && (
+        {drag ? (
+          <Pressable onLongPress={drag} accessibilityLabel="Przeciągnij aby zmienić kolejność">
+            <Text style={styles.grip}>{'≡'}</Text>
+          </Pressable>
+        ) : (showArrows || !isKupione) && (
           <Text style={styles.grip}>{'≡'}</Text>
         )}
         <Text style={styles.title}>{category}</Text>
         <View style={styles.headerRight}>
-          {showControls && (
+          {showArrows && (
             <View style={styles.moveControls}>
               <Pressable
                 onPress={onMoveUp}
@@ -72,6 +84,7 @@ export function CategorySection({
           item={item}
           onToggle={onToggle}
           onRemove={onRemove}
+          onEdit={onEdit}
         />
       ))}
     </View>
@@ -90,7 +103,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: SPACING.xs,
     paddingHorizontal: SPACING.sm,
-    backgroundColor: COLORS.primary,
     gap: SPACING.xs,
   },
   grip: {

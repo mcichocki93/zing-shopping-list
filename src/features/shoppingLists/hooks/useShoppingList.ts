@@ -8,6 +8,7 @@ import {
   removeItem,
   toggleItem,
   updateCategoryOrder,
+  resetAllItems,
 } from '../../../services/firebase/shoppingLists';
 import { CATEGORIES } from '../../../constants';
 import type { ShoppingList, ShoppingItem } from '../../../types/shoppingList';
@@ -21,6 +22,7 @@ interface UseShoppingListReturn {
   list: ShoppingList | null;
   isLoading: boolean;
   error: string | null;
+  allCompleted: boolean;
   sortedCategories: CategoryGroup[];
   handleUpdateTitle: (title: string) => Promise<void>;
   handleAddItem: (item: Omit<ShoppingItem, 'id' | 'createdAt'>) => Promise<void>;
@@ -32,6 +34,8 @@ interface UseShoppingListReturn {
   handleToggleItem: (itemId: string) => Promise<void>;
   handleRemoveItem: (itemId: string) => Promise<void>;
   handleReorderCategory: (category: string, direction: 'up' | 'down') => Promise<void>;
+  handleSetCategoryOrder: (newOrder: string[]) => Promise<void>;
+  handleResetAll: () => Promise<void>;
 }
 
 export function useShoppingList(listId: string | null): UseShoppingListReturn {
@@ -183,10 +187,31 @@ export function useShoppingList(listId: string | null): UseShoppingListReturn {
     [listId, sortedCategories, withError],
   );
 
+  const handleSetCategoryOrder = useCallback(
+    (newOrder: string[]) =>
+      withError(
+        () => updateCategoryOrder(listId!, newOrder),
+        'Nie udało się zmienić kolejności.',
+      ),
+    [listId, withError],
+  );
+
+  const allCompleted = list !== null && list.items.length > 0 && list.items.every((i) => i.isCompleted);
+
+  const handleResetAll = useCallback(
+    () =>
+      withError(
+        () => resetAllItems(listId!, list?.items ?? []),
+        'Nie udało się zresetować listy.',
+      ),
+    [listId, list, withError],
+  );
+
   return {
     list,
     isLoading,
     error,
+    allCompleted,
     sortedCategories,
     handleUpdateTitle,
     handleAddItem,
@@ -195,5 +220,7 @@ export function useShoppingList(listId: string | null): UseShoppingListReturn {
     handleToggleItem,
     handleRemoveItem,
     handleReorderCategory,
+    handleSetCategoryOrder,
+    handleResetAll,
   };
 }

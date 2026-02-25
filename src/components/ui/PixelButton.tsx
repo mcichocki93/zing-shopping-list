@@ -1,13 +1,16 @@
-import { Pressable, Text, StyleSheet, type ViewStyle } from 'react-native';
+import React from 'react';
+import { Pressable, View, Text, StyleSheet, type ViewStyle } from 'react-native';
 import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../constants';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface PixelButtonProps {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'accent' | 'danger';
+  variant?: 'primary' | 'accent' | 'danger' | 'accentMuted';
   disabled?: boolean;
   accessibilityLabel?: string;
   style?: ViewStyle;
+  icon?: React.ReactNode;
 }
 
 export function PixelButton({
@@ -17,8 +20,24 @@ export function PixelButton({
   disabled = false,
   accessibilityLabel,
   style,
+  icon,
 }: PixelButtonProps) {
-  const bgColor = disabled ? COLORS.disabled : COLORS[variant];
+  const { theme } = useTheme();
+
+  const getBackgroundColor = () => {
+    if (disabled) return COLORS.disabled;
+    switch (variant) {
+      case 'accent':
+        return theme.accent;
+      case 'accentMuted':
+        return theme.accentMuted;
+      case 'danger':
+        return COLORS.danger;
+      case 'primary':
+      default:
+        return COLORS.primary;
+    }
+  };
 
   return (
     <Pressable
@@ -29,12 +48,19 @@ export function PixelButton({
       accessibilityState={{ disabled }}
       style={({ pressed }) => [
         styles.button,
-        { backgroundColor: bgColor },
+        { backgroundColor: getBackgroundColor() },
         pressed && !disabled && styles.pressed,
         style,
       ]}
     >
-      <Text style={styles.text}>{title}</Text>
+      {icon ? (
+        <View style={styles.content}>
+          {icon}
+          <Text style={styles.text}>{title}</Text>
+        </View>
+      ) : (
+        <Text style={styles.text}>{title}</Text>
+      )}
     </Pressable>
   );
 }
@@ -52,6 +78,11 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.8,
+  },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
   },
   text: {
     color: COLORS.white,

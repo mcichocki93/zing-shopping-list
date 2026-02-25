@@ -207,6 +207,18 @@ export async function removeItem(
   });
 }
 
+export async function resetAllItems(
+  listId: string,
+  currentItems: ShoppingItem[],
+): Promise<void> {
+  const resetItems = currentItems.map((item) => ({ ...item, isCompleted: false }));
+
+  await updateDoc(listDoc(listId), {
+    items: resetItems,
+    updatedAt: serverTimestamp(),
+  });
+}
+
 // ─── Category Order ─────────────────────────────────────
 
 export async function updateCategoryOrder(

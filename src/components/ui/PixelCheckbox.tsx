@@ -1,5 +1,6 @@
 import { Pressable, View, Text, StyleSheet, type ViewStyle } from 'react-native';
 import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE } from '../../constants';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface PixelCheckboxProps {
   checked: boolean;
@@ -18,6 +19,8 @@ export function PixelCheckbox({
   disabled = false,
   style,
 }: PixelCheckboxProps) {
+  const { theme } = useTheme();
+
   return (
     <Pressable
       onPress={() => !disabled && onToggle(!checked)}
@@ -30,11 +33,11 @@ export function PixelCheckbox({
       <View
         style={[
           styles.box,
-          checked && styles.boxChecked,
+          checked && { borderColor: theme.accent },
           disabled && styles.boxDisabled,
         ]}
       >
-        {checked && <View style={styles.fill} />}
+        {checked && <View style={[styles.fill, { backgroundColor: theme.accent }]} />}
       </View>
       {label && (
         <Text style={[styles.label, checked && styles.labelChecked]}>
@@ -63,16 +66,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: COLORS.white,
   },
-  boxChecked: {
-    borderColor: COLORS.accent,
-  },
   boxDisabled: {
     borderColor: COLORS.disabled,
   },
   fill: {
     width: 14,
     height: 14,
-    backgroundColor: COLORS.accent,
   },
   label: {
     fontSize: FONT_SIZE.body,

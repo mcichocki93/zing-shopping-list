@@ -1,5 +1,6 @@
 import { View, Text, TextInput, Pressable, StyleSheet, type ViewStyle } from 'react-native';
 import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../constants';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface QuantityStepperProps {
   value: number;
@@ -20,6 +21,7 @@ export function QuantityStepper({
   accessibilityLabel = 'Ilość',
   style,
 }: QuantityStepperProps) {
+  const { theme } = useTheme();
   const canDecrement = value - step >= min;
   const canIncrement = value + step <= max;
 
@@ -55,11 +57,13 @@ export function QuantityStepper({
         accessibilityState={{ disabled: !canDecrement }}
         style={({ pressed }) => [
           styles.button,
-          !canDecrement && styles.buttonDisabled,
+          canDecrement
+            ? { backgroundColor: theme.accent }
+            : styles.buttonDisabled,
           pressed && canDecrement && styles.buttonPressed,
         ]}
       >
-        <Text style={[styles.buttonText, !canDecrement && styles.buttonTextDisabled]}>-</Text>
+        <Text style={[styles.buttonText, canDecrement ? styles.buttonTextEnabled : styles.buttonTextDisabled]}>-</Text>
       </Pressable>
 
       <TextInput
@@ -79,11 +83,13 @@ export function QuantityStepper({
         accessibilityState={{ disabled: !canIncrement }}
         style={({ pressed }) => [
           styles.button,
-          !canIncrement && styles.buttonDisabled,
+          canIncrement
+            ? { backgroundColor: theme.accent }
+            : styles.buttonDisabled,
           pressed && canIncrement && styles.buttonPressed,
         ]}
       >
-        <Text style={[styles.buttonText, !canIncrement && styles.buttonTextDisabled]}>+</Text>
+        <Text style={[styles.buttonText, canIncrement ? styles.buttonTextEnabled : styles.buttonTextDisabled]}>+</Text>
       </Pressable>
     </View>
   );
@@ -100,11 +106,11 @@ const styles = StyleSheet.create({
     borderWidth: BORDERS.width,
     borderColor: COLORS.border,
     borderRadius: BORDERS.radius,
-    backgroundColor: COLORS.white,
     alignItems: 'center',
     justifyContent: 'center',
   },
   buttonDisabled: {
+    backgroundColor: COLORS.background,
     borderColor: COLORS.disabled,
   },
   buttonPressed: {
@@ -113,7 +119,9 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: FONT_SIZE.h2,
     fontWeight: FONT_WEIGHT.bold,
-    color: COLORS.primary,
+  },
+  buttonTextEnabled: {
+    color: COLORS.white,
   },
   buttonTextDisabled: {
     color: COLORS.disabled,

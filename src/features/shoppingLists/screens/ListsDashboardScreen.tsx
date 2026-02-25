@@ -9,9 +9,12 @@ import {
   Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { PixelButton, PixelInput, PixelCard } from '../../../components/ui';
+import { PixelButton, PixelInput, PixelCard, PixelModal } from '../../../components/ui';
+import { ThemePickerModal } from '../../../components/ThemePickerModal';
 import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
+import { useTheme } from '../../../contexts/ThemeContext';
 import { useShoppingLists } from '../hooks';
 import { useAuth } from '../../auth/hooks';
 import { lookupInvite, joinList } from '../../../services/firebase/invites';
@@ -20,15 +23,24 @@ import type { ShoppingList } from '../../../types/shoppingList';
 
 type Props = NativeStackScreenProps<ShoppingListsStackParamList, 'ListsDashboard'>;
 
+function pluralize(n: number, one: string, few: string, many: string): string {
+  if (n === 1) return one;
+  if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) return few;
+  return many;
+}
+
 export function ListsDashboardScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
   const { user, handleSignOut } = useAuth();
   const { lists, isLoading, error, handleCreate, handleDelete } = useShoppingLists();
   const [newTitle, setNewTitle] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [joinCode, setJoinCode] = useState('');
   const [isJoining, setIsJoining] = useState(false);
-  const [showJoin, setShowJoin] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showJoinModal, setShowJoinModal] = useState(false);
+  const [showThemePicker, setShowThemePicker] = useState(false);
 
   const onJoinByCode = async () => {
     const trimmed = joinCode.trim().toUpperCase();
@@ -48,6 +60,7 @@ export function ListsDashboardScreen({ navigation }: Props) {
         Alert.alert('Info', 'Jesteś już członkiem tej listy.');
         setJoinCode('');
         setIsJoining(false);
+        setShowJoinModal(false);
         return;
       }
 
@@ -62,6 +75,7 @@ export function ListsDashboardScreen({ navigation }: Props) {
               try {
                 await joinList(invite.listId, user.id);
                 setJoinCode('');
+                setShowJoinModal(false);
               } catch {
                 Alert.alert('Błąd', 'Nie udało się dołączyć do listy.');
               }
@@ -84,6 +98,7 @@ export function ListsDashboardScreen({ navigation }: Props) {
     setIsCreating(false);
     if (listId) {
       setNewTitle('');
+      setShowCreateModal(false);
       navigation.navigate('ListDetail', { listId });
     }
   };
@@ -105,33 +120,34 @@ export function ListsDashboardScreen({ navigation }: Props) {
   };
 
   const renderItem = ({ item }: { item: ShoppingList }) => {
-    const itemCount = item.items.length;
-    const completedCount = item.items.filter((i) => i.isCompleted).length;
+    const allCompleted = item.items.length > 0 && item.items.every((i) => i.isCompleted);
 
     return (
       <Pressable
         onPress={() => navigation.navigate('ListDetail', { listId: item.id })}
+        onLongPress={() => onDeleteList(item)}
         accessibilityRole="button"
-        accessibilityLabel={`${item.title}, ${completedCount} z ${itemCount} produktów kupione`}
-        accessibilityHint="Otwórz listę zakupów"
+        accessibilityLabel={`${item.title}, ${allCompleted ? 'zrealizowana' : `${item.items.length} produktów`}`}
+        accessibilityHint="Otwórz listę zakupów. Przytrzymaj aby usunąć."
       >
         <PixelCard style={styles.listCard}>
           <View style={styles.listRow}>
+            <MaterialCommunityIcons
+              name={allCompleted ? 'check-circle' : 'cart-outline'}
+              size={24}
+              color={allCompleted ? theme.accent : COLORS.primary}
+              style={styles.cartIcon}
+            />
             <View style={styles.listInfo}>
               <Text style={styles.listTitle}>{item.title}</Text>
-              <Text style={styles.listMeta}>
-                {completedCount}/{itemCount} produktów
+              <Text style={[styles.listMeta, allCompleted && { color: theme.accent }]}>
+                {allCompleted ? 'Zrealizowana' : `Produkty: ${item.items.length}`}
               </Text>
             </View>
-            {item.ownerId === user?.id && (
-              <Pressable
-                onPress={() => onDeleteList(item)}
-                style={styles.deleteBtn}
-                accessibilityRole="button"
-                accessibilityLabel={`Usuń listę ${item.title}`}
-              >
-                <Text style={styles.deleteText}>X</Text>
-              </Pressable>
+            {item.inviteCode && (
+              <View style={[styles.codeBadge, { backgroundColor: theme.accent }]}>
+                <Text style={styles.codeBadgeText}>{item.inviteCode}</Text>
+              </View>
             )}
           </View>
         </PixelCard>
@@ -140,73 +156,58 @@ export function ListsDashboardScreen({ navigation }: Props) {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + SPACING.sm }]}>
-        <Text style={styles.title}>Zing</Text>
-        <Text style={styles.greeting}>Cześć, {user?.displayName}!</Text>
-      </View>
-
-      <View style={styles.createRow}>
-        <PixelInput
-          placeholder="Nazwa nowej listy..."
-          value={newTitle}
-          onChangeText={setNewTitle}
-          onSubmitEditing={onCreateList}
-          returnKeyType="done"
-          style={styles.createInput}
-          accessibilityLabel="Nazwa nowej listy"
-          accessibilityHint="Wpisz nazwę i naciśnij Utwórz"
-        />
-        <PixelButton
-          title="Utwórz"
-          accessibilityLabel="Utwórz nową listę"
-          onPress={onCreateList}
-          disabled={isCreating || !newTitle.trim()}
-          style={styles.createBtn}
-        />
-      </View>
-
-      <View style={styles.joinSection}>
-        <Pressable
-          onPress={() => setShowJoin((v) => !v)}
-          style={styles.joinToggle}
-          accessibilityRole="button"
-          accessibilityLabel={showJoin ? 'Ukryj pole kodu zaproszenia' : 'Pokaż pole kodu zaproszenia'}
-        >
-          <Text style={styles.joinToggleText}>
-            {showJoin ? 'Ukryj' : 'Masz kod zaproszenia?'}
+    <View style={[styles.container, { backgroundColor: theme.accentLight }]}>
+      <View style={[styles.header, { backgroundColor: theme.accent, paddingTop: insets.top + SPACING.sm }]}>
+        <View style={styles.headerLeft}>
+          <Text style={styles.headerTitle}>Moje listy</Text>
+          <Text style={styles.headerSubtitle}>
+            {lists.length} {pluralize(lists.length, 'lista', 'listy', 'list')}
           </Text>
+        </View>
+        <View style={styles.headerRight}>
+          <Pressable
+            onPress={() => setShowThemePicker(true)}
+            style={styles.iconBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Wybierz motyw"
+          >
+            <MaterialCommunityIcons name="palette-outline" size={24} color={COLORS.white} />
+          </Pressable>
+          <PixelButton
+            title="Wyloguj"
+            onPress={handleSignOut}
+            variant="danger"
+            icon={<MaterialCommunityIcons name="logout" size={16} color={COLORS.white} />}
+          />
+        </View>
+      </View>
+
+      <View style={styles.actionRow}>
+        <Pressable
+          onPress={() => setShowCreateModal(true)}
+          style={[styles.actionCard, { backgroundColor: theme.accent }]}
+          accessibilityRole="button"
+          accessibilityLabel="Nowa lista"
+        >
+          <MaterialCommunityIcons name="plus" size={32} color={COLORS.white} />
+          <Text style={styles.actionText}>Nowa lista</Text>
         </Pressable>
-        {showJoin && (
-          <View style={styles.joinRow}>
-            <PixelInput
-              placeholder="Kod zaproszenia..."
-              value={joinCode}
-              onChangeText={setJoinCode}
-              onSubmitEditing={onJoinByCode}
-              returnKeyType="done"
-              maxLength={6}
-              autoCapitalize="characters"
-              style={styles.joinInput}
-              accessibilityLabel="Kod zaproszenia do listy"
-              accessibilityHint="Wpisz 6-znakowy kod i naciśnij Dołącz"
-            />
-            <PixelButton
-              title="Dołącz"
-              accessibilityLabel="Dołącz do listy"
-              onPress={onJoinByCode}
-              disabled={isJoining || joinCode.trim().length !== 6}
-              style={styles.joinBtn}
-            />
-          </View>
-        )}
+        <Pressable
+          onPress={() => setShowJoinModal(true)}
+          style={[styles.actionCard, { backgroundColor: theme.accent }]}
+          accessibilityRole="button"
+          accessibilityLabel="Dołącz do listy"
+        >
+          <MaterialCommunityIcons name="account-plus-outline" size={32} color={COLORS.white} />
+          <Text style={styles.actionText}>Dołącz do listy</Text>
+        </Pressable>
       </View>
 
       {error && <Text style={styles.error}>{error}</Text>}
 
       {isLoading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={COLORS.accent} accessibilityLabel="Ładowanie list" />
+          <ActivityIndicator size="large" color={theme.accent} accessibilityLabel="Ładowanie list" />
         </View>
       ) : lists.length === 0 ? (
         <View style={styles.center}>
@@ -221,13 +222,39 @@ export function ListsDashboardScreen({ navigation }: Props) {
         />
       )}
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + SPACING.sm }]}>
-        <PixelButton
-          title="Wyloguj"
-          onPress={handleSignOut}
-          variant="danger"
+      <PixelModal visible={showCreateModal} onClose={() => setShowCreateModal(false)} title="Nowa lista">
+        <PixelInput
+          placeholder="Nazwa listy"
+          value={newTitle}
+          onChangeText={setNewTitle}
+          onSubmitEditing={onCreateList}
+          returnKeyType="done"
+          accessibilityLabel="Nazwa nowej listy"
         />
-      </View>
+        <View style={styles.modalButtons}>
+          <PixelButton title="Utwórz" onPress={onCreateList} disabled={isCreating || !newTitle.trim()} style={styles.modalBtn} />
+          <PixelButton title="Anuluj" onPress={() => { setShowCreateModal(false); setNewTitle(''); }} variant="accentMuted" style={styles.modalBtn} />
+        </View>
+      </PixelModal>
+
+      <PixelModal visible={showJoinModal} onClose={() => setShowJoinModal(false)} title="Dołącz do listy">
+        <PixelInput
+          placeholder="Wpisz kod"
+          value={joinCode}
+          onChangeText={setJoinCode}
+          onSubmitEditing={onJoinByCode}
+          returnKeyType="done"
+          maxLength={6}
+          autoCapitalize="characters"
+          accessibilityLabel="Kod zaproszenia do listy"
+        />
+        <View style={styles.modalButtons}>
+          <PixelButton title="Dołącz" onPress={onJoinByCode} disabled={isJoining || joinCode.trim().length !== 6} style={styles.modalBtn} />
+          <PixelButton title="Anuluj" onPress={() => { setShowJoinModal(false); setJoinCode(''); }} variant="accentMuted" style={styles.modalBtn} />
+        </View>
+      </PixelModal>
+
+      <ThemePickerModal visible={showThemePicker} onClose={() => setShowThemePicker(false)} />
     </View>
   );
 }
@@ -235,62 +262,56 @@ export function ListsDashboardScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: SPACING.sm,
     paddingBottom: SPACING.sm,
-    backgroundColor: COLORS.primary,
   },
-  title: {
+  headerLeft: {},
+  headerTitle: {
     fontSize: FONT_SIZE.h1,
     fontWeight: FONT_WEIGHT.black,
     color: COLORS.white,
   },
-  greeting: {
+  headerSubtitle: {
     fontSize: FONT_SIZE.caption,
-    color: COLORS.disabled,
+    color: 'rgba(255,255,255,0.8)',
     marginTop: SPACING.xs,
   },
-  createRow: {
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+  iconBtn: {
+    minWidth: TOUCH.minTarget,
+    minHeight: TOUCH.minTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: BORDERS.width,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  actionRow: {
     flexDirection: 'row',
     gap: SPACING.sm,
     padding: SPACING.sm,
-    backgroundColor: COLORS.white,
-    borderBottomWidth: BORDERS.width,
-    borderBottomColor: COLORS.border,
   },
-  createInput: {
+  actionCard: {
     flex: 1,
-  },
-  createBtn: {
-    paddingHorizontal: SPACING.md,
-  },
-  joinSection: {
-    padding: SPACING.sm,
-    backgroundColor: COLORS.white,
-    borderBottomWidth: BORDERS.width,
-    borderBottomColor: COLORS.border,
-  },
-  joinToggle: {
-    minHeight: TOUCH.minTarget,
+    alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: SPACING.md,
+    borderWidth: BORDERS.width,
+    borderColor: COLORS.border,
+    gap: SPACING.xs,
   },
-  joinToggleText: {
-    color: COLORS.accent,
+  actionText: {
     fontSize: FONT_SIZE.caption,
     fontWeight: FONT_WEIGHT.bold,
-  },
-  joinRow: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-    marginTop: SPACING.xs,
-  },
-  joinInput: {
-    flex: 1,
-  },
-  joinBtn: {
-    paddingHorizontal: SPACING.md,
+    color: COLORS.white,
   },
   error: {
     color: COLORS.danger,
@@ -318,6 +339,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  cartIcon: {
+    marginRight: SPACING.sm,
+  },
   listInfo: {
     flex: 1,
   },
@@ -331,22 +355,23 @@ const styles = StyleSheet.create({
     color: COLORS.disabled,
     marginTop: SPACING.xs,
   },
-  deleteBtn: {
-    minWidth: TOUCH.minTarget,
-    minHeight: TOUCH.minTarget,
+  codeBadge: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
     borderWidth: BORDERS.width,
-    borderColor: COLORS.danger,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderColor: COLORS.border,
   },
-  deleteText: {
+  codeBadgeText: {
     fontSize: FONT_SIZE.caption,
     fontWeight: FONT_WEIGHT.bold,
-    color: COLORS.danger,
+    color: COLORS.white,
   },
-  footer: {
-    padding: SPACING.sm,
-    borderTopWidth: BORDERS.width,
-    borderTopColor: COLORS.border,
+  modalButtons: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginTop: SPACING.md,
+  },
+  modalBtn: {
+    flex: 1,
   },
 });
