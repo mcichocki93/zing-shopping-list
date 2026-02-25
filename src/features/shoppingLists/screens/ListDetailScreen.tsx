@@ -23,11 +23,12 @@ export function ListDetailScreen({ route, navigation }: Props) {
     list,
     isLoading,
     error,
-    itemsByCategory,
+    sortedCategories,
     handleAddItem,
     handleAddItems,
     handleToggleItem,
     handleRemoveItem,
+    handleReorderCategory,
   } = useShoppingList(listId);
 
   const { parsedItems, isParsing, error: aiError, canRetry, parse, retry, removeItem: removePreviewItem, clear: clearPreview } = useAIParser();
@@ -99,7 +100,7 @@ export function ListDetailScreen({ route, navigation }: Props) {
     );
   }
 
-  const categories = Object.keys(itemsByCategory);
+  const movableCategories = sortedCategories.filter((g) => g.category !== 'Kupione');
 
   return (
     <View style={styles.container}>
@@ -168,15 +169,23 @@ export function ListDetailScreen({ route, navigation }: Props) {
           </View>
         ) : (
           <ScrollView style={styles.scroll} contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + SPACING.sm }]}>
-            {categories.map((cat) => (
-              <CategorySection
-                key={cat}
-                category={cat}
-                items={itemsByCategory[cat]}
-                onToggle={handleToggleItem}
-                onRemove={handleRemoveItem}
-              />
-            ))}
+            {sortedCategories.map((group) => {
+              const isKupione = group.category === 'Kupione';
+              const movableIdx = isKupione ? -1 : movableCategories.indexOf(group);
+              return (
+                <CategorySection
+                  key={group.category}
+                  category={group.category}
+                  items={group.items}
+                  onToggle={handleToggleItem}
+                  onRemove={handleRemoveItem}
+                  onMoveUp={isKupione ? undefined : () => handleReorderCategory(group.category, 'up')}
+                  onMoveDown={isKupione ? undefined : () => handleReorderCategory(group.category, 'down')}
+                  isFirst={movableIdx === 0}
+                  isLast={isKupione || movableIdx === movableCategories.length - 1}
+                />
+              );
+            })}
           </ScrollView>
         )}
       </KeyboardAvoidingView>

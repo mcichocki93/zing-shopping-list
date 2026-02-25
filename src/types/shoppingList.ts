@@ -16,6 +16,7 @@ export interface ShoppingList {
   memberIds: string[];
   isArchived: boolean;
   items: ShoppingItem[];
+  categoryOrder?: string[];
   inviteCode?: string;
   createdAt: Date;
   updatedAt: Date;

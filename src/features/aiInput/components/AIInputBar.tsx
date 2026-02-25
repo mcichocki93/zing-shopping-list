@@ -129,7 +129,7 @@ export function AIInputBar({ onParse, onAddManual, isParsing, disabled = false, 
           onChangeText={(v) => { setQtyText(v); if (qtyError) setQtyError(''); }}
           keyboardType="decimal-pad"
           selectTextOnFocus
-          style={[styles.qtyInput, qtyError ? styles.qtyInputError : undefined]}
+          style={{ ...styles.qtyInput, ...(qtyError ? styles.qtyInputError : undefined) }}
           editable={!isParsing && !disabled}
           accessibilityLabel="Ilość"
         />
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: SPACING.sm,
     padding: SPACING.sm,
-    paddingBottom: SPACING.xs,
+    paddingBottom: SPACING.sm,
     alignItems: 'flex-end',
   },
   input: {
@@ -232,17 +232,17 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
   },
   loader: {
-    width: 48,
-    height: 44,
+    width: TOUCH.minTarget,
+    height: TOUCH.minTarget,
     alignItems: 'center',
     justifyContent: 'center',
   },
   addBtn: {
-    width: 44,
+    width: TOUCH.minTarget,
     paddingHorizontal: 0,
   },
   aiBtn: {
-    width: 48,
+    width: TOUCH.minTarget,
     paddingHorizontal: 0,
   },
   qtyRow: {
@@ -250,11 +250,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: SPACING.sm,
     paddingHorizontal: SPACING.sm,
-    paddingBottom: SPACING.xs,
+    paddingBottom: SPACING.sm,
   },
   qtyInput: {
     width: 56,
-    minHeight: TOUCH.minTarget * 0.75,
+    minHeight: TOUCH.minTarget,
     paddingVertical: SPACING.xs,
     textAlign: 'center',
   },
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   chip: {
-    minHeight: TOUCH.minTarget * 0.68,
+    minHeight: TOUCH.minTarget,
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
     borderWidth: BORDERS.width,
@@ -294,6 +294,7 @@ const styles = StyleSheet.create({
   categoryRow: {
     paddingHorizontal: SPACING.sm,
     paddingBottom: SPACING.sm,
+    paddingTop: SPACING.xs,
   },
   categoryTrigger: {
     flexDirection: 'row',
@@ -322,7 +323,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     padding: SPACING.lg,
   },

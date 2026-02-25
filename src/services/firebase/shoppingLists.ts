@@ -111,7 +111,12 @@ export async function removeMember(listId: string, userId: string): Promise<void
 function normalizeItemFields(item: Omit<ShoppingItem, 'id' | 'createdAt'>): Omit<ShoppingItem, 'id' | 'createdAt'> {
   const quantity = typeof item.quantity === 'number' && item.quantity > 0 ? item.quantity : 1;
   const unit = typeof item.unit === 'string' && item.unit.trim() ? item.unit.trim().slice(0, 20) : undefined;
-  return { ...item, quantity, unit };
+  // Firestore rejects undefined values — omit optional fields when not set
+  const { unit: _u, category: _c, ...rest } = item;
+  const result: Omit<ShoppingItem, 'id' | 'createdAt'> = { ...rest, quantity };
+  if (unit !== undefined) result.unit = unit;
+  if (item.category) result.category = item.category;
+  return result;
 }
 
 export async function addItem(
@@ -198,6 +203,18 @@ export async function removeItem(
 
   await updateDoc(listDoc(listId), {
     items: updatedItems,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+// ─── Category Order ─────────────────────────────────────
+
+export async function updateCategoryOrder(
+  listId: string,
+  categoryOrder: string[],
+): Promise<void> {
+  await updateDoc(listDoc(listId), {
+    categoryOrder,
     updatedAt: serverTimestamp(),
   });
 }

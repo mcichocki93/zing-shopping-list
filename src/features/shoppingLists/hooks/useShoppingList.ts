@@ -7,14 +7,21 @@ import {
   updateItem,
   removeItem,
   toggleItem,
+  updateCategoryOrder,
 } from '../../../services/firebase/shoppingLists';
+import { CATEGORIES } from '../../../constants';
 import type { ShoppingList, ShoppingItem } from '../../../types/shoppingList';
+
+export interface CategoryGroup {
+  category: string;
+  items: ShoppingItem[];
+}
 
 interface UseShoppingListReturn {
   list: ShoppingList | null;
   isLoading: boolean;
   error: string | null;
-  itemsByCategory: Record<string, ShoppingItem[]>;
+  sortedCategories: CategoryGroup[];
   handleUpdateTitle: (title: string) => Promise<void>;
   handleAddItem: (item: Omit<ShoppingItem, 'id' | 'createdAt'>) => Promise<void>;
   handleAddItems: (items: Omit<ShoppingItem, 'id' | 'createdAt'>[]) => Promise<void>;
@@ -24,6 +31,7 @@ interface UseShoppingListReturn {
   ) => Promise<void>;
   handleToggleItem: (itemId: string) => Promise<void>;
   handleRemoveItem: (itemId: string) => Promise<void>;
+  handleReorderCategory: (category: string, direction: 'up' | 'down') => Promise<void>;
 }
 
 export function useShoppingList(listId: string | null): UseShoppingListReturn {
@@ -53,25 +61,38 @@ export function useShoppingList(listId: string | null): UseShoppingListReturn {
     };
   }, [listId]);
 
-  const itemsByCategory = useMemo(() => {
-    if (!list) return {};
+  const sortedCategories = useMemo((): CategoryGroup[] => {
+    if (!list) return [];
 
     const uncompleted = list.items.filter((i) => !i.isCompleted);
     const completed = list.items.filter((i) => i.isCompleted);
 
     const groups: Record<string, ShoppingItem[]> = {};
-
     for (const item of uncompleted) {
       const cat = item.category || 'Inne';
       if (!groups[cat]) groups[cat] = [];
       groups[cat].push(item);
     }
 
+    const presentCategories = Object.keys(groups);
+    const order = list.categoryOrder ?? [...CATEGORIES];
+
+    const sorted = presentCategories.sort((a, b) => {
+      const ai = order.indexOf(a);
+      const bi = order.indexOf(b);
+      // Categories not in order go to the end (before "Inne")
+      const aIdx = ai !== -1 ? ai : order.length;
+      const bIdx = bi !== -1 ? bi : order.length;
+      return aIdx - bIdx;
+    });
+
+    const result: CategoryGroup[] = sorted.map((cat) => ({ category: cat, items: groups[cat] }));
+
     if (completed.length > 0) {
-      groups['Kupione'] = completed;
+      result.push({ category: 'Kupione', items: completed });
     }
 
-    return groups;
+    return result;
   }, [list]);
 
   const withError = useCallback(
@@ -141,16 +162,38 @@ export function useShoppingList(listId: string | null): UseShoppingListReturn {
     [listId, list, withError],
   );
 
+  const handleReorderCategory = useCallback(
+    (category: string, direction: 'up' | 'down') => {
+      const currentOrder = sortedCategories
+        .filter((g) => g.category !== 'Kupione')
+        .map((g) => g.category);
+      const idx = currentOrder.indexOf(category);
+      if (idx === -1) return Promise.resolve();
+      const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (swapIdx < 0 || swapIdx >= currentOrder.length) return Promise.resolve();
+
+      const newOrder = [...currentOrder];
+      [newOrder[idx], newOrder[swapIdx]] = [newOrder[swapIdx], newOrder[idx]];
+
+      return withError(
+        () => updateCategoryOrder(listId!, newOrder),
+        'Nie udało się zmienić kolejności.',
+      );
+    },
+    [listId, sortedCategories, withError],
+  );
+
   return {
     list,
     isLoading,
     error,
-    itemsByCategory,
+    sortedCategories,
     handleUpdateTitle,
     handleAddItem,
     handleAddItems,
     handleUpdateItem,
     handleToggleItem,
     handleRemoveItem,
+    handleReorderCategory,
   };
 }

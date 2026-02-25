@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
     minHeight: TOUCH.minTarget,
     paddingVertical: SPACING.xs,
     paddingHorizontal: SPACING.sm,
-    borderBottomWidth: 1,
+    borderBottomWidth: BORDERS.width,
     borderBottomColor: COLORS.background,
   },
   checkbox: {},

@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   header: {
-    paddingHorizontal: SPACING.md,
+    paddingHorizontal: SPACING.sm,
     paddingBottom: SPACING.sm,
     backgroundColor: COLORS.primary,
   },
@@ -267,8 +267,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
   },
   joinSection: {
-    paddingHorizontal: SPACING.sm,
-    paddingBottom: SPACING.sm,
+    padding: SPACING.sm,
     backgroundColor: COLORS.white,
     borderBottomWidth: BORDERS.width,
     borderBottomColor: COLORS.border,
