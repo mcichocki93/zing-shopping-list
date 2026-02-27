@@ -7,6 +7,7 @@ import {
   browserLocalPersistence,
 } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getFunctions } from 'firebase/functions';
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 import { firebaseConfig } from '../../config/env';
 import type { FirebaseServices } from '../../types/firebase';
@@ -31,11 +32,12 @@ function initializeFirebase(): FirebaseServices {
   }
 
   const db = getFirestore(app);
+  const functions = getFunctions(app);
 
-  return { app, auth, db };
+  return { app, auth, db, functions };
 }
 
 const firebase = initializeFirebase();
 
-export const { app, auth, db } = firebase;
+export const { app, auth, db, functions } = firebase;
 export default firebase;

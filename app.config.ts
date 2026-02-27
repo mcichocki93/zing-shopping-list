@@ -21,7 +21,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     firebaseMessagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
     firebaseAppId: process.env.FIREBASE_APP_ID,
     firebaseMeasurementId: process.env.FIREBASE_MEASUREMENT_ID,
-    geminiApiKey: process.env.GEMINI_API_KEY,
     eas: {
         projectId: "8bfa11a0-18f2-48a7-ba45-87ba46584410"
       }
