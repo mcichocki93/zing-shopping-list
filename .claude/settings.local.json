@@ -28,7 +28,9 @@
       "Bash(\"/c/Users/cichy/AppData/Local/Android/Sdk/platform-tools/adb.exe\" logcat -d)",
       "Read(//c/tmp/**)",
       "Bash(\"/c/Users/cichy/AppData/Local/Android/Sdk/platform-tools/adb.exe\" logcat -d -s ReactNativeJS:* -s com.facebook.react:*)",
-      "Bash(eas build:*)"
+      "Bash(eas build:*)",
+      "Bash(git stash:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
