@@ -1,7 +1,7 @@
 node_modules/
 .expo/
 dist/
-.env
+npm-debug.*
 *.jks
 *.p8
 *.p12
@@ -9,3 +9,34 @@ dist/
 *.mobileprovision
 *.orig.*
 web-build/
+
+# Logs
+logs
+*.log
+
+# Build artifacts
+android/app/build/
+android/app/.cxx/
+android/build/
+android/.gradle/
+ios/Pods/
+ios/build/
+
+# Environment variables with secrets
+.env
+.env.local
+.env.*.local
+app.config.ts.backup
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+docs/ui/screenshots/Zrzut ekranu 2026-02-23 141846.png
+docs/ui/screenshots/Zrzut ekranu 2026-02-23 141914.png
+docs/ui/screenshots/Zrzut ekranu 2026-02-23 141924.png
+docs/ui/screenshots/Zrzut ekranu 2026-02-23 141936.png
+docs/ui/screenshots/Zrzut ekranu 2026-02-23 142001.png
+docs/ui/screenshots/Zrzut ekranu 2026-02-23 142011.png
+docs/ui/screenshots/Zrzut ekranu 2026-02-23 142021.png
