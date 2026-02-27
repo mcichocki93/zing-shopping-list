@@ -87,7 +87,7 @@ export async function parseItemsWithAI(input: string): Promise<AIParseResult> {
 
   try {
     const genAI = getGeminiClient();
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
 
     const result = await model.generateContent(
       SYSTEM_PROMPT + '\n\nProdukty od użytkownika:\n' + sanitized,
