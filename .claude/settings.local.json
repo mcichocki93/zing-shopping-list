@@ -30,7 +30,19 @@
       "Bash(\"/c/Users/cichy/AppData/Local/Android/Sdk/platform-tools/adb.exe\" logcat -d -s ReactNativeJS:* -s com.facebook.react:*)",
       "Bash(eas build:*)",
       "Bash(git stash:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(firebase functions:config:set:*)",
+      "Bash(firebase login:*)",
+      "Bash(firebase projects:list:*)",
+      "Bash(firebase functions:secrets:set:*)",
+      "Bash(npm run deploy:*)",
+      "Bash(firebase deploy:*)",
+      "Bash(git restore:*)",
+      "Bash(adb logcat:*)",
+      "Bash(\"C:/Users/cichy/AppData/Local/Android/Sdk/platform-tools/adb.exe\" logcat -d)",
+      "Bash(eas secret:create:*)",
+      "Bash(ls:*)",
+      "Bash(grep:*)"
     ]
   }
 }
