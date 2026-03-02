@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
   },
   featureList: {
     gap: SPACING.xs,
-    backgroundColor: COLORS.backgroundSecondary ?? '#f5f5f5',
+    backgroundColor: '#f5f5f5',
     borderRadius: 8,
     padding: SPACING.sm,
   },
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     fontWeight: FONT_WEIGHT.bold,
   },
   freeColor: {
-    color: COLORS.textSecondary ?? '#888',
+    color: COLORS.disabled,
   },
   premiumColor: {
     color: COLORS.primary,
