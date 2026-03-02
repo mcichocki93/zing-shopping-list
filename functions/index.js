@@ -38,27 +38,62 @@ Zasady:
 - Używaj wielkich liter na początku nazwy
 - Odpowiedz TYLKO poprawnym JSON array, bez markdown, bez komentarzy`;
 
-// Rate limiting - max 10 calls per user per hour
+// Server-side rate limit (abuse protection regardless of plan)
 const userCallCounts = new Map();
-const RATE_LIMIT = 10;
-const RATE_WINDOW = 60 * 60 * 1000; // 1 hour
+const BURST_LIMIT = 10;
+const BURST_WINDOW = 60 * 60 * 1000; // 1 hour
 
-function checkRateLimit(userId) {
+// Monthly free tier limit (must match AI_FREE_LIMIT in src/types/user.ts)
+const AI_FREE_MONTHLY_LIMIT = 10;
+
+function checkBurstLimit(userId) {
   const now = Date.now();
-  const userLimit = userCallCounts.get(userId);
-
-  if (userLimit && userLimit.resetTime > now) {
-    if (userLimit.count >= RATE_LIMIT) {
-      return false;
-    }
-    userLimit.count++;
+  const entry = userCallCounts.get(userId);
+  if (entry && entry.resetTime > now) {
+    if (entry.count >= BURST_LIMIT) return false;
+    entry.count++;
   } else {
-    userCallCounts.set(userId, {
-      count: 1,
-      resetTime: now + RATE_WINDOW,
-    });
+    userCallCounts.set(userId, {count: 1, resetTime: now + BURST_WINDOW});
   }
   return true;
+}
+
+/**
+ * Checks monthly quota for free users and increments the counter atomically.
+ * Returns the updated usage count, or throws resource-exhausted if over limit.
+ */
+async function checkAndIncrementMonthlyQuota(userId) {
+  const db = admin.firestore();
+  const userRef = db.collection('users').doc(userId);
+
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(userRef);
+    if (!snap.exists) return; // new user — let it through
+
+    const data = snap.data();
+    const isPremium = data.isPremium === true;
+    if (isPremium) return; // no limit for premium users
+
+    const now = new Date();
+    const resetDate = data.aiUsageResetDate?.toDate?.() ?? new Date(0);
+
+    // Reset counter if a new month started
+    if (now >= resetDate) {
+      const nextReset = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      tx.update(userRef, {aiUsageThisMonth: 1, aiUsageResetDate: nextReset});
+      return;
+    }
+
+    const usage = data.aiUsageThisMonth ?? 0;
+    if (usage >= AI_FREE_MONTHLY_LIMIT) {
+      throw new HttpsError(
+        'resource-exhausted',
+        `Wykorzystałeś limit ${AI_FREE_MONTHLY_LIMIT} wywołań AI na ten miesiąc. Kup Premium, aby uzyskać nieograniczony dostęp.`,
+      );
+    }
+
+    tx.update(userRef, {aiUsageThisMonth: admin.firestore.FieldValue.increment(1)});
+  });
 }
 
 exports.parseItemsWithAI = onCall({secrets: [geminiApiKey]}, async (request) => {
@@ -69,12 +104,15 @@ exports.parseItemsWithAI = onCall({secrets: [geminiApiKey]}, async (request) => 
 
   const userId = request.auth.uid;
 
-  // 2. Rate limiting
-  if (!checkRateLimit(userId)) {
-    throw new HttpsError('resource-exhausted', 'Za dużo żądań. Spróbuj za godzinę.');
+  // 2. Burst rate limit (protects against rapid abuse)
+  if (!checkBurstLimit(userId)) {
+    throw new HttpsError('resource-exhausted', 'Za dużo żądań. Spróbuj za chwilę.');
   }
 
-  // 3. Validate input
+  // 3. Monthly quota check + increment (free users only)
+  await checkAndIncrementMonthlyQuota(userId);
+
+  // 4. Validate input
   const {input} = request.data;
   if (!input || typeof input !== 'string') {
     throw new HttpsError('invalid-argument', 'Podaj produkty do dodania.');
