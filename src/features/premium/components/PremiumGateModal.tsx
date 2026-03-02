@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
   },
   featureBadge: {
-    fontSize: FONT_SIZE.small,
+    fontSize: FONT_SIZE.caption,
     fontWeight: FONT_WEIGHT.bold,
   },
   freeColor: {
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     marginVertical: SPACING.sm,
   },
   error: {
-    fontSize: FONT_SIZE.small,
+    fontSize: FONT_SIZE.caption,
     color: COLORS.danger,
   },
 });
