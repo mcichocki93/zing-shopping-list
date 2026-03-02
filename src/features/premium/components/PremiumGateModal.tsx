@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
   },
   body: {
     fontSize: FONT_SIZE.body,
-    color: COLORS.text,
+    color: COLORS.primary,
   },
   featureList: {
     gap: SPACING.xs,
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
   featureLabel: {
     flex: 1,
     fontSize: FONT_SIZE.body,
-    color: COLORS.text,
+    color: COLORS.primary,
   },
   featureBadge: {
     fontSize: FONT_SIZE.small,
