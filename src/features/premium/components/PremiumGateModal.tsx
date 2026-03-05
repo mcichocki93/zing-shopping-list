@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { PixelModal } from '../../../components/ui/PixelModal';
 import { PixelButton } from '../../../components/ui/PixelButton';
 import { COLORS, SPACING, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
-import { AI_FREE_LIMIT } from '../../../types/user';
+import { AI_FREE_DAILY_LIMIT } from '../../../types/user';
 import { purchasePremium } from '../services/iap';
 import { grantPremium } from '../hooks/usePremium';
 import { useAuth } from '../../auth/hooks/useAuth';
@@ -50,7 +50,7 @@ export function PremiumGateModal({ visible, onClose, limitReached = false }: Pre
       <View style={styles.container}>
         {limitReached ? (
           <Text style={styles.body}>
-            Wykorzystałeś {AI_FREE_LIMIT} bezpłatnych wywołań AI na ten miesiąc.
+            Wykorzystałeś dzienny limit AI ({AI_FREE_DAILY_LIMIT} wywołanie/24h).
           </Text>
         ) : (
           <Text style={styles.body}>Odblokuj pełne możliwości Zing!</Text>
@@ -58,7 +58,7 @@ export function PremiumGateModal({ visible, onClose, limitReached = false }: Pre
 
         <View style={styles.featureList}>
           <FeatureRow label="Nieograniczone AI" free={false} />
-          <FeatureRow label={`${AI_FREE_LIMIT} wywołań AI / miesiąc`} free={true} />
+          <FeatureRow label={`${AI_FREE_DAILY_LIMIT} wywołanie AI / dzień`} free={true} />
           <FeatureRow label="Brak reklam" free={false} />
           <FeatureRow label="Pełna lista zakupów" free={true} />
         </View>

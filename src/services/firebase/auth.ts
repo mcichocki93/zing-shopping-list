@@ -29,7 +29,7 @@ async function createUserProfile(firebaseUser: FirebaseUser, displayName: string
     lastActiveAt: now,
     isPremium: false,
     aiUsageThisMonth: 0,
-    aiUsageResetDate: new Date(now.getFullYear(), now.getMonth() + 1, 1),
+    aiUsageResetDate: new Date(0), // epoch = immediately available
   };
   await setDoc(doc(db, COLLECTIONS.USERS, firebaseUser.uid), {
     ...profile,

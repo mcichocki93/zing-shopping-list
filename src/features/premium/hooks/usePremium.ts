@@ -1,7 +1,7 @@
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../../services/firebase/config';
 import { COLLECTIONS } from '../../../constants';
-import { AI_FREE_LIMIT } from '../../../types/user';
+import { AI_FREE_DAILY_LIMIT } from '../../../types/user';
 import { useAuth } from '../../auth/hooks/useAuth';
 
 export interface PremiumStatus {
@@ -9,21 +9,37 @@ export interface PremiumStatus {
   aiUsageThisMonth: number;
   aiCallsRemaining: number;
   hasAIAccess: boolean;
+  hoursUntilReset: number | null; // null = no limit (premium) or already reset
 }
 
 export function usePremium(): PremiumStatus {
   const { user } = useAuth();
 
   if (!user) {
-    return { isPremium: false, aiUsageThisMonth: 0, aiCallsRemaining: 0, hasAIAccess: false };
+    return { isPremium: false, aiUsageThisMonth: 0, aiCallsRemaining: 0, hasAIAccess: false, hoursUntilReset: null };
   }
 
   const isPremium = user.isPremium ?? false;
-  const aiUsageThisMonth = user.aiUsageThisMonth ?? 0;
-  const aiCallsRemaining = isPremium ? Infinity : Math.max(0, AI_FREE_LIMIT - aiUsageThisMonth);
-  const hasAIAccess = isPremium || aiCallsRemaining > 0;
 
-  return { isPremium, aiUsageThisMonth, aiCallsRemaining, hasAIAccess };
+  if (isPremium) {
+    return { isPremium: true, aiUsageThisMonth: 0, aiCallsRemaining: Infinity, hasAIAccess: true, hoursUntilReset: null };
+  }
+
+  const now = new Date();
+  // Firestore returns Timestamps — handle both Timestamp and Date
+  const raw = user.aiUsageResetDate as any;
+  const resetDate: Date = raw?.toDate?.() ?? (raw instanceof Date ? raw : new Date(0));
+
+  const isReset = now >= resetDate;
+  const aiUsageThisMonth = user.aiUsageThisMonth ?? 0;
+  const aiCallsRemaining = isReset ? AI_FREE_DAILY_LIMIT : Math.max(0, AI_FREE_DAILY_LIMIT - aiUsageThisMonth);
+  const hasAIAccess = aiCallsRemaining > 0;
+
+  const hoursUntilReset = !hasAIAccess
+    ? Math.ceil((resetDate.getTime() - now.getTime()) / (1000 * 60 * 60))
+    : null;
+
+  return { isPremium, aiUsageThisMonth, aiCallsRemaining, hasAIAccess, hoursUntilReset };
 }
 
 export async function grantPremium(userId: string): Promise<void> {

@@ -50,7 +50,7 @@ export function ListDetailScreen({ route, navigation }: Props) {
 
   const {
     parsedItems, isParsing, error: aiError, canRetry,
-    limitReached, aiCallsRemaining, isPremium,
+    limitReached, aiCallsRemaining, isPremium, hoursUntilReset,
     parse, retry, removeItem: removePreviewItem, clear: clearPreview,
   } = useAIParser();
   const [inputClearTrigger, setInputClearTrigger] = useState(0);
@@ -199,13 +199,13 @@ export function ListDetailScreen({ route, navigation }: Props) {
             onPress={() => setShowPremiumModal(true)}
             style={styles.aiQuotaRow}
             accessibilityRole="button"
-            accessibilityLabel={`Pozostało ${aiCallsRemaining} wywołań AI. Kup Premium.`}
+            accessibilityLabel={aiCallsRemaining > 0 ? 'AI dostępne dziś. Kup Premium po nieograniczony dostęp.' : `Limit AI wyczerpany. Wróć za ${hoursUntilReset}h lub kup Premium.`}
           >
-            <MaterialCommunityIcons name="robot-outline" size={14} color={aiCallsRemaining <= 2 ? COLORS.danger : COLORS.disabled} />
-            <Text style={[styles.aiQuotaText, aiCallsRemaining <= 2 && styles.aiQuotaWarning]}>
+            <MaterialCommunityIcons name="robot-outline" size={14} color={aiCallsRemaining === 0 ? COLORS.danger : COLORS.disabled} />
+            <Text style={[styles.aiQuotaText, aiCallsRemaining === 0 && styles.aiQuotaWarning]}>
               {aiCallsRemaining > 0
-                ? `AI: ${aiCallsRemaining} / miesiąc`
-                : 'Limit AI wyczerpany — kup Premium'}
+                ? 'AI: dostępne dziś'
+                : `AI: wróć za ${hoursUntilReset}h — lub kup Premium`}
             </Text>
             <MaterialCommunityIcons name="crown-outline" size={14} color={COLORS.primary} />
           </Pressable>

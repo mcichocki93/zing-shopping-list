@@ -43,8 +43,8 @@ const userCallCounts = new Map();
 const BURST_LIMIT = 10;
 const BURST_WINDOW = 60 * 60 * 1000; // 1 hour
 
-// Monthly free tier limit (must match AI_FREE_LIMIT in src/types/user.ts)
-const AI_FREE_MONTHLY_LIMIT = 10;
+// Daily free tier limit (must match AI_FREE_DAILY_LIMIT in src/types/user.ts)
+const AI_FREE_DAILY_LIMIT = 1;
 
 function checkBurstLimit(userId) {
   const now = Date.now();
@@ -59,10 +59,10 @@ function checkBurstLimit(userId) {
 }
 
 /**
- * Checks monthly quota for free users and increments the counter atomically.
- * Returns the updated usage count, or throws resource-exhausted if over limit.
+ * Checks 24h quota for free users and increments the counter atomically.
+ * Throws resource-exhausted if limit already used within last 24h.
  */
-async function checkAndIncrementMonthlyQuota(userId) {
+async function checkAndIncrementDailyQuota(userId) {
   const db = admin.firestore();
   const userRef = db.collection('users').doc(userId);
 
@@ -71,24 +71,24 @@ async function checkAndIncrementMonthlyQuota(userId) {
     if (!snap.exists) return; // new user — let it through
 
     const data = snap.data();
-    const isPremium = data.isPremium === true;
-    if (isPremium) return; // no limit for premium users
+    if (data.isPremium === true) return; // no limit for premium users
 
     const now = new Date();
     const resetDate = data.aiUsageResetDate?.toDate?.() ?? new Date(0);
 
-    // Reset counter if a new month started
+    // Reset date has passed — allow and set next reset to +24h
     if (now >= resetDate) {
-      const nextReset = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      const nextReset = new Date(now.getTime() + 24 * 60 * 60 * 1000);
       tx.update(userRef, {aiUsageThisMonth: 1, aiUsageResetDate: nextReset});
       return;
     }
 
     const usage = data.aiUsageThisMonth ?? 0;
-    if (usage >= AI_FREE_MONTHLY_LIMIT) {
+    if (usage >= AI_FREE_DAILY_LIMIT) {
+      const hoursLeft = Math.ceil((resetDate - now) / (1000 * 60 * 60));
       throw new HttpsError(
         'resource-exhausted',
-        `Wykorzystałeś limit ${AI_FREE_MONTHLY_LIMIT} wywołań AI na ten miesiąc. Kup Premium, aby uzyskać nieograniczony dostęp.`,
+        `Wykorzystałeś dzienny limit AI. Wróć za ${hoursLeft}h lub kup Premium.`,
       );
     }
 
@@ -109,8 +109,8 @@ exports.parseItemsWithAI = onCall({secrets: [geminiApiKey]}, async (request) => 
     throw new HttpsError('resource-exhausted', 'Za dużo żądań. Spróbuj za chwilę.');
   }
 
-  // 3. Monthly quota check + increment (free users only)
-  await checkAndIncrementMonthlyQuota(userId);
+  // 3. Daily quota check + increment (free users only)
+  await checkAndIncrementDailyQuota(userId);
 
   // 4. Validate input
   const {input} = request.data;

@@ -11,6 +11,7 @@ interface UseAIParserReturn {
   limitReached: boolean;
   aiCallsRemaining: number;
   isPremium: boolean;
+  hoursUntilReset: number | null;
   parse: (input: string) => Promise<void>;
   retry: () => Promise<void>;
   updateItem: (index: number, updates: Partial<AIParsedItem>) => void;
@@ -25,7 +26,7 @@ export function useAIParser(): UseAIParserReturn {
   const [limitReached, setLimitReached] = useState(false);
   const lastInputRef = useRef<string | null>(null);
   const mountedRef = useRef(true);
-  const { hasAIAccess, aiCallsRemaining, isPremium } = usePremium();
+  const { hasAIAccess, aiCallsRemaining, isPremium, hoursUntilReset } = usePremium();
 
   useEffect(() => {
     mountedRef.current = true;
@@ -96,6 +97,7 @@ export function useAIParser(): UseAIParserReturn {
     limitReached,
     aiCallsRemaining,
     isPremium,
+    hoursUntilReset,
     canRetry: error !== null && lastInputRef.current !== null,
     parse,
     retry,
