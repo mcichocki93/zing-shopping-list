@@ -6,6 +6,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AIInputBar, type ManualItemData } from '../../aiInput/components/AIInputBar';
 import { PreviewModal } from '../../aiInput/components/PreviewModal';
 import { useAIParser } from '../../aiInput/hooks/useAIParser';
+import { PremiumGateModal } from '../../premium/components/PremiumGateModal';
 import { PixelButton } from '../../../components/ui';
 import { ThemePickerModal } from '../../../components/ThemePickerModal';
 import { CategorySection } from '../components/CategorySection';
@@ -47,9 +48,14 @@ export function ListDetailScreen({ route, navigation }: Props) {
     handleResetAll,
   } = useShoppingList(listId);
 
-  const { parsedItems, isParsing, error: aiError, canRetry, parse, retry, removeItem: removePreviewItem, clear: clearPreview } = useAIParser();
+  const {
+    parsedItems, isParsing, error: aiError, canRetry,
+    limitReached, aiCallsRemaining, isPremium,
+    parse, retry, removeItem: removePreviewItem, clear: clearPreview,
+  } = useAIParser();
   const [inputClearTrigger, setInputClearTrigger] = useState(0);
   const [showThemePicker, setShowThemePicker] = useState(false);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
   const showPreview = parsedItems.length > 0;
 
@@ -58,6 +64,12 @@ export function ListDetailScreen({ route, navigation }: Props) {
       navigation.goBack();
     }
   }, [isLoading, list, navigation]);
+
+  useEffect(() => {
+    if (limitReached) {
+      setShowPremiumModal(true);
+    }
+  }, [limitReached]);
 
   const onAddManual = useCallback((item: ManualItemData) => {
     if (!user) return;
@@ -182,6 +194,23 @@ export function ListDetailScreen({ route, navigation }: Props) {
       >
         <AIInputBar onParse={parse} onAddManual={onAddManual} isParsing={isParsing} clearTrigger={inputClearTrigger} />
 
+        {!isPremium && (
+          <Pressable
+            onPress={() => setShowPremiumModal(true)}
+            style={styles.aiQuotaRow}
+            accessibilityRole="button"
+            accessibilityLabel={`Pozostało ${aiCallsRemaining} wywołań AI. Kup Premium.`}
+          >
+            <MaterialCommunityIcons name="robot-outline" size={14} color={aiCallsRemaining <= 2 ? COLORS.danger : COLORS.disabled} />
+            <Text style={[styles.aiQuotaText, aiCallsRemaining <= 2 && styles.aiQuotaWarning]}>
+              {aiCallsRemaining > 0
+                ? `AI: ${aiCallsRemaining} / miesiąc`
+                : 'Limit AI wyczerpany — kup Premium'}
+            </Text>
+            <MaterialCommunityIcons name="crown-outline" size={14} color={COLORS.primary} />
+          </Pressable>
+        )}
+
         <PreviewModal
           visible={showPreview}
           items={parsedItems}
@@ -298,6 +327,12 @@ export function ListDetailScreen({ route, navigation }: Props) {
         onClose={() => setEditingItem(null)}
       />
 
+      <PremiumGateModal
+        visible={showPremiumModal}
+        onClose={() => setShowPremiumModal(false)}
+        limitReached={limitReached}
+      />
+
       <ThemePickerModal visible={showThemePicker} onClose={() => setShowThemePicker(false)} />
     </View>
   );
@@ -351,6 +386,22 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.caption,
     fontWeight: FONT_WEIGHT.bold,
     color: COLORS.white,
+  },
+  aiQuotaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: SPACING.xs,
+    paddingHorizontal: SPACING.sm,
+  },
+  aiQuotaText: {
+    fontSize: FONT_SIZE.caption,
+    color: COLORS.disabled,
+  },
+  aiQuotaWarning: {
+    color: COLORS.danger,
+    fontWeight: FONT_WEIGHT.bold,
   },
   errorRow: {
     flexDirection: 'row',

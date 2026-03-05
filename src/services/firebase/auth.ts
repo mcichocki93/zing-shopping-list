@@ -27,6 +27,9 @@ async function createUserProfile(firebaseUser: FirebaseUser, displayName: string
     sharedListIds: [],
     createdAt: now,
     lastActiveAt: now,
+    isPremium: false,
+    aiUsageThisMonth: 0,
+    aiUsageResetDate: new Date(now.getFullYear(), now.getMonth() + 1, 1),
   };
   await setDoc(doc(db, COLLECTIONS.USERS, firebaseUser.uid), {
     ...profile,

@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { parseItemsWithAI } from '../../../services/ai';
+import { usePremium } from '../../premium/hooks/usePremium';
 import type { AIParsedItem, AIParseError } from '../../../types/ai';
 
 interface UseAIParserReturn {
@@ -7,6 +8,9 @@ interface UseAIParserReturn {
   isParsing: boolean;
   error: string | null;
   canRetry: boolean;
+  limitReached: boolean;
+  aiCallsRemaining: number;
+  isPremium: boolean;
   parse: (input: string) => Promise<void>;
   retry: () => Promise<void>;
   updateItem: (index: number, updates: Partial<AIParsedItem>) => void;
@@ -18,8 +22,10 @@ export function useAIParser(): UseAIParserReturn {
   const [parsedItems, setParsedItems] = useState<AIParsedItem[]>([]);
   const [isParsing, setIsParsing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [limitReached, setLimitReached] = useState(false);
   const lastInputRef = useRef<string | null>(null);
   const mountedRef = useRef(true);
+  const { hasAIAccess, aiCallsRemaining, isPremium } = usePremium();
 
   useEffect(() => {
     mountedRef.current = true;
@@ -29,8 +35,14 @@ export function useAIParser(): UseAIParserReturn {
   }, []);
 
   const parse = useCallback(async (input: string) => {
+    if (!hasAIAccess) {
+      setLimitReached(true);
+      return;
+    }
+
     lastInputRef.current = input;
     setError(null);
+    setLimitReached(false);
     setIsParsing(true);
     setParsedItems([]);
 
@@ -41,13 +53,18 @@ export function useAIParser(): UseAIParserReturn {
     } catch (err) {
       if (!mountedRef.current) return;
       const aiError = err as AIParseError;
-      setError(aiError.message || 'Nieznany błąd.');
+      // Cloud Function returns resource-exhausted when monthly limit hit
+      if (aiError.message?.includes('limit') || aiError.message?.includes('miesiąc')) {
+        setLimitReached(true);
+      } else {
+        setError(aiError.message || 'Nieznany błąd.');
+      }
     } finally {
       if (mountedRef.current) {
         setIsParsing(false);
       }
     }
-  }, []);
+  }, [hasAIAccess]);
 
   const updateItem = useCallback((index: number, updates: Partial<AIParsedItem>) => {
     setParsedItems((prev) =>
@@ -68,6 +85,7 @@ export function useAIParser(): UseAIParserReturn {
   const clear = useCallback(() => {
     setParsedItems([]);
     setError(null);
+    setLimitReached(false);
     lastInputRef.current = null;
   }, []);
 
@@ -75,6 +93,9 @@ export function useAIParser(): UseAIParserReturn {
     parsedItems,
     isParsing,
     error,
+    limitReached,
+    aiCallsRemaining,
+    isPremium,
     canRetry: error !== null && lastInputRef.current !== null,
     parse,
     retry,
