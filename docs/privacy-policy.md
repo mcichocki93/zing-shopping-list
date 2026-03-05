@@ -122,7 +122,7 @@ Administrator zastrzega sobie prawo do wprowadzania zmian w niniejszej Polityce 
 
 W przypadku pytań dotyczących niniejszej Polityki Prywatności prosimy o kontakt:
 
-**E-mail:** kontakt@zing-app.pl *(zastąp właściwym adresem e-mail)*
+**E-mail:** mcichocki1993@gmail.com
 
 ---
 
