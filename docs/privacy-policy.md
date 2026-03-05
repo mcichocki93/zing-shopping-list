@@ -8,7 +8,7 @@
 
 Niniejsza Polityka Prywatności opisuje, w jaki sposób aplikacja mobilna **Zing** (dalej: „Aplikacja") zbiera, przechowuje i przetwarza dane osobowe użytkowników.
 
-Administratorem danych osobowych jest osoba fizyczna prowadząca Aplikację (dalej: „Administrator"). W razie pytań dotyczących prywatności prosimy o kontakt pod adresem e-mail: **kontakt@zing-app.pl** *(zastąp właściwym adresem e-mail)*.
+Administratorem danych osobowych jest osoba fizyczna prowadząca Aplikację (dalej: „Administrator"). W razie pytań dotyczących prywatności prosimy o kontakt pod adresem e-mail: **mcichocki1993@gmail.com**.
 
 ---
 
@@ -90,7 +90,7 @@ Użytkownikowi przysługują następujące prawa:
 - **Prawo do ograniczenia przetwarzania** — możesz zażądać wstrzymania przetwarzania danych w określonych przypadkach
 - **Prawo do sprzeciwu** — możesz sprzeciwić się przetwarzaniu opartemu na prawnie uzasadnionym interesie
 
-Aby skorzystać z powyższych praw, skontaktuj się pod adresem: **kontakt@zing-app.pl** *(zastąp właściwym adresem e-mail)*.
+Aby skorzystać z powyższych praw, skontaktuj się pod adresem: **mcichocki1993@gmail.com**.
 
 Masz również prawo złożyć skargę do **Prezesa Urzędu Ochrony Danych Osobowych** (PUODO), ul. Stawki 2, 00-193 Warszawa, [uodo.gov.pl](https://uodo.gov.pl).
 
