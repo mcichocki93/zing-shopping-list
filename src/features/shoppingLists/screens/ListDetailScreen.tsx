@@ -259,32 +259,15 @@ export function ListDetailScreen({ route, navigation }: Props) {
             <Text style={styles.emptyHint}>Użyj zakładki RĘCZNIE lub AI TEKST aby dodać produkty.</Text>
           </View>
         ) : !isExpoGo && DraggableFlatList ? (
-          <ScrollView style={styles.scroll} contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + SPACING.sm }]}>
-            <DraggableFlatList
-              data={movableCategories}
-              keyExtractor={(item: CategoryGroup) => item.category}
-              scrollEnabled={false}
-              onDragEnd={({ data }: { data: CategoryGroup[] }) => {
-                handleSetCategoryOrder(data.map((g) => g.category));
-              }}
-              renderItem={({ item, drag, isActive, getIndex }: { item: CategoryGroup; drag: () => void; isActive: boolean; getIndex: () => number | undefined }) => {
-                const index = getIndex() ?? 0;
-                return (
-                  <ScaleDecorator>
-                    <CategorySection
-                      category={item.category}
-                      items={item.items}
-                      colorIndex={index}
-                      onToggle={handleToggleItem}
-                      onRemove={handleRemoveItem}
-                      onEdit={onEditItem}
-                      drag={drag}
-                    />
-                  </ScaleDecorator>
-                );
-              }}
-            />
-            {kupioneGroup && (
+          <DraggableFlatList
+            style={styles.scroll}
+            contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + SPACING.sm }]}
+            data={movableCategories}
+            keyExtractor={(item: CategoryGroup) => item.category}
+            onDragEnd={({ data }: { data: CategoryGroup[] }) => {
+              handleSetCategoryOrder(data.map((g) => g.category));
+            }}
+            ListFooterComponent={kupioneGroup ? (
               <CategorySection
                 category={kupioneGroup.category}
                 items={kupioneGroup.items}
@@ -293,8 +276,24 @@ export function ListDetailScreen({ route, navigation }: Props) {
                 onRemove={handleRemoveItem}
                 onEdit={onEditItem}
               />
-            )}
-          </ScrollView>
+            ) : null}
+            renderItem={({ item, drag, isActive, getIndex }: { item: CategoryGroup; drag: () => void; isActive: boolean; getIndex: () => number | undefined }) => {
+              const index = getIndex() ?? 0;
+              return (
+                <ScaleDecorator>
+                  <CategorySection
+                    category={item.category}
+                    items={item.items}
+                    colorIndex={index}
+                    onToggle={handleToggleItem}
+                    onRemove={handleRemoveItem}
+                    onEdit={onEditItem}
+                    drag={drag}
+                  />
+                </ScaleDecorator>
+              );
+            }}
+          />
         ) : (
           <ScrollView style={styles.scroll} contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + SPACING.sm }]}>
             {sortedCategories.map((group, index) => {

@@ -69,11 +69,15 @@ export function PremiumGateModal({ visible, onClose, limitReached = false }: Pre
           <ActivityIndicator color={COLORS.primary} style={styles.loader} />
         ) : (
           <View style={styles.buttons}>
-            <PixelButton
-              title="Kup Premium"
-              onPress={handlePurchase}
-              variant="primary"
-            />
+            {__DEV__ ? (
+              <PixelButton
+                title="Kup Premium (dev)"
+                onPress={handlePurchase}
+                variant="primary"
+              />
+            ) : (
+              <Text style={styles.comingSoon}>Zakup Premium — wkrótce dostępny</Text>
+            )}
             <PixelButton
               title="Może później"
               onPress={onClose}
@@ -147,5 +151,11 @@ const styles = StyleSheet.create({
   error: {
     fontSize: FONT_SIZE.caption,
     color: COLORS.danger,
+  },
+  comingSoon: {
+    fontSize: FONT_SIZE.body,
+    color: COLORS.disabled,
+    textAlign: 'center',
+    paddingVertical: SPACING.sm,
   },
 });

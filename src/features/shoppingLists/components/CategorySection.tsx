@@ -42,12 +42,15 @@ export function CategorySection({
         accessibilityRole="header"
         accessibilityLabel={`${category}, ${items.length} produktów`}
       >
-        {drag ? (
-          <Pressable onLongPress={drag} accessibilityLabel="Przeciągnij aby zmienić kolejność">
+        {(drag || showArrows || !isKupione) && (
+          <Pressable
+            onLongPress={drag}
+            delayLongPress={200}
+            style={styles.gripArea}
+            accessibilityLabel={drag ? 'Przytrzymaj aby zmienić kolejność' : undefined}
+          >
             <Text style={styles.grip}>{'≡'}</Text>
           </Pressable>
-        ) : (showArrows || !isKupione) && (
-          <Text style={styles.grip}>{'≡'}</Text>
         )}
         <Text style={styles.title}>{category}</Text>
         <View style={styles.headerRight}>
@@ -104,6 +107,12 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.xs,
     paddingHorizontal: SPACING.sm,
     gap: SPACING.xs,
+  },
+  gripArea: {
+    minWidth: TOUCH.minTarget,
+    minHeight: TOUCH.minTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   grip: {
     fontSize: FONT_SIZE.h3,
