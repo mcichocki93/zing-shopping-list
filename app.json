@@ -18,6 +18,12 @@
         "usesNonExemptEncryption": false
       }
     },
+    "plugins": [
+      ["expo-speech-recognition", {
+        "microphonePermission": "Zing potrzebuje dostępu do mikrofonu, aby rozpoznawać produkty głosem.",
+        "speechRecognitionPermission": "Zing potrzebuje dostępu do rozpoznawania mowy."
+      }]
+    ],
     "android": {
       "package": "com.cichy093.zing",
       "adaptiveIcon": {
@@ -25,7 +31,8 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": ["android.permission.RECORD_AUDIO"]
     },
     "web": {
       "favicon": "./assets/favicon.png"

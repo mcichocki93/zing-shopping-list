@@ -4,11 +4,12 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { PixelInput, PixelButton, PixelTabs, QuantityStepper } from '../../../components/ui';
 import { CATEGORIES, UNITS, DECIMAL_UNITS, COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
 import { useTheme } from '../../../contexts/ThemeContext';
+import { useSpeechInput } from '../hooks/useSpeechInput';
 import type { Category, Unit } from '../../../constants';
 
 const DEFAULT_CATEGORY: Category = 'Inne';
 const DEFAULT_UNIT: Unit = 'szt';
-const TABS = ['RĘCZNIE', 'AI TEKST'];
+const TABS = ['RĘCZNIE', 'AI'];
 
 export interface ManualItemData {
   name: string;
@@ -39,6 +40,12 @@ export function AIInputBar({ onParse, onAddManual, isParsing, disabled = false, 
 
   // AI tab state
   const [aiText, setAiText] = useState('');
+  const { isListening, transcript, error: speechError, isSupported: isSpeechSupported, startListening, stopListening, clearTranscript } = useSpeechInput();
+
+  // Fill text field with speech transcript
+  useEffect(() => {
+    if (transcript) setAiText(transcript);
+  }, [transcript]);
 
   useEffect(() => {
     if (clearTrigger > 0) {
@@ -48,8 +55,9 @@ export function AIInputBar({ onParse, onAddManual, isParsing, disabled = false, 
       setSelectedCategory(DEFAULT_CATEGORY);
       setShowCategoryPicker(false);
       setAiText('');
+      clearTranscript();
     }
-  }, [clearTrigger]);
+  }, [clearTrigger, clearTranscript]);
 
   const handleQuickAdd = () => {
     const trimmed = manualName.trim();
@@ -136,21 +144,40 @@ export function AIInputBar({ onParse, onAddManual, isParsing, disabled = false, 
       ) : (
         <View style={styles.tabContent}>
           <Text style={styles.aiHint}>
-            Wpisz listę produktów oddzielonych przecinkami lub w osobnych liniach. AI rozpozna nazwy, ilości i kategorie.
+            Wpisz lub podyktuj listę produktów. AI rozpozna nazwy, ilości i kategorie.
           </Text>
 
           <View style={styles.field}>
-            <Text style={styles.label}>TEKST:</Text>
+            <View style={styles.labelRow}>
+              <Text style={styles.label}>TEKST:</Text>
+              {isSpeechSupported && (
+                <Pressable
+                  onPress={isListening ? stopListening : startListening}
+                  disabled={isParsing || disabled}
+                  style={[styles.micBtn, isListening && { backgroundColor: COLORS.danger }]}
+                  accessibilityRole="button"
+                  accessibilityLabel={isListening ? 'Zatrzymaj nagrywanie' : 'Dyktuj głosem'}
+                >
+                  <MaterialCommunityIcons
+                    name={isListening ? 'microphone' : 'microphone-outline'}
+                    size={18}
+                    color={isListening ? COLORS.white : COLORS.primary}
+                  />
+                </Pressable>
+              )}
+            </View>
             <PixelInput
-              placeholder="np. 2x mleko, 3 jabłka, chleb..."
+              placeholder={isListening ? 'Słucham...' : 'np. 2x mleko, 3 jabłka, chleb...'}
               value={aiText}
               onChangeText={setAiText}
               multiline
               numberOfLines={3}
-              editable={!isParsing && !disabled}
+              editable={!isParsing && !disabled && !isListening}
               accessibilityLabel="Tekst do rozpoznania AI"
             />
           </View>
+
+          {speechError && <Text style={styles.speechError}>{speechError}</Text>}
 
           {isParsing ? (
             <View style={styles.loaderRow}>
@@ -161,7 +188,7 @@ export function AIInputBar({ onParse, onAddManual, isParsing, disabled = false, 
             <PixelButton
               title="ROZPOZNAJ AI"
               onPress={handleAIParse}
-              disabled={!aiText.trim() || disabled}
+              disabled={!aiText.trim() || disabled || isListening}
               icon={<MaterialCommunityIcons name="auto-fix" size={18} color={COLORS.white} />}
               accessibilityLabel="Rozpoznaj produkty przez AI"
             />
@@ -280,6 +307,24 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.body,
     fontWeight: FONT_WEIGHT.bold,
     color: COLORS.primary,
+  },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  micBtn: {
+    width: TOUCH.minTarget,
+    height: TOUCH.minTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: BORDERS.width,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.white,
+  },
+  speechError: {
+    fontSize: FONT_SIZE.caption,
+    color: COLORS.danger,
   },
   aiHint: {
     fontSize: FONT_SIZE.caption,
