@@ -9,6 +9,10 @@ export const CATEGORY_HEADER_COLORS = [
   '#FFAB91',
 ] as const;
 
-export function getCategoryColor(index: number): string {
-  return CATEGORY_HEADER_COLORS[index % CATEGORY_HEADER_COLORS.length];
+export function getCategoryColor(category: string): string {
+  let hash = 0;
+  for (let i = 0; i < category.length; i++) {
+    hash = category.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return CATEGORY_HEADER_COLORS[Math.abs(hash) % CATEGORY_HEADER_COLORS.length];
 }

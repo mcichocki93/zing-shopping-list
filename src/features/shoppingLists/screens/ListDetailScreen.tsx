@@ -271,32 +271,27 @@ export function ListDetailScreen({ route, navigation }: Props) {
               <CategorySection
                 category={kupioneGroup.category}
                 items={kupioneGroup.items}
-                colorIndex={sortedCategories.length - 1}
                 onToggle={handleToggleItem}
                 onRemove={handleRemoveItem}
                 onEdit={onEditItem}
               />
             ) : null}
-            renderItem={({ item, drag, isActive, getIndex }: { item: CategoryGroup; drag: () => void; isActive: boolean; getIndex: () => number | undefined }) => {
-              const index = getIndex() ?? 0;
-              return (
-                <ScaleDecorator>
-                  <CategorySection
-                    category={item.category}
-                    items={item.items}
-                    colorIndex={index}
-                    onToggle={handleToggleItem}
-                    onRemove={handleRemoveItem}
-                    onEdit={onEditItem}
-                    drag={drag}
-                  />
-                </ScaleDecorator>
-              );
-            }}
+            renderItem={({ item, drag }: { item: CategoryGroup; drag: () => void; isActive: boolean; getIndex: () => number | undefined }) => (
+              <ScaleDecorator>
+                <CategorySection
+                  category={item.category}
+                  items={item.items}
+                  onToggle={handleToggleItem}
+                  onRemove={handleRemoveItem}
+                  onEdit={onEditItem}
+                  drag={drag}
+                />
+              </ScaleDecorator>
+            )}
           />
         ) : (
           <ScrollView style={styles.scroll} contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + SPACING.sm }]}>
-            {sortedCategories.map((group, index) => {
+            {sortedCategories.map((group) => {
               const isKupione = group.category === 'Kupione';
               const movableIdx = isKupione ? -1 : movableCategories.indexOf(group);
               return (
@@ -304,7 +299,6 @@ export function ListDetailScreen({ route, navigation }: Props) {
                   key={group.category}
                   category={group.category}
                   items={group.items}
-                  colorIndex={index}
                   onToggle={handleToggleItem}
                   onRemove={handleRemoveItem}
                   onEdit={onEditItem}

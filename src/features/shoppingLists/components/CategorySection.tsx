@@ -7,7 +7,6 @@ import type { ShoppingItem } from '../../../types/shoppingList';
 interface CategorySectionProps {
   category: string;
   items: ShoppingItem[];
-  colorIndex: number;
   onToggle: (itemId: string) => void;
   onRemove: (itemId: string) => void;
   onEdit?: (itemId: string) => void;
@@ -21,7 +20,6 @@ interface CategorySectionProps {
 export function CategorySection({
   category,
   items,
-  colorIndex,
   onToggle,
   onRemove,
   onEdit,
@@ -33,7 +31,7 @@ export function CategorySection({
 }: CategorySectionProps) {
   const showArrows = !drag && (onMoveUp != null || onMoveDown != null);
   const isKupione = category === 'Kupione';
-  const headerColor = isKupione ? COLORS.disabled : getCategoryColor(colorIndex);
+  const headerColor = isKupione ? COLORS.disabled : getCategoryColor(category);
 
   return (
     <View style={styles.section}>
