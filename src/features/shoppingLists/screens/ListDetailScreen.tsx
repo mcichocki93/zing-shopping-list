@@ -57,6 +57,7 @@ export function ListDetailScreen({ route, navigation }: Props) {
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
+  const [inputCollapsed, setInputCollapsed] = useState(false);
   const showPreview = parsedItems.length > 0;
 
   useEffect(() => {
@@ -192,24 +193,40 @@ export function ListDetailScreen({ route, navigation }: Props) {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={0}
       >
-        <AIInputBar onParse={parse} onAddManual={onAddManual} isParsing={isParsing} clearTrigger={inputClearTrigger} />
-
-        {!isPremium && (
-          <Pressable
-            onPress={() => setShowPremiumModal(true)}
-            style={styles.aiQuotaRow}
-            accessibilityRole="button"
-            accessibilityLabel={aiCallsRemaining > 0 ? 'AI dostępne dziś. Kup Premium po nieograniczony dostęp.' : `Limit AI wyczerpany. Wróć za ${hoursUntilReset}h lub kup Premium.`}
-          >
-            <MaterialCommunityIcons name="robot-outline" size={14} color={aiCallsRemaining === 0 ? COLORS.danger : COLORS.disabled} />
-            <Text style={[styles.aiQuotaText, aiCallsRemaining === 0 && styles.aiQuotaWarning]}>
-              {aiCallsRemaining > 0
-                ? 'AI: dostępne dziś'
-                : `AI: wróć za ${hoursUntilReset}h — lub kup Premium`}
-            </Text>
-            <MaterialCommunityIcons name="crown-outline" size={14} color={COLORS.primary} />
-          </Pressable>
+        {!inputCollapsed && (
+          <>
+            <AIInputBar onParse={parse} onAddManual={onAddManual} isParsing={isParsing} clearTrigger={inputClearTrigger} />
+            {!isPremium && (
+              <Pressable
+                onPress={() => setShowPremiumModal(true)}
+                style={styles.aiQuotaRow}
+                accessibilityRole="button"
+                accessibilityLabel={aiCallsRemaining > 0 ? 'AI dostępne dziś. Kup Premium po nieograniczony dostęp.' : `Limit AI wyczerpany. Wróć za ${hoursUntilReset}h lub kup Premium.`}
+              >
+                <MaterialCommunityIcons name="robot-outline" size={14} color={aiCallsRemaining === 0 ? COLORS.danger : COLORS.disabled} />
+                <Text style={[styles.aiQuotaText, aiCallsRemaining === 0 && styles.aiQuotaWarning]}>
+                  {aiCallsRemaining > 0
+                    ? 'AI: dostępne dziś'
+                    : `AI: wróć za ${hoursUntilReset}h — lub kup Premium`}
+                </Text>
+                <MaterialCommunityIcons name="crown-outline" size={14} color={COLORS.primary} />
+              </Pressable>
+            )}
+          </>
         )}
+
+        <Pressable
+          onPress={() => setInputCollapsed((c) => !c)}
+          style={[styles.collapseToggle, { backgroundColor: theme.accentLight }]}
+          accessibilityRole="button"
+          accessibilityLabel={inputCollapsed ? 'Rozwiń dodawanie produktów' : 'Zwiń dodawanie produktów'}
+        >
+          <MaterialCommunityIcons
+            name={inputCollapsed ? 'chevron-down' : 'chevron-up'}
+            size={16}
+            color={COLORS.disabled}
+          />
+        </Pressable>
 
         <PreviewModal
           visible={showPreview}
@@ -380,6 +397,13 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.caption,
     fontWeight: FONT_WEIGHT.bold,
     color: COLORS.white,
+  },
+  collapseToggle: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 2,
+    borderBottomWidth: BORDERS.width,
+    borderBottomColor: COLORS.border,
   },
   aiQuotaRow: {
     flexDirection: 'row',
