@@ -114,14 +114,14 @@ const styles = StyleSheet.create({
   },
   grip: {
     fontSize: FONT_SIZE.h3,
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: 'rgba(0, 0, 0, 0.3)',
     lineHeight: FONT_SIZE.h3,
   },
   title: {
     flex: 1,
     fontSize: FONT_SIZE.caption,
     fontWeight: FONT_WEIGHT.bold,
-    color: COLORS.white,
+    color: COLORS.primary,
     textTransform: 'uppercase',
   },
   headerRight: {
@@ -138,25 +138,25 @@ const styles = StyleSheet.create({
     height: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
     borderRadius: 4,
   },
   moveBtnDisabled: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(0, 0, 0, 0.04)',
   },
   moveBtnText: {
     fontSize: FONT_SIZE.h2,
     fontWeight: FONT_WEIGHT.bold,
-    color: COLORS.white,
+    color: COLORS.primary,
     lineHeight: FONT_SIZE.h2,
     transform: [{ rotate: '-90deg' }],
   },
   moveBtnTextDisabled: {
-    color: 'rgba(255, 255, 255, 0.25)',
+    color: 'rgba(0, 0, 0, 0.2)',
   },
   count: {
     fontSize: FONT_SIZE.caption,
-    color: COLORS.white,
+    color: COLORS.primary,
     minWidth: 20,
     textAlign: 'right',
   },
