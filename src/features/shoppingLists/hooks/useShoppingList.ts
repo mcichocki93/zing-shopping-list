@@ -188,11 +188,14 @@ export function useShoppingList(listId: string | null): UseShoppingListReturn {
   );
 
   const handleSetCategoryOrder = useCallback(
-    (newOrder: string[]) =>
-      withError(
+    (newOrder: string[]) => {
+      // Optimistic update — prevents flicker while waiting for Firestore listener
+      setList((prev) => prev ? { ...prev, categoryOrder: newOrder } : prev);
+      return withError(
         () => updateCategoryOrder(listId!, newOrder),
         'Nie udało się zmienić kolejności.',
-      ),
+      );
+    },
     [listId, withError],
   );
 

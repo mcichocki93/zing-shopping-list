@@ -163,15 +163,18 @@ export async function updateItem(
   itemId: string,
   updates: Partial<Pick<ShoppingItem, 'name' | 'quantity' | 'unit' | 'category'>>,
 ): Promise<void> {
-  const updatedItems = currentItems.map((item) =>
-    item.id === itemId
-      ? {
-          ...item,
-          ...updates,
-          ...(updates.name !== undefined && { name: sanitizeString(updates.name) }),
-        }
-      : item,
-  );
+  const updatedItems = currentItems.map((item) => {
+    if (item.id !== itemId) return item;
+    const merged = {
+      ...item,
+      ...updates,
+      ...(updates.name !== undefined && { name: sanitizeString(updates.name) }),
+    };
+    // Firestore rejects undefined values — strip them before writing
+    return Object.fromEntries(
+      Object.entries(merged).filter(([, v]) => v !== undefined),
+    ) as ShoppingItem;
+  });
 
   await updateDoc(listDoc(listId), {
     items: updatedItems,
