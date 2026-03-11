@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, type ViewStyle } from 'react-native';
 import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../constants';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -25,6 +26,32 @@ export function QuantityStepper({
   const canDecrement = value - step >= min;
   const canIncrement = value + step <= max;
 
+  // Internal text state — allows free typing without immediate parse/reset
+  const isFocused = useRef(false);
+  const [text, setText] = useState(() =>
+    Number.isInteger(value) ? String(value) : String(value).replace('.', ','),
+  );
+
+  // Sync display when value changes externally (e.g. +/- buttons) but not while typing
+  useEffect(() => {
+    if (!isFocused.current) {
+      setText(Number.isInteger(value) ? String(value) : String(value).replace('.', ','));
+    }
+  }, [value]);
+
+  const commitText = (raw: string) => {
+    const normalized = raw.replace(',', '.');
+    const parsed = parseFloat(normalized);
+    if (!isNaN(parsed) && parsed > 0) {
+      const clamped = Math.min(max, Math.max(min, parsed));
+      onChange(clamped);
+      setText(Number.isInteger(clamped) ? String(clamped) : String(clamped).replace('.', ','));
+    } else {
+      // Restore to current valid value
+      setText(Number.isInteger(value) ? String(value) : String(value).replace('.', ','));
+    }
+  };
+
   const onDecrement = () => {
     if (canDecrement) onChange(Math.max(min, value - step));
   };
@@ -32,20 +59,6 @@ export function QuantityStepper({
   const onIncrement = () => {
     if (canIncrement) onChange(Math.min(max, value + step));
   };
-
-  const onChangeText = (text: string) => {
-    const normalized = text.replace(',', '.');
-    if (normalized === '' || normalized === '.') {
-      onChange(min);
-      return;
-    }
-    const parsed = parseFloat(normalized);
-    if (!isNaN(parsed)) {
-      onChange(Math.min(max, Math.max(min, parsed)));
-    }
-  };
-
-  const displayValue = Number.isInteger(value) ? String(value) : value.toFixed(1);
 
   return (
     <View style={[styles.container, style]} accessibilityLabel={accessibilityLabel} accessibilityRole="adjustable">
@@ -67,12 +80,15 @@ export function QuantityStepper({
       </Pressable>
 
       <TextInput
-        value={displayValue}
-        onChangeText={onChangeText}
+        value={text}
+        onChangeText={setText}
+        onFocus={() => { isFocused.current = true; }}
+        onBlur={() => { isFocused.current = false; commitText(text); }}
+        onEndEditing={() => { isFocused.current = false; commitText(text); }}
         keyboardType="decimal-pad"
         selectTextOnFocus
         style={styles.input}
-        accessibilityLabel={`${accessibilityLabel}: ${displayValue}`}
+        accessibilityLabel={`${accessibilityLabel}: ${text}`}
       />
 
       <Pressable
