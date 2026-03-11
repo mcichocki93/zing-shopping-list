@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, StyleSheet, Modal } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { PixelInput, PixelButton, PixelTabs, QuantityStepper } from '../../../components/ui';
-import { CATEGORIES, COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
+import { CATEGORIES, UNITS, DECIMAL_UNITS, COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
 import { useTheme } from '../../../contexts/ThemeContext';
-import type { Category } from '../../../constants';
+import type { Category, Unit } from '../../../constants';
 
 const DEFAULT_CATEGORY: Category = 'Inne';
+const DEFAULT_UNIT: Unit = 'szt';
 const TABS = ['RĘCZNIE', 'AI TEKST'];
 
 export interface ManualItemData {
@@ -31,6 +32,8 @@ export function AIInputBar({ onParse, onAddManual, isParsing, disabled = false, 
   // Manual tab state
   const [manualName, setManualName] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [selectedUnit, setSelectedUnit] = useState<Unit>(DEFAULT_UNIT);
+  const [showUnitPicker, setShowUnitPicker] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category>(DEFAULT_CATEGORY);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
 
@@ -41,6 +44,7 @@ export function AIInputBar({ onParse, onAddManual, isParsing, disabled = false, 
     if (clearTrigger > 0) {
       setManualName('');
       setQuantity(1);
+      setSelectedUnit(DEFAULT_UNIT);
       setSelectedCategory(DEFAULT_CATEGORY);
       setShowCategoryPicker(false);
       setAiText('');
@@ -53,6 +57,7 @@ export function AIInputBar({ onParse, onAddManual, isParsing, disabled = false, 
     onAddManual({
       name: trimmed,
       quantity,
+      unit: selectedUnit,
       category: selectedCategory,
     });
     setManualName('');
@@ -84,15 +89,27 @@ export function AIInputBar({ onParse, onAddManual, isParsing, disabled = false, 
 
           <View style={styles.fieldRow}>
             <View style={styles.fieldHalf}>
-              <Text style={styles.label}>SZTUKI:</Text>
+              <Text style={styles.label}>ILOŚĆ:</Text>
               <QuantityStepper
                 value={quantity}
                 onChange={setQuantity}
-                min={0.1}
+                min={DECIMAL_UNITS.has(selectedUnit) ? 0.1 : 1}
                 max={999}
-                step={1}
+                step={DECIMAL_UNITS.has(selectedUnit) ? 0.5 : 1}
                 accessibilityLabel="Ilość"
               />
+            </View>
+            <View style={styles.fieldHalf}>
+              <Text style={styles.label}>JEDNOSTKA:</Text>
+              <Pressable
+                onPress={() => setShowUnitPicker(true)}
+                style={styles.categoryTrigger}
+                accessibilityRole="button"
+                accessibilityLabel={`Jednostka: ${selectedUnit}. Zmień jednostkę`}
+              >
+                <Text style={styles.categoryValue}>{selectedUnit}</Text>
+                <MaterialCommunityIcons name="chevron-down" size={20} color={COLORS.disabled} />
+              </Pressable>
             </View>
           </View>
 
@@ -174,6 +191,43 @@ export function AIInputBar({ onParse, onAddManual, isParsing, disabled = false, 
                 >
                   <Text style={[styles.modalOptionText, isSelected && styles.modalOptionTextSelected]}>
                     {cat}
+                  </Text>
+                  {isSelected && <Text style={styles.modalCheck}>{'✓'}</Text>}
+                </Pressable>
+              );
+            })}
+          </View>
+        </Pressable>
+      </Modal>
+
+      <Modal
+        visible={showUnitPicker}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowUnitPicker(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setShowUnitPicker(false)}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Wybierz jednostkę</Text>
+            {UNITS.map((unit) => {
+              const isSelected = unit === selectedUnit;
+              return (
+                <Pressable
+                  key={unit}
+                  onPress={() => {
+                    setSelectedUnit(unit);
+                    if (!DECIMAL_UNITS.has(unit) && quantity % 1 !== 0) {
+                      setQuantity(Math.round(quantity));
+                    }
+                    setShowUnitPicker(false);
+                  }}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: isSelected }}
+                  accessibilityLabel={unit}
+                  style={[styles.modalOption, isSelected && { backgroundColor: theme.accent }]}
+                >
+                  <Text style={[styles.modalOptionText, isSelected && styles.modalOptionTextSelected]}>
+                    {unit}
                   </Text>
                   {isSelected && <Text style={styles.modalCheck}>{'✓'}</Text>}
                 </Pressable>

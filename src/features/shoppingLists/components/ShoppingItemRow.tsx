@@ -29,7 +29,7 @@ export function ShoppingItemRow({ item, onToggle, onRemove, onEdit }: ShoppingIt
           {item.name}
         </Text>
         <Text style={styles.quantity}>
-          SZTUKI: {item.quantity}{item.unit ? ` ${item.unit}` : ''}
+          {item.quantity} {item.unit ?? 'szt'}
         </Text>
       </View>
       <View style={styles.actions}>

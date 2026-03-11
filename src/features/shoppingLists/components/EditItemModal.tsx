@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet, Modal } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { PixelModal, PixelInput, PixelButton, QuantityStepper } from '../../../components/ui';
-import { CATEGORIES, COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
+import { CATEGORIES, UNITS, DECIMAL_UNITS, COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
 import { useTheme } from '../../../contexts/ThemeContext';
-import type { Category } from '../../../constants';
+import type { Category, Unit } from '../../../constants';
 import type { ShoppingItem } from '../../../types/shoppingList';
 
 interface EditItemModalProps {
@@ -18,6 +18,8 @@ export function EditItemModal({ visible, item, onSave, onClose }: EditItemModalP
   const { theme } = useTheme();
   const [name, setName] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [selectedUnit, setSelectedUnit] = useState<Unit>('szt');
+  const [showUnitPicker, setShowUnitPicker] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category>('Inne');
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
 
@@ -25,6 +27,7 @@ export function EditItemModal({ visible, item, onSave, onClose }: EditItemModalP
     if (item) {
       setName(item.name);
       setQuantity(item.quantity);
+      setSelectedUnit((item.unit as Unit) || 'szt');
       setSelectedCategory((item.category as Category) || 'Inne');
     }
   }, [item]);
@@ -34,7 +37,7 @@ export function EditItemModal({ visible, item, onSave, onClose }: EditItemModalP
     onSave(item.id, {
       name: name.trim(),
       quantity,
-      unit: item.unit,
+      unit: selectedUnit,
       category: selectedCategory,
     });
     onClose();
@@ -52,16 +55,30 @@ export function EditItemModal({ visible, item, onSave, onClose }: EditItemModalP
         />
       </View>
 
-      <View style={styles.field}>
-        <Text style={styles.label}>SZTUKI:</Text>
-        <QuantityStepper
-          value={quantity}
-          onChange={setQuantity}
-          min={0.1}
-          max={999}
-          step={1}
-          accessibilityLabel="Ilość"
-        />
+      <View style={styles.row}>
+        <View style={styles.rowHalf}>
+          <Text style={styles.label}>ILOŚĆ:</Text>
+          <QuantityStepper
+            value={quantity}
+            onChange={setQuantity}
+            min={DECIMAL_UNITS.has(selectedUnit) ? 0.1 : 1}
+            max={999}
+            step={DECIMAL_UNITS.has(selectedUnit) ? 0.5 : 1}
+            accessibilityLabel="Ilość"
+          />
+        </View>
+        <View style={styles.rowHalf}>
+          <Text style={styles.label}>JEDNOSTKA:</Text>
+          <Pressable
+            onPress={() => setShowUnitPicker(true)}
+            style={styles.categoryTrigger}
+            accessibilityRole="button"
+            accessibilityLabel={`Jednostka: ${selectedUnit}`}
+          >
+            <Text style={styles.categoryValue}>{selectedUnit}</Text>
+            <MaterialCommunityIcons name="chevron-down" size={20} color={COLORS.disabled} />
+          </Pressable>
+        </View>
       </View>
 
       <View style={styles.field}>
@@ -111,6 +128,42 @@ export function EditItemModal({ visible, item, onSave, onClose }: EditItemModalP
           </View>
         </Pressable>
       </Modal>
+
+      <Modal
+        visible={showUnitPicker}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowUnitPicker(false)}
+      >
+        <Pressable style={styles.pickerOverlay} onPress={() => setShowUnitPicker(false)}>
+          <View style={styles.pickerContent}>
+            <Text style={styles.pickerTitle}>Wybierz jednostkę</Text>
+            {UNITS.map((unit) => {
+              const isSelected = unit === selectedUnit;
+              return (
+                <Pressable
+                  key={unit}
+                  onPress={() => {
+                    setSelectedUnit(unit);
+                    if (!DECIMAL_UNITS.has(unit) && quantity % 1 !== 0) {
+                      setQuantity(Math.round(quantity));
+                    }
+                    setShowUnitPicker(false);
+                  }}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: isSelected }}
+                  style={[styles.pickerOption, isSelected && { backgroundColor: theme.accent }]}
+                >
+                  <Text style={[styles.pickerOptionText, isSelected && styles.pickerOptionTextSelected]}>
+                    {unit}
+                  </Text>
+                  {isSelected && <Text style={styles.pickerCheck}>{'✓'}</Text>}
+                </Pressable>
+              );
+            })}
+          </View>
+        </Pressable>
+      </Modal>
     </PixelModal>
   );
 }
@@ -118,6 +171,15 @@ export function EditItemModal({ visible, item, onSave, onClose }: EditItemModalP
 const styles = StyleSheet.create({
   field: {
     marginBottom: SPACING.sm,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginBottom: SPACING.sm,
+  },
+  rowHalf: {
+    flex: 1,
+    gap: SPACING.xs,
   },
   label: {
     fontSize: FONT_SIZE.caption,
