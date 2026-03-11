@@ -123,6 +123,22 @@ export function ListDetailScreen({ route, navigation }: Props) {
     handleUpdateItem(itemId, updates);
   }, [handleUpdateItem]);
 
+  const renderDraggableItem = useCallback(
+    ({ item, drag }: { item: CategoryGroup; drag: () => void; isActive: boolean; getIndex: () => number | undefined }) => (
+      <ScaleDecorator>
+        <CategorySection
+          category={item.category}
+          items={item.items}
+          onToggle={handleToggleItem}
+          onRemove={handleRemoveItem}
+          onEdit={onEditItem}
+          drag={drag}
+        />
+      </ScaleDecorator>
+    ),
+    [handleToggleItem, handleRemoveItem, onEditItem],
+  );
+
   if (isLoading) {
     return (
       <View style={styles.center}>
@@ -293,18 +309,7 @@ export function ListDetailScreen({ route, navigation }: Props) {
                   onEdit={onEditItem}
                 />
               ) : null}
-              renderItem={({ item, drag }: { item: CategoryGroup; drag: () => void; isActive: boolean; getIndex: () => number | undefined }) => (
-                <ScaleDecorator>
-                  <CategorySection
-                    category={item.category}
-                    items={item.items}
-                    onToggle={handleToggleItem}
-                    onRemove={handleRemoveItem}
-                    onEdit={onEditItem}
-                    drag={drag}
-                  />
-                </ScaleDecorator>
-              )}
+              renderItem={renderDraggableItem}
             />
           </View>
         ) : (

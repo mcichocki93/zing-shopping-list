@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { ShoppingItemRow } from './ShoppingItemRow';
-import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT, getCategoryColor } from '../../../constants';
+import { COLORS, SPACING, BORDERS, FONT_SIZE, FONT_WEIGHT, getCategoryColor } from '../../../constants';
 import type { ShoppingItem } from '../../../types/shoppingList';
 
 interface CategorySectionProps {
@@ -17,7 +17,7 @@ interface CategorySectionProps {
   isLast?: boolean;
 }
 
-export function CategorySection({
+export const CategorySection = memo(function CategorySection({
   category,
   items,
   onToggle,
@@ -35,20 +35,15 @@ export function CategorySection({
 
   return (
     <View style={styles.section}>
-      <View
+      <Pressable
+        onLongPress={drag}
+        delayLongPress={150}
         style={[styles.header, { backgroundColor: headerColor }]}
         accessibilityRole="header"
-        accessibilityLabel={`${category}, ${items.length} produktów`}
+        accessibilityLabel={`${category}, ${items.length} produktów${drag ? '. Przytrzymaj aby zmienić kolejność' : ''}`}
       >
-        {(drag || showArrows || !isKupione) && (
-          <Pressable
-            onLongPress={drag}
-            delayLongPress={200}
-            style={styles.gripArea}
-            accessibilityLabel={drag ? 'Przytrzymaj aby zmienić kolejność' : undefined}
-          >
-            <Text style={styles.grip}>{'≡'}</Text>
-          </Pressable>
+        {!isKupione && (
+          <Text style={styles.grip}>{'≡'}</Text>
         )}
         <Text style={styles.title}>{category}</Text>
         <View style={styles.headerRight}>
@@ -78,7 +73,7 @@ export function CategorySection({
           )}
           <Text style={styles.count}>{items.length}</Text>
         </View>
-      </View>
+      </Pressable>
       {items.map((item) => (
         <ShoppingItemRow
           key={item.id}
@@ -90,7 +85,7 @@ export function CategorySection({
       ))}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   section: {
@@ -105,12 +100,6 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.xs,
     paddingHorizontal: SPACING.sm,
     gap: SPACING.xs,
-  },
-  gripArea: {
-    minWidth: TOUCH.minTarget,
-    minHeight: TOUCH.minTarget,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   grip: {
     fontSize: FONT_SIZE.h3,
