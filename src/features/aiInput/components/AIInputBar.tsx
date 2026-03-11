@@ -152,11 +152,12 @@ export function AIInputBar({ onParse, onAddManual, isParsing, disabled = false, 
               <Text style={styles.label}>TEKST:</Text>
               {isSpeechSupported && (
                 <Pressable
-                  onPress={isListening ? stopListening : startListening}
+                  onPressIn={startListening}
+                  onPressOut={stopListening}
                   disabled={isParsing || disabled}
                   style={[styles.micBtn, isListening && { backgroundColor: COLORS.danger }]}
                   accessibilityRole="button"
-                  accessibilityLabel={isListening ? 'Zatrzymaj nagrywanie' : 'Dyktuj głosem'}
+                  accessibilityLabel="Przytrzymaj aby dyktować"
                 >
                   <MaterialCommunityIcons
                     name={isListening ? 'microphone' : 'microphone-outline'}
