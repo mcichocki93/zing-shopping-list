@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { Linking } from 'react-native';
 import { isExpoGo } from '../../../utils/platform';
 
 // expo-speech-recognition requires a native build — not available in Expo Go
@@ -43,10 +44,15 @@ export function useSpeechInput(): UseSpeechInputReturn {
     if (!SpeechModule) return;
     setError(null);
     setTranscript('');
-    const { granted } =
+    const { granted, canAskAgain } =
       await SpeechModule.ExpoSpeechRecognitionModule.requestPermissionsAsync();
     if (!granted) {
-      setError('Brak dostępu do mikrofonu.');
+      if (!canAskAgain) {
+        setError('Brak dostępu do mikrofonu. Włącz w Ustawieniach telefonu → Aplikacje → Zing → Uprawnienia.');
+        Linking.openSettings();
+      } else {
+        setError('Brak dostępu do mikrofonu.');
+      }
       return;
     }
     SpeechModule.ExpoSpeechRecognitionModule.start({
