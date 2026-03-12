@@ -26,9 +26,9 @@ export function usePremium(): PremiumStatus {
   }
 
   const now = new Date();
-  // Firestore returns Timestamps — handle both Timestamp and Date
-  const raw = user.aiUsageResetDate as any;
-  const resetDate: Date = raw?.toDate?.() ?? (raw instanceof Date ? raw : new Date(0));
+  // Firestore returns Timestamps — handle both Timestamp (with .toDate()) and plain Date
+  const raw = user.aiUsageResetDate as Date & { toDate?: () => Date };
+  const resetDate: Date = typeof raw?.toDate === 'function' ? raw.toDate() : (raw instanceof Date ? raw : new Date(0));
 
   const isReset = now >= resetDate;
   const aiUsageThisMonth = user.aiUsageThisMonth ?? 0;

@@ -1,16 +1,10 @@
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../firebase/config';
+import { sanitizeUserInput, MAX_INPUT_LENGTH } from '../../utils/sanitization';
 import type { AIParsedItem, AIParseResult, AIParseError } from '../../types/ai';
 
-const MAX_INPUT_LENGTH = 500;
-
-function sanitizeInput(input: string): string {
-  // Strip control characters, keep only printable text
-  return input.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').trim();
-}
-
 export async function parseItemsWithAI(input: string): Promise<AIParseResult> {
-  const sanitized = sanitizeInput(input);
+  const sanitized = sanitizeUserInput(input);
   if (!sanitized) {
     const error: AIParseError = {
       code: 'PARSE_FAILED',

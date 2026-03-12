@@ -8,8 +8,9 @@ import {
   type User as FirebaseUser,
   type Unsubscribe,
 } from 'firebase/auth';
+import { httpsCallable } from 'firebase/functions';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db } from './config';
+import { auth, db, functions } from './config';
 import { COLLECTIONS } from '../../constants';
 import type { User } from '../../types/user';
 
@@ -67,6 +68,11 @@ export async function signOut(): Promise<void> {
 
 export async function resetPassword(email: string): Promise<void> {
   await sendPasswordResetEmail(auth, email);
+}
+
+export async function deleteAccount(): Promise<void> {
+  const fn = httpsCallable(functions, 'deleteUserAccount');
+  await fn({});
 }
 
 export function onAuthChanged(callback: (user: User | null) => void): Unsubscribe {

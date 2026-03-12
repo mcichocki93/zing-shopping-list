@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   StyleSheet,
   Alert,
+  Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -32,7 +33,7 @@ function pluralize(n: number, one: string, few: string, many: string): string {
 export function ListsDashboardScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
-  const { user, handleSignOut } = useAuth();
+  const { user, handleSignOut, handleDeleteAccount, isLoading: isAuthLoading } = useAuth();
   const { lists, isLoading, error, handleCreate, handleDelete } = useShoppingLists();
   const [newTitle, setNewTitle] = useState('');
   const [isCreating, setIsCreating] = useState(false);
@@ -41,6 +42,7 @@ export function ListsDashboardScreen({ navigation }: Props) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [showThemePicker, setShowThemePicker] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const onJoinByCode = async () => {
     const trimmed = joinCode.trim().toUpperCase();
@@ -101,6 +103,24 @@ export function ListsDashboardScreen({ navigation }: Props) {
       setShowCreateModal(false);
       navigation.navigate('ListDetail', { listId });
     }
+  };
+
+  const onDeleteAccount = () => {
+    Alert.alert(
+      'Usuń konto',
+      'Spowoduje to trwałe usunięcie Twojego konta i wszystkich danych. Tej operacji nie można cofnąć.',
+      [
+        { text: 'Anuluj', style: 'cancel' },
+        {
+          text: 'Usuń konto',
+          style: 'destructive',
+          onPress: async () => {
+            setShowSettings(false);
+            await handleDeleteAccount();
+          },
+        },
+      ],
+    );
   };
 
   const onDeleteList = (list: ShoppingList) => {
@@ -172,6 +192,14 @@ export function ListsDashboardScreen({ navigation }: Props) {
             accessibilityLabel="Wybierz motyw"
           >
             <MaterialCommunityIcons name="palette-outline" size={24} color={COLORS.white} />
+          </Pressable>
+          <Pressable
+            onPress={() => setShowSettings(true)}
+            style={styles.iconBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Ustawienia"
+          >
+            <MaterialCommunityIcons name="cog-outline" size={24} color={COLORS.white} />
           </Pressable>
           <PixelButton
             title="Wyloguj"
@@ -255,6 +283,44 @@ export function ListsDashboardScreen({ navigation }: Props) {
       </PixelModal>
 
       <ThemePickerModal visible={showThemePicker} onClose={() => setShowThemePicker(false)} />
+
+      <PixelModal visible={showSettings} onClose={() => setShowSettings(false)} title="Ustawienia">
+        <Pressable
+          onPress={() => Linking.openURL('https://mcichocki93.github.io/zing-shopping-list/privacy-policy')}
+          style={styles.settingsRow}
+          accessibilityRole="link"
+          accessibilityLabel="Polityka prywatności"
+        >
+          <MaterialCommunityIcons name="shield-account-outline" size={20} color={COLORS.primary} />
+          <Text style={styles.settingsRowText}>Polityka prywatności</Text>
+          <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.disabled} />
+        </Pressable>
+        <Pressable
+          onPress={() => Linking.openURL('https://mcichocki93.github.io/zing-shopping-list/delete-account')}
+          style={styles.settingsRow}
+          accessibilityRole="link"
+          accessibilityLabel="Usuń konto (strona)"
+        >
+          <MaterialCommunityIcons name="delete-outline" size={20} color={COLORS.primary} />
+          <Text style={styles.settingsRowText}>Usuń konto (przez stronę)</Text>
+          <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.disabled} />
+        </Pressable>
+        <View style={styles.settingsDivider} />
+        <PixelButton
+          title={isAuthLoading ? 'Usuwanie...' : 'USUŃ KONTO'}
+          onPress={onDeleteAccount}
+          variant="danger"
+          disabled={isAuthLoading}
+          icon={<MaterialCommunityIcons name="delete-forever" size={16} color={COLORS.white} />}
+          accessibilityLabel="Usuń konto i wszystkie dane"
+        />
+        <PixelButton
+          title="Zamknij"
+          onPress={() => setShowSettings(false)}
+          variant="accentMuted"
+          style={styles.settingsClose}
+        />
+      </PixelModal>
     </View>
   );
 }
@@ -373,5 +439,26 @@ const styles = StyleSheet.create({
   },
   modalBtn: {
     flex: 1,
+  },
+  settingsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: TOUCH.minTarget,
+    gap: SPACING.sm,
+    paddingVertical: SPACING.xs,
+  },
+  settingsRowText: {
+    flex: 1,
+    fontSize: FONT_SIZE.body,
+    fontWeight: FONT_WEIGHT.bold,
+    color: COLORS.primary,
+  },
+  settingsDivider: {
+    height: BORDERS.width,
+    backgroundColor: COLORS.border,
+    marginVertical: SPACING.sm,
+  },
+  settingsClose: {
+    marginTop: SPACING.sm,
   },
 });
