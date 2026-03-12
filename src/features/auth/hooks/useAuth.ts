@@ -1,11 +1,13 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { Alert } from 'react-native';
 import type { User, AuthState } from '../../../types/user';
-import { signUp, signIn, signOut, onAuthChanged, resetPassword, deleteAccount } from '../services';
+import { signUp, signIn, signInWithGoogle, signInWithApple, signOut, onAuthChanged, resetPassword, deleteAccount } from '../services';
 
 interface AuthContextValue extends AuthState {
   handleSignUp: (email: string, password: string, displayName: string) => Promise<void>;
   handleSignIn: (email: string, password: string) => Promise<void>;
+  handleSignInWithGoogle: () => Promise<void>;
+  handleSignInWithApple: () => Promise<void>;
   handleSignOut: () => Promise<void>;
   handleResetPassword: (email: string) => Promise<void>;
   handleDeleteAccount: () => Promise<void>;
@@ -22,6 +24,8 @@ export const AuthContext = createContext<AuthContextValue>({
   ...initialState,
   handleSignUp: async () => {},
   handleSignIn: async () => {},
+  handleSignInWithGoogle: async () => {},
+  handleSignInWithApple: async () => {},
   handleSignOut: async () => {},
   handleResetPassword: async () => {},
   handleDeleteAccount: async () => {},
@@ -58,11 +62,7 @@ export function useAuthProvider(): AuthContextValue {
         setState({ user, isLoading: false, isAuthenticated: true, error: null });
       } catch (err) {
         if (!mountedRef.current) return;
-        setState((prev) => ({
-          ...prev,
-          isLoading: false,
-          error: getErrorMessage(err),
-        }));
+        setState((prev) => ({ ...prev, isLoading: false, error: getErrorMessage(err) }));
       }
     },
     [],
@@ -76,11 +76,42 @@ export function useAuthProvider(): AuthContextValue {
       setState({ user, isLoading: false, isAuthenticated: true, error: null });
     } catch (err) {
       if (!mountedRef.current) return;
-      setState((prev) => ({
-        ...prev,
-        isLoading: false,
-        error: getErrorMessage(err),
-      }));
+      setState((prev) => ({ ...prev, isLoading: false, error: getErrorMessage(err) }));
+    }
+  }, []);
+
+  const handleSignInWithGoogle = useCallback(async () => {
+    setState((prev) => ({ ...prev, isLoading: true, error: null }));
+    try {
+      const user = await signInWithGoogle();
+      if (!mountedRef.current) return;
+      setState({ user, isLoading: false, isAuthenticated: true, error: null });
+    } catch (err) {
+      if (!mountedRef.current) return;
+      const msg = getErrorMessage(err);
+      // Silently ignore user-cancelled sign-in
+      if (msg.includes('cancelled') || msg.includes('cancel')) {
+        setState((prev) => ({ ...prev, isLoading: false }));
+      } else {
+        setState((prev) => ({ ...prev, isLoading: false, error: msg }));
+      }
+    }
+  }, []);
+
+  const handleSignInWithApple = useCallback(async () => {
+    setState((prev) => ({ ...prev, isLoading: true, error: null }));
+    try {
+      const user = await signInWithApple();
+      if (!mountedRef.current) return;
+      setState({ user, isLoading: false, isAuthenticated: true, error: null });
+    } catch (err) {
+      if (!mountedRef.current) return;
+      const msg = getErrorMessage(err);
+      if (msg.includes('cancelled') || msg.includes('cancel') || msg.includes('ERR_CANCELED')) {
+        setState((prev) => ({ ...prev, isLoading: false }));
+      } else {
+        setState((prev) => ({ ...prev, isLoading: false, error: msg }));
+      }
     }
   }, []);
 
@@ -92,11 +123,7 @@ export function useAuthProvider(): AuthContextValue {
       setState({ user: null, isLoading: false, isAuthenticated: false, error: null });
     } catch (err) {
       if (!mountedRef.current) return;
-      setState((prev) => ({
-        ...prev,
-        isLoading: false,
-        error: getErrorMessage(err),
-      }));
+      setState((prev) => ({ ...prev, isLoading: false, error: getErrorMessage(err) }));
     }
   }, []);
 
@@ -116,15 +143,20 @@ export function useAuthProvider(): AuthContextValue {
       // onAuthStateChanged fires after Firebase Auth user is deleted → sets state to null
     } catch (err) {
       if (!mountedRef.current) return;
-      setState((prev) => ({
-        ...prev,
-        isLoading: false,
-        error: getErrorMessage(err),
-      }));
+      setState((prev) => ({ ...prev, isLoading: false, error: getErrorMessage(err) }));
     }
   }, []);
 
-  return { ...state, handleSignUp, handleSignIn, handleSignOut, handleResetPassword, handleDeleteAccount };
+  return {
+    ...state,
+    handleSignUp,
+    handleSignIn,
+    handleSignInWithGoogle,
+    handleSignInWithApple,
+    handleSignOut,
+    handleResetPassword,
+    handleDeleteAccount,
+  };
 }
 
 export function useAuth(): AuthContextValue {
