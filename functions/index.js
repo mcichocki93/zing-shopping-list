@@ -44,7 +44,8 @@ const BURST_LIMIT = 10;
 const BURST_WINDOW = 60 * 60 * 1000; // 1 hour
 
 // Daily free tier limit (must match AI_FREE_DAILY_LIMIT in src/types/user.ts)
-const AI_FREE_DAILY_LIMIT = 1;
+// TESTING: set to 10 — change back to 1 before release
+const AI_FREE_DAILY_LIMIT = 10;
 
 function checkBurstLimit(userId) {
   const now = Date.now();
