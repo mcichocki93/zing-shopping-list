@@ -79,8 +79,10 @@ service cloud.firestore {
 
     match /invites/{code} {
 
-      // Any authenticated user can look up an invite
-      allow read: if isAuthenticated();
+      // `get` (fetch by document ID) is allowed for any authenticated user — needed for the
+      // join flow where the user enters a code. Using `get` instead of `read` disables
+      // collection listing, preventing enumeration of all invite codes.
+      allow get: if isAuthenticated();
 
       // Only the list owner can create an invite
       allow create: if isAuthenticated()

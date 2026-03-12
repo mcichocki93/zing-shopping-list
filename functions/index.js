@@ -44,8 +44,7 @@ const BURST_LIMIT = 10;
 const BURST_WINDOW = 60 * 60 * 1000; // 1 hour
 
 // Daily free tier limit (must match AI_FREE_DAILY_LIMIT in src/types/user.ts)
-// TESTING: set to 10 — change back to 1 before release
-const AI_FREE_DAILY_LIMIT = 10;
+const AI_FREE_DAILY_LIMIT = 1;
 
 function checkBurstLimit(userId) {
   const now = Date.now();
@@ -96,6 +95,77 @@ async function checkAndIncrementDailyQuota(userId) {
     tx.update(userRef, {aiUsageThisMonth: admin.firestore.FieldValue.increment(1)});
   });
 }
+
+/**
+ * Deletes all user data from Firestore and removes the Firebase Auth account.
+ * Called from the app when a user chooses to delete their account.
+ */
+exports.deleteUserAccount = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Musisz być zalogowany.');
+  }
+
+  const uid = request.auth.uid;
+  const db = admin.firestore();
+
+  // 1. Delete all shopping lists owned by this user
+  const ownedLists = await db.collection('shoppingLists')
+    .where('ownerId', '==', uid)
+    .get();
+
+  if (!ownedLists.empty) {
+    const batch = db.batch();
+    ownedLists.docs.forEach((doc) => batch.delete(doc.ref));
+    await batch.commit();
+  }
+
+  // 2. Remove user from lists they're a member of (but don't own)
+  const sharedLists = await db.collection('shoppingLists')
+    .where('memberIds', 'array-contains', uid)
+    .get();
+
+  if (!sharedLists.empty) {
+    const batch = db.batch();
+    sharedLists.docs.forEach((doc) => {
+      const memberIds = doc.data().memberIds.filter((id) => id !== uid);
+      batch.update(doc.ref, {
+        memberIds,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    });
+    await batch.commit();
+  }
+
+  // 3. Delete invite codes created by this user
+  const invites = await db.collection('invites')
+    .where('ownerId', '==', uid)
+    .get();
+
+  if (!invites.empty) {
+    const batch = db.batch();
+    invites.docs.forEach((doc) => batch.delete(doc.ref));
+    await batch.commit();
+  }
+
+  // 4. Delete AI usage logs
+  const logs = await db.collection('aiUsageLogs')
+    .where('userId', '==', uid)
+    .get();
+
+  if (!logs.empty) {
+    const batch = db.batch();
+    logs.docs.forEach((doc) => batch.delete(doc.ref));
+    await batch.commit();
+  }
+
+  // 5. Delete user document
+  await db.collection('users').doc(uid).delete();
+
+  // 6. Delete Firebase Auth account
+  await admin.auth().deleteUser(uid);
+
+  return {success: true};
+});
 
 exports.parseItemsWithAI = onCall({secrets: [geminiApiKey]}, async (request) => {
   // 1. Verify authentication

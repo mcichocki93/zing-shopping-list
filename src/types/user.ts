@@ -12,7 +12,7 @@ export interface User {
   aiUsageResetDate: Date;
 }
 
-export const AI_FREE_DAILY_LIMIT = 10; // calls per 24h for free users (TESTING: change back to 1 before release)
+export const AI_FREE_DAILY_LIMIT = 1; // calls per 24h for free users
 
 export interface AuthState {
   user: User | null;
