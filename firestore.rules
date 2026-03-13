@@ -45,6 +45,11 @@ service cloud.firestore {
 
       allow read, write: if isAuthenticated()
         && request.auth.uid == userId;
+
+      match /templates/{templateId} {
+        allow read, write: if isAuthenticated()
+          && request.auth.uid == userId;
+      }
     }
 
     // ---------- Shopping Lists ----------

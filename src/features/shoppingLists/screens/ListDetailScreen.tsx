@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, Share, Alert, StyleSheet, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, Share, Alert, StyleSheet, Pressable, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -23,6 +23,7 @@ import { isExpoGo } from '../../../utils/platform';
 const DraggableFlatList = !isExpoGo ? require('react-native-draggable-flatlist').default : null;
 const ScaleDecorator = !isExpoGo ? require('react-native-draggable-flatlist').ScaleDecorator : null;
 import { createInvite } from '../../../services/firebase/invites';
+import { useTemplates } from '../../templates';
 import type { ShoppingListsStackParamList } from '../../../types/navigation';
 import type { ShoppingItem } from '../../../types/shoppingList';
 
@@ -54,11 +55,15 @@ export function ListDetailScreen({ route, navigation }: Props) {
     limitReached, aiCallsRemaining, isPremium, hoursUntilReset,
     parse, retry, removeItem: removePreviewItem, clear: clearPreview,
   } = useAIParser();
+  const { handleSave: saveTemplate } = useTemplates({ load: false });
   const [inputClearTrigger, setInputClearTrigger] = useState(0);
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
   const [inputCollapsed, setInputCollapsed] = useState(false);
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false);
+  const [templateName, setTemplateName] = useState('');
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
   const showPreview = parsedItems.length > 0;
 
   useEffect(() => {
@@ -126,6 +131,26 @@ Lub wpisz kod: ${code}`,
     handleUpdateItem(itemId, updates);
   }, [handleUpdateItem]);
 
+  const onSaveAsTemplate = useCallback(async () => {
+    if (!list) return;
+    const name = templateName.trim();
+    if (!name) return;
+    setIsSavingTemplate(true);
+    const items = list.items
+      .filter((i) => !i.isCompleted)
+      .map(({ name: n, quantity, unit, category }) => ({
+        name: n,
+        quantity,
+        ...(unit !== undefined ? { unit } : {}),
+        ...(category !== undefined ? { category } : {}),
+      }));
+    await saveTemplate(name, items);
+    setIsSavingTemplate(false);
+    setShowSaveTemplate(false);
+    setTemplateName('');
+    Alert.alert('Szablon zapisany', `"${name}" został zapisany jako szablon.`);
+  }, [list, templateName, saveTemplate]);
+
   const renderDraggableItem = useCallback(
     ({ item, drag }: { item: CategoryGroup; drag: () => void; isActive: boolean; getIndex: () => number | undefined }) => (
       <ScaleDecorator>
@@ -173,6 +198,18 @@ Lub wpisz kod: ${code}`,
           <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.white} />
         </Pressable>
         <Text style={styles.title} numberOfLines={1} accessibilityRole="header">{list.title}</Text>
+        <Pressable
+          onPress={() => {
+            if (!isPremium) { setShowPremiumModal(true); return; }
+            setTemplateName(list?.title ?? '');
+            setShowSaveTemplate(true);
+          }}
+          style={styles.iconBtn}
+          accessibilityRole="button"
+          accessibilityLabel="Zapisz jako szablon"
+        >
+          <MaterialCommunityIcons name="content-save-outline" size={24} color={COLORS.white} />
+        </Pressable>
         <Pressable
           onPress={() => setShowThemePicker(true)}
           style={styles.iconBtn}
@@ -354,6 +391,38 @@ Lub wpisz kod: ${code}`,
       />
 
       <ThemePickerModal visible={showThemePicker} onClose={() => setShowThemePicker(false)} />
+
+      {showSaveTemplate && (
+        <View style={styles.templateOverlay}>
+          <View style={styles.templateModal}>
+            <Text style={styles.templateTitle}>Zapisz jako szablon</Text>
+            <TextInput
+              style={styles.templateInput}
+              value={templateName}
+              onChangeText={setTemplateName}
+              placeholder="Nazwa szablonu"
+              autoFocus
+              maxLength={100}
+              returnKeyType="done"
+              onSubmitEditing={onSaveAsTemplate}
+            />
+            <View style={styles.templateButtons}>
+              <PixelButton
+                title={isSavingTemplate ? 'Zapisuję...' : 'Zapisz'}
+                onPress={onSaveAsTemplate}
+                disabled={isSavingTemplate || !templateName.trim()}
+                style={styles.templateBtn}
+              />
+              <PixelButton
+                title="Anuluj"
+                onPress={() => { setShowSaveTemplate(false); setTemplateName(''); }}
+                variant="accentMuted"
+                style={styles.templateBtn}
+              />
+            </View>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -504,5 +573,43 @@ const styles = StyleSheet.create({
   resetBtnText: {
     fontSize: FONT_SIZE.body,
     fontWeight: FONT_WEIGHT.bold,
+  },
+  templateOverlay: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SPACING.lg,
+  },
+  templateModal: {
+    backgroundColor: COLORS.white,
+    borderWidth: BORDERS.width,
+    borderColor: COLORS.border,
+    padding: SPACING.md,
+    width: '100%',
+    gap: SPACING.sm,
+  },
+  templateTitle: {
+    fontSize: FONT_SIZE.h3,
+    fontWeight: FONT_WEIGHT.bold,
+    color: COLORS.primary,
+  },
+  templateInput: {
+    borderWidth: BORDERS.width,
+    borderColor: COLORS.border,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    fontSize: FONT_SIZE.body,
+    color: COLORS.primary,
+    backgroundColor: COLORS.white,
+  },
+  templateButtons: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginTop: SPACING.xs,
+  },
+  templateBtn: {
+    flex: 1,
   },
 });

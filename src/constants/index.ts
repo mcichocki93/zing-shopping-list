@@ -2,6 +2,7 @@ export const COLLECTIONS = {
   USERS: 'users',
   SHOPPING_LISTS: 'shoppingLists',
   INVITES: 'invites',
+  TEMPLATES: 'templates',
 } as const;
 
 export const CATEGORIES = [

@@ -15,12 +15,16 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { PixelButton, PixelInput, PixelCard, PixelModal } from '../../../components/ui';
 import { ThemePickerModal } from '../../../components/ThemePickerModal';
 import { CategoryManagerModal } from '../../categories';
+import { TemplatePickerModal, TemplateManagerModal, useTemplates, type ListTemplate, type TemplateItem } from '../../templates';
+import { PremiumGateModal } from '../../premium/components/PremiumGateModal';
+import { usePremium } from '../../premium/hooks/usePremium';
 import { OfflineBanner } from '../../../components/OfflineBanner';
 import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useShoppingLists } from '../hooks';
 import { useAuth } from '../../auth/hooks';
 import { lookupInvite, joinList } from '../../../services/firebase/invites';
+import { addItems } from '../../../services/firebase/shoppingLists';
 import type { ShoppingListsStackParamList } from '../../../types/navigation';
 import type { ShoppingList } from '../../../types/shoppingList';
 
@@ -46,6 +50,11 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showCategoryManager, setShowCategoryManager] = useState(false);
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+  const [showTemplateManager, setShowTemplateManager] = useState(false);
+  const [showTemplatesPremium, setShowTemplatesPremium] = useState(false);
+  const { isPremium } = usePremium();
+  const { templates, isLoading: isLoadingTemplates } = useTemplates();
   const deepLinkHandled = useRef(false);
 
   // Handle incoming deep link: zing://join/CODE
@@ -116,6 +125,25 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
       setShowCreateModal(false);
       navigation.navigate('ListDetail', { listId });
     }
+  };
+
+  const onCreateFromTemplate = async (template: ListTemplate) => {
+    if (!user) return;
+    const listId = await handleCreate(template.name);
+    if (!listId || template.items.length === 0) {
+      if (listId) navigation.navigate('ListDetail', { listId });
+      return;
+    }
+    const itemsToAdd = template.items.map((item: TemplateItem) => ({
+      name: item.name,
+      quantity: item.quantity,
+      ...(item.unit !== undefined ? { unit: item.unit } : {}),
+      ...(item.category !== undefined ? { category: item.category } : {}),
+      isCompleted: false,
+      createdBy: user.id,
+    }));
+    await addItems(listId, itemsToAdd);
+    navigation.navigate('ListDetail', { listId });
   };
 
   const onDeleteAccount = () => {
@@ -258,6 +286,18 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
           <MaterialCommunityIcons name="account-plus-outline" size={32} color={COLORS.white} />
           <Text style={styles.actionText}>Dołącz do listy</Text>
         </Pressable>
+        <Pressable
+          onPress={() => {
+            if (!isPremium) { setShowTemplatesPremium(true); return; }
+            setShowTemplatePicker(true);
+          }}
+          style={[styles.actionCard, { backgroundColor: theme.accent }]}
+          accessibilityRole="button"
+          accessibilityLabel="Utwórz listę z szablonu"
+        >
+          <MaterialCommunityIcons name="file-outline" size={32} color={COLORS.white} />
+          <Text style={styles.actionText}>Z szablonu</Text>
+        </Pressable>
       </View>
 
       {error && <Text style={styles.error}>{error}</Text>}
@@ -319,6 +359,25 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
         onClose={() => setShowCategoryManager(false)}
       />
 
+      <TemplatePickerModal
+        visible={showTemplatePicker}
+        templates={templates}
+        isLoading={isLoadingTemplates}
+        onSelect={onCreateFromTemplate}
+        onClose={() => setShowTemplatePicker(false)}
+      />
+
+      <TemplateManagerModal
+        visible={showTemplateManager}
+        onClose={() => setShowTemplateManager(false)}
+      />
+
+      <PremiumGateModal
+        visible={showTemplatesPremium}
+        onClose={() => setShowTemplatesPremium(false)}
+        limitReached={false}
+      />
+
       <PixelModal visible={showSettings} onClose={() => setShowSettings(false)} title="Ustawienia">
         <Pressable
           onPress={() => { setShowSettings(false); setShowCategoryManager(true); }}
@@ -328,6 +387,16 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
         >
           <MaterialCommunityIcons name="tag-multiple-outline" size={20} color={COLORS.primary} />
           <Text style={styles.settingsRowText}>Zarządzaj kategoriami</Text>
+          <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.disabled} />
+        </Pressable>
+        <Pressable
+          onPress={() => { setShowSettings(false); setShowTemplateManager(true); }}
+          style={styles.settingsRow}
+          accessibilityRole="button"
+          accessibilityLabel="Zarządzaj szablonami"
+        >
+          <MaterialCommunityIcons name="file-outline" size={20} color={COLORS.primary} />
+          <Text style={styles.settingsRowText}>Szablony list</Text>
           <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.disabled} />
         </Pressable>
         <View style={styles.settingsDivider} />
