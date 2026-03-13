@@ -8,6 +8,7 @@ import { PreviewModal } from '../../aiInput/components/PreviewModal';
 import { useAIParser } from '../../aiInput/hooks/useAIParser';
 import { PremiumGateModal } from '../../premium/components/PremiumGateModal';
 import { PixelButton } from '../../../components/ui';
+import { OfflineBanner } from '../../../components/OfflineBanner';
 import { ThemePickerModal } from '../../../components/ThemePickerModal';
 import { CategorySection } from '../components/CategorySection';
 import { EditItemModal } from '../components/EditItemModal';
@@ -182,6 +183,7 @@ Lub wpisz kod: ${code}`,
         </Pressable>
       </View>
 
+      <OfflineBanner />
       {list.inviteCode && (
         <Pressable
           onPress={onShare}
