@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { PixelModal } from '../../../components/ui/PixelModal';
 import { PixelButton } from '../../../components/ui/PixelButton';
 import { COLORS, SPACING, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
 import { AI_FREE_DAILY_LIMIT } from '../../../types/user';
-import { purchasePremium } from '../services/iap';
-import { grantPremium } from '../hooks/usePremium';
-import { useAuth } from '../../auth/hooks/useAuth';
+import { purchasePremium, restorePurchases } from '../services/iap';
 
 interface PremiumGateModalProps {
   visible: boolean;
@@ -16,18 +14,17 @@ interface PremiumGateModalProps {
 }
 
 export function PremiumGateModal({ visible, onClose, limitReached = false }: PremiumGateModalProps) {
-  const { user } = useAuth();
   const [isPurchasing, setIsPurchasing] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handlePurchase() {
-    if (!user) return;
     setIsPurchasing(true);
     setError(null);
     try {
       const result = await purchasePremium();
       if (result === 'success') {
-        await grantPremium(user.id);
+        // isPremium is updated via Firestore listener — just close
         onClose();
       } else if (result === 'cancelled') {
         // user backed out — do nothing
@@ -41,11 +38,30 @@ export function PremiumGateModal({ visible, onClose, limitReached = false }: Pre
     }
   }
 
+  async function handleRestore() {
+    setIsRestoring(true);
+    setError(null);
+    try {
+      const restored = await restorePurchases();
+      if (restored) {
+        onClose();
+      } else {
+        Alert.alert('Brak zakupu', 'Nie znaleziono aktywnej subskrypcji dla tego konta.');
+      }
+    } catch {
+      setError('Nie udało się przywrócić zakupu.');
+    } finally {
+      setIsRestoring(false);
+    }
+  }
+
+  const isBusy = isPurchasing || isRestoring;
+
   return (
     <PixelModal
       visible={visible}
       onClose={onClose}
-      title={limitReached ? '⚠️ Limit AI osiągnięty' : '✨ Zing Premium'}
+      title={limitReached ? 'Limit AI osiągnięty' : 'Zing Premium'}
     >
       <View style={styles.container}>
         {limitReached ? (
@@ -59,25 +75,27 @@ export function PremiumGateModal({ visible, onClose, limitReached = false }: Pre
         <View style={styles.featureList}>
           <FeatureRow label="Nieograniczone AI" free={false} />
           <FeatureRow label={`${AI_FREE_DAILY_LIMIT} wywołanie AI / dzień`} free={true} />
-          <FeatureRow label="Brak reklam" free={false} />
+          <FeatureRow label="Szablony list" free={false} />
+          <FeatureRow label="Niestandardowe kategorie" free={false} />
           <FeatureRow label="Pełna lista zakupów" free={true} />
         </View>
 
         {error && <Text style={styles.error}>{error}</Text>}
 
-        {isPurchasing ? (
+        {isBusy ? (
           <ActivityIndicator color={COLORS.primary} style={styles.loader} />
         ) : (
           <View style={styles.buttons}>
-            {__DEV__ ? (
-              <PixelButton
-                title="Kup Premium (dev)"
-                onPress={handlePurchase}
-                variant="primary"
-              />
-            ) : (
-              <Text style={styles.comingSoon}>Zakup Premium — wkrótce dostępny</Text>
-            )}
+            <PixelButton
+              title="Kup Premium"
+              onPress={handlePurchase}
+              variant="primary"
+            />
+            <PixelButton
+              title="Przywróć zakup"
+              onPress={handleRestore}
+              variant="accentMuted"
+            />
             <PixelButton
               title="Może później"
               onPress={onClose}
@@ -151,11 +169,5 @@ const styles = StyleSheet.create({
   error: {
     fontSize: FONT_SIZE.caption,
     color: COLORS.danger,
-  },
-  comingSoon: {
-    fontSize: FONT_SIZE.body,
-    color: COLORS.disabled,
-    textAlign: 'center',
-    paddingVertical: SPACING.sm,
   },
 });

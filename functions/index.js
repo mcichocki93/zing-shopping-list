@@ -1,12 +1,15 @@
 const {onCall, HttpsError} = require('firebase-functions/v2/https');
+const {onSchedule} = require('firebase-functions/v2/scheduler');
 const {defineSecret} = require('firebase-functions/params');
 const admin = require('firebase-admin');
 const {GoogleGenerativeAI} = require('@google/generative-ai');
+const {google} = require('googleapis');
 
 admin.initializeApp();
 
-// Define secret for Gemini API key
+// Define secrets
 const geminiApiKey = defineSecret('GEMINI_API_KEY');
+const googlePlayServiceAccountKey = defineSecret('GOOGLE_PLAY_SERVICE_ACCOUNT_KEY');
 
 const CATEGORIES = [
   'Owoce i warzywa',
@@ -165,6 +168,108 @@ exports.deleteUserAccount = onCall(async (request) => {
   await admin.auth().deleteUser(uid);
 
   return {success: true};
+});
+
+/**
+ * Verifies a Google Play purchase token server-side and grants premium if valid.
+ * Called from the app after a successful Play Billing purchase.
+ */
+exports.verifyAndGrantPremium = onCall(
+  {secrets: [googlePlayServiceAccountKey]},
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'Musisz być zalogowany.');
+    }
+
+    // Dev bypass — allow __DEV__ testing without a real purchase token
+    if (request.data && request.data.devGrant === true) {
+      if (process.env.FUNCTIONS_EMULATOR !== 'true') {
+        throw new HttpsError('permission-denied', 'Dev grant tylko w emulatorze.');
+      }
+      const db = admin.firestore();
+      await db.collection('users').doc(request.auth.uid).update({
+        isPremium: true,
+        premiumExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      });
+      return {success: true};
+    }
+
+    const {purchaseToken, packageName} = request.data;
+    if (!purchaseToken || typeof purchaseToken !== 'string') {
+      throw new HttpsError('invalid-argument', 'Brak tokenu zakupu.');
+    }
+    if (!packageName || typeof packageName !== 'string') {
+      throw new HttpsError('invalid-argument', 'Brak nazwy pakietu.');
+    }
+
+    // Parse service account key from secret
+    let serviceAccountKey;
+    try {
+      serviceAccountKey = JSON.parse(googlePlayServiceAccountKey.value());
+    } catch {
+      throw new HttpsError('internal', 'Błąd konfiguracji serwera.');
+    }
+
+    // Call Google Play Developer API
+    const auth = new google.auth.GoogleAuth({
+      credentials: serviceAccountKey,
+      scopes: ['https://www.googleapis.com/auth/androidpublisher'],
+    });
+    const androidPublisher = google.androidpublisher({version: 'v3', auth});
+
+    let purchase;
+    try {
+      const result = await androidPublisher.purchases.subscriptions.get({
+        packageName,
+        subscriptionId: 'zing_premium_monthly',
+        token: purchaseToken,
+      });
+      purchase = result.data;
+    } catch {
+      throw new HttpsError('failed-precondition', 'Nie udało się zweryfikować zakupu.');
+    }
+
+    // Validate: paymentState 1 = received, subscription not expired
+    const paymentState = purchase.paymentState;
+    const expiryMs = parseInt(purchase.expiryTimeMillis ?? '0', 10);
+    const isValid = paymentState === 1 && expiryMs > Date.now();
+
+    if (!isValid) {
+      throw new HttpsError('failed-precondition', 'Zakup nieważny lub wygasły.');
+    }
+
+    // Update Firestore
+    const db = admin.firestore();
+    await db.collection('users').doc(request.auth.uid).update({
+      isPremium: true,
+      premiumExpiresAt: new Date(expiryMs),
+      subscriptionToken: purchaseToken,
+    });
+
+    return {success: true, expiresAt: expiryMs};
+  },
+);
+
+/**
+ * Runs daily and revokes premium for users whose subscription has expired.
+ * Handles cancellations and non-renewals automatically.
+ */
+exports.checkExpiredSubscriptions = onSchedule('every 24 hours', async () => {
+  const db = admin.firestore();
+  const now = admin.firestore.Timestamp.now();
+
+  const expired = await db.collection('users')
+    .where('isPremium', '==', true)
+    .where('premiumExpiresAt', '<', now)
+    .get();
+
+  if (expired.empty) return;
+
+  const batch = db.batch();
+  expired.docs.forEach((docSnap) => {
+    batch.update(docSnap.ref, {isPremium: false});
+  });
+  await batch.commit();
 });
 
 exports.parseItemsWithAI = onCall({secrets: [geminiApiKey]}, async (request) => {

@@ -42,7 +42,10 @@
       "Bash(\"C:/Users/cichy/AppData/Local/Android/Sdk/platform-tools/adb.exe\" logcat -d)",
       "Bash(eas secret:create:*)",
       "Bash(ls:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(grep '\"\"version\"\"')",
+      "Bash(python3 -c \":*)",
+      "Bash(grep -E \"\"\"sku\"\": string|sku: string\" node_modules/expo-iap/build/types.d.ts)"
     ]
   }
 }
