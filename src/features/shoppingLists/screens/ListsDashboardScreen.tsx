@@ -15,6 +15,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { PixelButton, PixelInput, PixelCard, PixelModal } from '../../../components/ui';
 import { ThemePickerModal } from '../../../components/ThemePickerModal';
 import { CategoryManagerModal } from '../../categories';
+import { OfflineBanner } from '../../../components/OfflineBanner';
 import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useShoppingLists } from '../hooks';
@@ -236,6 +237,7 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
           />
         </View>
       </View>
+      <OfflineBanner />
 
       <View style={styles.actionRow}>
         <Pressable
