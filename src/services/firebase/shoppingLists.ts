@@ -173,7 +173,7 @@ export async function updateItem(
     // Firestore rejects undefined values — strip them before writing
     return Object.fromEntries(
       Object.entries(merged).filter(([, v]) => v !== undefined),
-    ) as ShoppingItem;
+    ) as unknown as ShoppingItem;
   });
 
   await updateDoc(listDoc(listId), {

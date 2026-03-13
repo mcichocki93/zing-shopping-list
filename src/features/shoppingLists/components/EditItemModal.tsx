@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet, Modal } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { PixelModal, PixelInput, PixelButton, QuantityStepper } from '../../../components/ui';
-import { CATEGORIES, UNITS, DECIMAL_UNITS, COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
+import { UNITS, DECIMAL_UNITS, COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
 import { useTheme } from '../../../contexts/ThemeContext';
-import type { Category, Unit } from '../../../constants';
+import { useCategories } from '../../categories';
+import type { Unit } from '../../../constants';
 import type { ShoppingItem } from '../../../types/shoppingList';
 
 interface EditItemModalProps {
@@ -20,7 +21,8 @@ export function EditItemModal({ visible, item, onSave, onClose }: EditItemModalP
   const [quantity, setQuantity] = useState(1);
   const [selectedUnit, setSelectedUnit] = useState<Unit>('szt');
   const [showUnitPicker, setShowUnitPicker] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<Category>('Inne');
+  const [selectedCategory, setSelectedCategory] = useState<string>('Inne');
+  const { allCategories } = useCategories();
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
 
   useEffect(() => {
@@ -28,7 +30,7 @@ export function EditItemModal({ visible, item, onSave, onClose }: EditItemModalP
       setName(item.name);
       setQuantity(item.quantity);
       setSelectedUnit((item.unit as Unit) || 'szt');
-      setSelectedCategory((item.category as Category) || 'Inne');
+      setSelectedCategory(item.category || 'Inne');
     }
   }, [item]);
 
@@ -108,7 +110,7 @@ export function EditItemModal({ visible, item, onSave, onClose }: EditItemModalP
         <Pressable style={styles.pickerOverlay} onPress={() => setShowCategoryPicker(false)}>
           <View style={styles.pickerContent}>
             <Text style={styles.pickerTitle}>Wybierz kategorię</Text>
-            {CATEGORIES.map((cat) => {
+            {allCategories.map((cat) => {
               const isSelected = cat === selectedCategory;
               return (
                 <Pressable

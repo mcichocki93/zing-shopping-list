@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, type LinkingOptions } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../features/auth/hooks';
 import { AuthNavigator } from './AuthNavigator';
@@ -9,6 +9,19 @@ import { COLORS } from '../constants';
 import type { RootStackParamList } from '../types/navigation';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+
+const linking: LinkingOptions<RootStackParamList> = {
+  prefixes: ['zing://'],
+  config: {
+    screens: {
+      Main: {
+        screens: {
+          ListsDashboard: 'join/:inviteCode',
+        },
+      },
+    },
+  },
+};
 
 export function RootNavigator() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -22,7 +35,7 @@ export function RootNavigator() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer linking={linking}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {isAuthenticated ? (
           <Stack.Screen name="Main" component={MainNavigator} />

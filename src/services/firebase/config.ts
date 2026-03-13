@@ -3,6 +3,7 @@ import { initializeApp, getApp, getApps } from 'firebase/app';
 import {
   getAuth,
   initializeAuth,
+  // @ts-ignore — exists in the RN bundle resolved by Metro, not in browser TS types
   getReactNativePersistence,
   browserLocalPersistence,
 } from 'firebase/auth';

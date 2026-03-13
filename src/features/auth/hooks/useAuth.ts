@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { Alert } from 'react-native';
-import type { User, AuthState } from '../../../types/user';
-import { signUp, signIn, signInWithGoogle, signInWithApple, signOut, onAuthChanged, resetPassword, deleteAccount } from '../services';
+import type { User, AuthState, CustomCategory } from '../../../types/user';
+import { signUp, signIn, signInWithGoogle, signInWithApple, signOut, onAuthChanged, resetPassword, deleteAccount, saveCustomCategories, saveListOrder } from '../services';
 
 interface AuthContextValue extends AuthState {
   handleSignUp: (email: string, password: string, displayName: string) => Promise<void>;
@@ -11,6 +11,8 @@ interface AuthContextValue extends AuthState {
   handleSignOut: () => Promise<void>;
   handleResetPassword: (email: string) => Promise<void>;
   handleDeleteAccount: () => Promise<void>;
+  handleUpdateCustomCategories: (categories: CustomCategory[]) => Promise<void>;
+  handleUpdateListOrder: (listOrder: string[]) => Promise<void>;
 }
 
 const initialState: AuthState = {
@@ -29,6 +31,8 @@ export const AuthContext = createContext<AuthContextValue>({
   handleSignOut: async () => {},
   handleResetPassword: async () => {},
   handleDeleteAccount: async () => {},
+  handleUpdateCustomCategories: async () => {},
+  handleUpdateListOrder: async () => {},
 });
 
 export function useAuthProvider(): AuthContextValue {
@@ -147,6 +151,29 @@ export function useAuthProvider(): AuthContextValue {
     }
   }, []);
 
+
+  const handleUpdateCustomCategories = useCallback(async (categories: CustomCategory[]) => {
+    const uid = state.user?.id;
+    if (!uid) return;
+    await saveCustomCategories(uid, categories);
+    if (!mountedRef.current) return;
+    setState((prev) => ({
+      ...prev,
+      user: prev.user ? { ...prev.user, customCategories: categories } : null,
+    }));
+  }, [state.user?.id]);
+
+  const handleUpdateListOrder = useCallback(async (listOrder: string[]) => {
+    const uid = state.user?.id;
+    if (!uid) return;
+    setState((prev) => ({
+      ...prev,
+      user: prev.user ? { ...prev.user, listOrder } : null,
+    }));
+    await saveListOrder(uid, listOrder);
+  }, [state.user?.id]);
+
+
   return {
     ...state,
     handleSignUp,
@@ -156,6 +183,8 @@ export function useAuthProvider(): AuthContextValue {
     handleSignOut,
     handleResetPassword,
     handleDeleteAccount,
+    handleUpdateCustomCategories,
+    handleUpdateListOrder,
   };
 }
 

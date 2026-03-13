@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   subscribeToUserLists,
   subscribeToArchivedLists,
@@ -19,20 +19,23 @@ interface UseShoppingListsReturn {
   handleDelete: (listId: string) => Promise<void>;
   handleArchive: (listId: string) => Promise<void>;
   handleRestore: (listId: string) => Promise<void>;
+  handleReorder: (orderedIds: string[]) => Promise<void>;
 }
 
 export function useShoppingLists(): UseShoppingListsReturn {
-  const { user } = useAuth();
-  const [lists, setLists] = useState<ShoppingList[]>([]);
+  const { user, handleUpdateListOrder } = useAuth();
+  const [rawLists, setRawLists] = useState<ShoppingList[]>([]);
   const [archivedLists, setArchivedLists] = useState<ShoppingList[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const mountedRef = useRef(true);
 
+  // Subscribe only when user ID changes (login/logout), not on every user update.
+  // This prevents re-subscription — and flickering — when listOrder is saved.
   useEffect(() => {
     mountedRef.current = true;
     if (!user) {
-      setLists([]);
+      setRawLists([]);
       setArchivedLists([]);
       setIsLoading(false);
       return;
@@ -43,7 +46,7 @@ export function useShoppingLists(): UseShoppingListsReturn {
 
     const unsubActive = subscribeToUserLists(user.id, (data) => {
       if (!mountedRef.current) return;
-      setLists(data);
+      setRawLists(data);
       activeReceived = true;
       if (archivedReceived) setIsLoading(false);
     });
@@ -60,7 +63,18 @@ export function useShoppingLists(): UseShoppingListsReturn {
       unsubActive();
       unsubArchived();
     };
-  }, [user]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  // Apply listOrder synchronously via useMemo — no state update, no flicker.
+  const lists = useMemo(() => {
+    const order = user?.listOrder;
+    if (!order || order.length === 0) return rawLists;
+    const indexed = new Map(rawLists.map((l) => [l.id, l]));
+    const sorted = order.flatMap((id) => (indexed.has(id) ? [indexed.get(id)!] : []));
+    const rest = rawLists.filter((l) => !order.includes(l.id));
+    return [...sorted, ...rest];
+  }, [rawLists, user?.listOrder]);
 
   const handleCreate = useCallback(
     async (title: string): Promise<string | null> => {
@@ -111,6 +125,15 @@ export function useShoppingLists(): UseShoppingListsReturn {
     }
   }, []);
 
+  const handleReorder = useCallback(
+    async (orderedIds: string[]) => {
+      // handleUpdateListOrder updates user.listOrder optimistically before saving,
+      // so useMemo re-sorts immediately without any intermediate flicker.
+      await handleUpdateListOrder(orderedIds);
+    },
+    [handleUpdateListOrder],
+  );
+
   return {
     lists,
     archivedLists,
@@ -120,5 +143,6 @@ export function useShoppingLists(): UseShoppingListsReturn {
     handleDelete,
     handleArchive,
     handleRestore,
+    handleReorder,
   };
 }

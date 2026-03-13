@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { parseItemsWithAI } from '../../../services/ai';
 import { usePremium } from '../../premium/hooks/usePremium';
+import { useCategories } from '../../categories';
 import type { AIParsedItem, AIParseError } from '../../../types/ai';
 
 interface UseAIParserReturn {
@@ -27,6 +28,7 @@ export function useAIParser(): UseAIParserReturn {
   const lastInputRef = useRef<string | null>(null);
   const mountedRef = useRef(true);
   const { hasAIAccess, aiCallsRemaining, isPremium, hoursUntilReset } = usePremium();
+  const { customCategories } = useCategories();
 
   useEffect(() => {
     mountedRef.current = true;
@@ -48,7 +50,7 @@ export function useAIParser(): UseAIParserReturn {
     setParsedItems([]);
 
     try {
-      const result = await parseItemsWithAI(input);
+      const result = await parseItemsWithAI(input, customCategories);
       if (!mountedRef.current) return;
       setParsedItems(result.items);
     } catch (err) {
@@ -65,7 +67,7 @@ export function useAIParser(): UseAIParserReturn {
         setIsParsing(false);
       }
     }
-  }, [hasAIAccess]);
+  }, [hasAIAccess, customCategories]);
 
   const updateItem = useCallback((index: number, updates: Partial<AIParsedItem>) => {
     setParsedItems((prev) =>

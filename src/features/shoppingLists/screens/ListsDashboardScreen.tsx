@@ -1,24 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
-  FlatList,
   Pressable,
   ActivityIndicator,
   StyleSheet,
   Alert,
   Linking,
 } from 'react-native';
+import DraggableFlatList, { RenderItemParams, ScaleDecorator } from 'react-native-draggable-flatlist';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { PixelButton, PixelInput, PixelCard, PixelModal } from '../../../components/ui';
 import { ThemePickerModal } from '../../../components/ThemePickerModal';
+import { CategoryManagerModal } from '../../categories';
+import { TemplatePickerModal, TemplateManagerModal, useTemplates, type ListTemplate, type TemplateItem } from '../../templates';
+import { PremiumGateModal } from '../../premium/components/PremiumGateModal';
+import { usePremium } from '../../premium/hooks/usePremium';
+import { OfflineBanner } from '../../../components/OfflineBanner';
 import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useShoppingLists } from '../hooks';
 import { useAuth } from '../../auth/hooks';
 import { lookupInvite, joinList } from '../../../services/firebase/invites';
+import { addItems } from '../../../services/firebase/shoppingLists';
 import type { ShoppingListsStackParamList } from '../../../types/navigation';
 import type { ShoppingList } from '../../../types/shoppingList';
 
@@ -30,11 +36,11 @@ function pluralize(n: number, one: string, few: string, many: string): string {
   return many;
 }
 
-export function ListsDashboardScreen({ navigation }: Props) {
+export function ListsDashboardScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const { user, handleSignOut, handleDeleteAccount, isLoading: isAuthLoading } = useAuth();
-  const { lists, isLoading, error, handleCreate, handleDelete } = useShoppingLists();
+  const { lists, isLoading, error, handleCreate, handleDelete, handleReorder } = useShoppingLists();
   const [newTitle, setNewTitle] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [joinCode, setJoinCode] = useState('');
@@ -43,6 +49,22 @@ export function ListsDashboardScreen({ navigation }: Props) {
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showCategoryManager, setShowCategoryManager] = useState(false);
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+  const [showTemplateManager, setShowTemplateManager] = useState(false);
+  const [showTemplatesPremium, setShowTemplatesPremium] = useState(false);
+  const { isPremium } = usePremium();
+  const { templates, isLoading: isLoadingTemplates } = useTemplates();
+  const deepLinkHandled = useRef(false);
+
+  // Handle incoming deep link: zing://join/CODE
+  useEffect(() => {
+    const code = route.params?.inviteCode;
+    if (!code || deepLinkHandled.current || !user) return;
+    deepLinkHandled.current = true;
+    setJoinCode(code.toUpperCase());
+    setShowJoinModal(true);
+  }, [route.params?.inviteCode, user]);
 
   const onJoinByCode = async () => {
     const trimmed = joinCode.trim().toUpperCase();
@@ -105,6 +127,25 @@ export function ListsDashboardScreen({ navigation }: Props) {
     }
   };
 
+  const onCreateFromTemplate = async (template: ListTemplate) => {
+    if (!user) return;
+    const listId = await handleCreate(template.name);
+    if (!listId || template.items.length === 0) {
+      if (listId) navigation.navigate('ListDetail', { listId });
+      return;
+    }
+    const itemsToAdd = template.items.map((item: TemplateItem) => ({
+      name: item.name,
+      quantity: item.quantity,
+      ...(item.unit !== undefined ? { unit: item.unit } : {}),
+      ...(item.category !== undefined ? { category: item.category } : {}),
+      isCompleted: false,
+      createdBy: user.id,
+    }));
+    await addItems(listId, itemsToAdd);
+    navigation.navigate('ListDetail', { listId });
+  };
+
   const onDeleteAccount = () => {
     Alert.alert(
       'Usuń konto',
@@ -139,39 +180,54 @@ export function ListsDashboardScreen({ navigation }: Props) {
     );
   };
 
-  const renderItem = ({ item }: { item: ShoppingList }) => {
+  const renderItem = ({ item, drag, isActive }: RenderItemParams<ShoppingList>) => {
     const allCompleted = item.items.length > 0 && item.items.every((i) => i.isCompleted);
 
     return (
-      <Pressable
-        onPress={() => navigation.navigate('ListDetail', { listId: item.id })}
-        onLongPress={() => onDeleteList(item)}
-        accessibilityRole="button"
-        accessibilityLabel={`${item.title}, ${allCompleted ? 'zrealizowana' : `${item.items.length} produktów`}`}
-        accessibilityHint="Otwórz listę zakupów. Przytrzymaj aby usunąć."
-      >
-        <PixelCard style={styles.listCard}>
-          <View style={styles.listRow}>
-            <MaterialCommunityIcons
-              name={allCompleted ? 'check-circle' : 'cart-outline'}
-              size={24}
-              color={allCompleted ? theme.accent : COLORS.primary}
-              style={styles.cartIcon}
-            />
-            <View style={styles.listInfo}>
-              <Text style={styles.listTitle}>{item.title}</Text>
-              <Text style={[styles.listMeta, allCompleted && { color: theme.accent }]}>
-                {allCompleted ? 'Zrealizowana' : `Produkty: ${item.items.length}`}
-              </Text>
-            </View>
-            {item.inviteCode && (
-              <View style={[styles.codeBadge, { backgroundColor: theme.accent }]}>
-                <Text style={styles.codeBadgeText}>{item.inviteCode}</Text>
+      <ScaleDecorator>
+        <Pressable
+          onPress={() => !isActive && navigation.navigate('ListDetail', { listId: item.id })}
+          onLongPress={drag}
+          delayLongPress={200}
+          accessibilityRole="button"
+          accessibilityLabel={`${item.title}, ${allCompleted ? 'zrealizowana' : `${item.items.length} produktów`}`}
+          accessibilityHint="Otwórz listę zakupów. Przytrzymaj aby zmienić kolejność."
+        >
+          <PixelCard style={isActive ? { ...styles.listCard, ...styles.listCardDragging } : styles.listCard}>
+            <View style={styles.listRow}>
+              <MaterialCommunityIcons
+                name={allCompleted ? 'check-circle' : 'cart-outline'}
+                size={24}
+                color={allCompleted ? theme.accent : COLORS.primary}
+                style={styles.cartIcon}
+              />
+              <View style={styles.listInfo}>
+                <Text style={styles.listTitle}>{item.title}</Text>
+                <Text style={[styles.listMeta, allCompleted && { color: theme.accent }]}>
+                  {allCompleted ? 'Zrealizowana' : `Produkty: ${item.items.length}`}
+                </Text>
               </View>
-            )}
-          </View>
-        </PixelCard>
-      </Pressable>
+              {item.inviteCode && (
+                <View style={[styles.codeBadge, { backgroundColor: theme.accent }]}>
+                  <Text style={styles.codeBadgeText}>{item.inviteCode}</Text>
+                </View>
+              )}
+              {item.ownerId === user?.id && (
+                <Pressable
+                  onPress={() => onDeleteList(item)}
+                  style={styles.deleteBtn}
+                  accessibilityLabel={`Usuń ${item.title}`}
+                  accessibilityRole="button"
+                  hitSlop={8}
+                >
+                  <MaterialCommunityIcons name="delete-outline" size={18} color={COLORS.danger} />
+                </Pressable>
+              )}
+              <MaterialCommunityIcons name="drag-horizontal-variant" size={20} color={COLORS.disabled} style={styles.dragHandle} />
+            </View>
+          </PixelCard>
+        </Pressable>
+      </ScaleDecorator>
     );
   };
 
@@ -209,6 +265,7 @@ export function ListsDashboardScreen({ navigation }: Props) {
           />
         </View>
       </View>
+      <OfflineBanner />
 
       <View style={styles.actionRow}>
         <Pressable
@@ -229,6 +286,18 @@ export function ListsDashboardScreen({ navigation }: Props) {
           <MaterialCommunityIcons name="account-plus-outline" size={32} color={COLORS.white} />
           <Text style={styles.actionText}>Dołącz do listy</Text>
         </Pressable>
+        <Pressable
+          onPress={() => {
+            if (!isPremium) { setShowTemplatesPremium(true); return; }
+            setShowTemplatePicker(true);
+          }}
+          style={[styles.actionCard, { backgroundColor: theme.accent }]}
+          accessibilityRole="button"
+          accessibilityLabel="Utwórz listę z szablonu"
+        >
+          <MaterialCommunityIcons name="file-outline" size={32} color={COLORS.white} />
+          <Text style={styles.actionText}>Z szablonu</Text>
+        </Pressable>
       </View>
 
       {error && <Text style={styles.error}>{error}</Text>}
@@ -242,10 +311,11 @@ export function ListsDashboardScreen({ navigation }: Props) {
           <Text style={styles.emptyText}>Brak list. Utwórz pierwszą!</Text>
         </View>
       ) : (
-        <FlatList
+        <DraggableFlatList
           data={lists}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
+          onDragEnd={({ data }) => handleReorder(data.map((l) => l.id))}
           contentContainerStyle={styles.listContent}
         />
       )}
@@ -284,7 +354,52 @@ export function ListsDashboardScreen({ navigation }: Props) {
 
       <ThemePickerModal visible={showThemePicker} onClose={() => setShowThemePicker(false)} />
 
+      <CategoryManagerModal
+        visible={showCategoryManager}
+        onClose={() => setShowCategoryManager(false)}
+      />
+
+      <TemplatePickerModal
+        visible={showTemplatePicker}
+        templates={templates}
+        isLoading={isLoadingTemplates}
+        onSelect={onCreateFromTemplate}
+        onClose={() => setShowTemplatePicker(false)}
+      />
+
+      <TemplateManagerModal
+        visible={showTemplateManager}
+        onClose={() => setShowTemplateManager(false)}
+      />
+
+      <PremiumGateModal
+        visible={showTemplatesPremium}
+        onClose={() => setShowTemplatesPremium(false)}
+        limitReached={false}
+      />
+
       <PixelModal visible={showSettings} onClose={() => setShowSettings(false)} title="Ustawienia">
+        <Pressable
+          onPress={() => { setShowSettings(false); setShowCategoryManager(true); }}
+          style={styles.settingsRow}
+          accessibilityRole="button"
+          accessibilityLabel="Zarządzaj kategoriami"
+        >
+          <MaterialCommunityIcons name="tag-multiple-outline" size={20} color={COLORS.primary} />
+          <Text style={styles.settingsRowText}>Zarządzaj kategoriami</Text>
+          <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.disabled} />
+        </Pressable>
+        <Pressable
+          onPress={() => { setShowSettings(false); setShowTemplateManager(true); }}
+          style={styles.settingsRow}
+          accessibilityRole="button"
+          accessibilityLabel="Zarządzaj szablonami"
+        >
+          <MaterialCommunityIcons name="file-outline" size={20} color={COLORS.primary} />
+          <Text style={styles.settingsRowText}>Szablony list</Text>
+          <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.disabled} />
+        </Pressable>
+        <View style={styles.settingsDivider} />
         <Pressable
           onPress={() => Linking.openURL('https://mcichocki93.github.io/zing-shopping-list/privacy-policy')}
           style={styles.settingsRow}
@@ -400,6 +515,17 @@ const styles = StyleSheet.create({
   },
   listCard: {
     padding: SPACING.sm,
+  },
+  listCardDragging: {
+    opacity: 0.85,
+    borderColor: COLORS.primary,
+  },
+  dragHandle: {
+    marginLeft: SPACING.xs,
+  },
+  deleteBtn: {
+    padding: SPACING.xs,
+    marginLeft: SPACING.xs,
   },
   listRow: {
     flexDirection: 'row',
