@@ -142,12 +142,12 @@ export function useAuthProvider(): AuthContextValue {
   const handleUpdateListOrder = useCallback(async (listOrder: string[]) => {
     const uid = state.user?.id;
     if (!uid) return;
-    await saveListOrder(uid, listOrder);
-    if (!mountedRef.current) return;
+    // Update local state immediately so useMemo in useShoppingLists re-sorts at once.
     setState((prev) => ({
       ...prev,
       user: prev.user ? { ...prev.user, listOrder } : null,
     }));
+    await saveListOrder(uid, listOrder);
   }, [state.user?.id]);
 
   return {
