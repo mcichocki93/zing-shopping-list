@@ -184,10 +184,18 @@ exports.parseItemsWithAI = onCall({secrets: [geminiApiKey]}, async (request) => 
   await checkAndIncrementDailyQuota(userId);
 
   // 4. Validate input
-  const {input} = request.data;
+  const {input, customCategories: rawCustomCategories} = request.data;
   if (!input || typeof input !== 'string') {
     throw new HttpsError('invalid-argument', 'Podaj produkty do dodania.');
   }
+
+  // Build merged category list (built-in + user custom)
+  const userCategories = Array.isArray(rawCustomCategories)
+    ? rawCustomCategories
+        .filter((c) => c && typeof c.name === 'string' && c.name.trim())
+        .map((c) => c.name.trim().slice(0, 30))
+    : [];
+  const allCategories = [...CATEGORIES, ...userCategories];
 
   const sanitized = input.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').trim();
 
@@ -204,9 +212,13 @@ exports.parseItemsWithAI = onCall({secrets: [geminiApiKey]}, async (request) => 
     const genAI = new GoogleGenerativeAI(geminiApiKey.value());
     const model = genAI.getGenerativeModel({model: 'gemini-2.5-flash-lite'});
 
-    // 5. Generate content
+    // 5. Generate content (inject dynamic category list)
+    const dynamicPrompt = SYSTEM_PROMPT.replace(
+      /jedna z: .+/,
+      `jedna z: ${allCategories.join(', ')}`,
+    );
     const result = await model.generateContent(
-      SYSTEM_PROMPT + '\n\nProdukty od użytkownika:\n' + sanitized,
+      dynamicPrompt + '\n\nProdukty od użytkownika:\n' + sanitized,
     );
 
     const response = result.response;
@@ -238,14 +250,14 @@ exports.parseItemsWithAI = onCall({secrets: [geminiApiKey]}, async (request) => 
           typeof raw.unit === 'string' && raw.unit.trim() ? raw.unit.trim() : undefined;
 
         const rawCategory = typeof raw.category === 'string' ? raw.category.trim() : 'Inne';
-        const category = CATEGORIES.includes(rawCategory) ? rawCategory : 'Inne';
+        const category = allCategories.includes(rawCategory) ? rawCategory : 'Inne';
 
         return {
           name: name.slice(0, 100),
           quantity,
           unit: unit?.slice(0, 20),
           category,
-          confidence: CATEGORIES.includes(rawCategory) ? 0.9 : 0.5,
+          confidence: allCategories.includes(rawCategory) ? 0.9 : 0.5,
         };
       })
       .filter((item) => item !== null);
