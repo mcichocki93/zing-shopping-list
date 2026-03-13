@@ -37,6 +37,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         microphonePermission: 'Zing potrzebuje dostępu do mikrofonu, aby rozpoznawać produkty głosem.',
         speechRecognitionPermission: 'Zing potrzebuje dostępu do rozpoznawania mowy.',
       }],
+      '@react-native-google-signin/google-signin',
     ],
     extra: {
       firebaseApiKey: process.env.FIREBASE_API_KEY,
@@ -46,6 +47,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       firebaseMessagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
       firebaseAppId: process.env.FIREBASE_APP_ID,
       firebaseMeasurementId: process.env.FIREBASE_MEASUREMENT_ID,
+      googleWebClientId: process.env.GOOGLE_WEB_CLIENT_ID,
       eas: {
         projectId: '8bfa11a0-18f2-48a7-ba45-87ba46584410',
       },

@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Text, ScrollView, Pressable, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { Text, ScrollView, Pressable, View, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { PixelButton, PixelInput, PixelCard } from '../../../components/ui';
-import { COLORS, SPACING, FONT_SIZE, FONT_WEIGHT, TOUCH } from '../../../constants';
+import { COLORS, SPACING, FONT_SIZE, FONT_WEIGHT, TOUCH, BORDERS } from '../../../constants';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useAuth } from '../hooks';
 import type { AuthStackParamList } from '../../../types/navigation';
@@ -13,7 +14,7 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
 export function LoginScreen({ navigation }: Props) {
   const { theme } = useTheme();
-  const { handleSignIn, handleResetPassword, isLoading, error } = useAuth();
+  const { handleSignIn, handleSignInWithGoogle, handleSignInWithApple, handleResetPassword, isLoading, error } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -83,6 +84,33 @@ export function LoginScreen({ navigation }: Props) {
               onPress={onSubmit}
               disabled={isLoading}
             />
+
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>lub</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <Pressable
+              onPress={handleSignInWithGoogle}
+              disabled={isLoading}
+              style={[styles.socialButton, { opacity: isLoading ? 0.5 : 1 }]}
+              accessibilityRole="button"
+              accessibilityLabel="Zaloguj się przez Google"
+            >
+              <MaterialCommunityIcons name="google" size={20} color="#DB4437" />
+              <Text style={styles.socialButtonText}>Kontynuuj z Google</Text>
+            </Pressable>
+
+            {Platform.OS === 'ios' && (
+              <AppleAuthentication.AppleAuthenticationButton
+                buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+                buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                cornerRadius={0}
+                style={styles.appleButton}
+                onPress={handleSignInWithApple}
+              />
+            )}
           </PixelCard>
 
           <Pressable
@@ -140,6 +168,41 @@ const styles = StyleSheet.create({
   forgotText: {
     fontSize: FONT_SIZE.caption,
     fontWeight: FONT_WEIGHT.bold,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: SPACING.xs,
+  },
+  dividerLine: {
+    flex: 1,
+    height: BORDERS.width,
+    backgroundColor: COLORS.border,
+  },
+  dividerText: {
+    marginHorizontal: SPACING.sm,
+    fontSize: FONT_SIZE.caption,
+    color: COLORS.disabled,
+  },
+  socialButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    minHeight: TOUCH.minTarget,
+    borderWidth: BORDERS.width,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.white,
+    paddingHorizontal: SPACING.md,
+  },
+  socialButtonText: {
+    fontSize: FONT_SIZE.body,
+    fontWeight: FONT_WEIGHT.bold,
+    color: COLORS.primary,
+  },
+  appleButton: {
+    width: '100%',
+    height: TOUCH.minTarget,
   },
   linkButton: {
     marginTop: SPACING.md,
