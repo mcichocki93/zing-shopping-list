@@ -173,6 +173,17 @@ export function ListsDashboardScreen({ navigation }: Props) {
                   <Text style={styles.codeBadgeText}>{item.inviteCode}</Text>
                 </View>
               )}
+              {item.ownerId === user?.id && (
+                <Pressable
+                  onPress={() => onDeleteList(item)}
+                  style={styles.deleteBtn}
+                  accessibilityLabel={`Usuń ${item.title}`}
+                  accessibilityRole="button"
+                  hitSlop={8}
+                >
+                  <MaterialCommunityIcons name="delete-outline" size={18} color={COLORS.danger} />
+                </Pressable>
+              )}
               <MaterialCommunityIcons name="drag-horizontal-variant" size={20} color={COLORS.disabled} style={styles.dragHandle} />
             </View>
           </PixelCard>
@@ -429,6 +440,10 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primary,
   },
   dragHandle: {
+    marginLeft: SPACING.xs,
+  },
+  deleteBtn: {
+    padding: SPACING.xs,
     marginLeft: SPACING.xs,
   },
   listRow: {
