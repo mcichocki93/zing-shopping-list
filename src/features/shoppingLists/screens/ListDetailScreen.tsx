@@ -107,7 +107,9 @@ export function ListDetailScreen({ route, navigation }: Props) {
         code = await createInvite(list.id, list.title, user.displayName, user.id);
       }
       await Share.share({
-        message: `Dołącz do mojej listy zakupów "${list.title}" w Zing! Kod: ${code}`,
+        message: `Dołącz do mojej listy zakupów "${list.title}" w Zing!
+Link: zing://join/${code}
+Lub wpisz kod: ${code}`,
       });
     } catch {
       Alert.alert('Błąd', 'Nie udało się udostępnić listy.');

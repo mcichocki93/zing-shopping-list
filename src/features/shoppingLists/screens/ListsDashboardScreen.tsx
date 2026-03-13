@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -31,7 +31,7 @@ function pluralize(n: number, one: string, few: string, many: string): string {
   return many;
 }
 
-export function ListsDashboardScreen({ navigation }: Props) {
+export function ListsDashboardScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const { user, handleSignOut, handleDeleteAccount, isLoading: isAuthLoading } = useAuth();
@@ -45,6 +45,16 @@ export function ListsDashboardScreen({ navigation }: Props) {
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showCategoryManager, setShowCategoryManager] = useState(false);
+  const deepLinkHandled = useRef(false);
+
+  // Handle incoming deep link: zing://join/CODE
+  useEffect(() => {
+    const code = route.params?.inviteCode;
+    if (!code || deepLinkHandled.current || !user) return;
+    deepLinkHandled.current = true;
+    setJoinCode(code.toUpperCase());
+    setShowJoinModal(true);
+  }, [route.params?.inviteCode, user]);
 
   const onJoinByCode = async () => {
     const trimmed = joinCode.trim().toUpperCase();

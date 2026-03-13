@@ -15,6 +15,6 @@ export type MainTabParamList = {
 };
 
 export type ShoppingListsStackParamList = {
-  ListsDashboard: undefined;
+  ListsDashboard: { inviteCode?: string } | undefined;
   ListDetail: { listId: string };
 };
