@@ -22,6 +22,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ...config,
     name: 'Zing',
     slug: 'zing',
+    scheme: 'zing',
     android: {
       package: 'com.cichy093.zing',
       adaptiveIcon: {
