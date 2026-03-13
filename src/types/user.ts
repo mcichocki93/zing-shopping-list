@@ -1,3 +1,8 @@
+export interface CustomCategory {
+  name: string;
+  color: string;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -10,6 +15,7 @@ export interface User {
   isPremium: boolean;
   aiUsageThisMonth: number;
   aiUsageResetDate: Date;
+  customCategories?: CustomCategory[];
 }
 
 export const AI_FREE_DAILY_LIMIT = 1; // calls per 24h for free users

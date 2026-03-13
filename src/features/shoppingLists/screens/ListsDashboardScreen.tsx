@@ -14,6 +14,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { PixelButton, PixelInput, PixelCard, PixelModal } from '../../../components/ui';
 import { ThemePickerModal } from '../../../components/ThemePickerModal';
+import { CategoryManagerModal } from '../../categories';
 import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useShoppingLists } from '../hooks';
@@ -43,6 +44,7 @@ export function ListsDashboardScreen({ navigation }: Props) {
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showCategoryManager, setShowCategoryManager] = useState(false);
 
   const onJoinByCode = async () => {
     const trimmed = joinCode.trim().toUpperCase();
@@ -284,7 +286,23 @@ export function ListsDashboardScreen({ navigation }: Props) {
 
       <ThemePickerModal visible={showThemePicker} onClose={() => setShowThemePicker(false)} />
 
+      <CategoryManagerModal
+        visible={showCategoryManager}
+        onClose={() => setShowCategoryManager(false)}
+      />
+
       <PixelModal visible={showSettings} onClose={() => setShowSettings(false)} title="Ustawienia">
+        <Pressable
+          onPress={() => { setShowSettings(false); setShowCategoryManager(true); }}
+          style={styles.settingsRow}
+          accessibilityRole="button"
+          accessibilityLabel="Zarządzaj kategoriami"
+        >
+          <MaterialCommunityIcons name="tag-multiple-outline" size={20} color={COLORS.primary} />
+          <Text style={styles.settingsRowText}>Zarządzaj kategoriami</Text>
+          <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.disabled} />
+        </Pressable>
+        <View style={styles.settingsDivider} />
         <Pressable
           onPress={() => Linking.openURL('https://mcichocki93.github.io/zing-shopping-list/privacy-policy')}
           style={styles.settingsRow}

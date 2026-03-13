@@ -9,10 +9,10 @@ import {
   type Unsubscribe,
 } from 'firebase/auth';
 import { httpsCallable } from 'firebase/functions';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db, functions } from './config';
 import { COLLECTIONS } from '../../constants';
-import type { User } from '../../types/user';
+import type { User, CustomCategory } from '../../types/user';
 
 async function fetchUserProfile(uid: string): Promise<User | null> {
   const snapshot = await getDoc(doc(db, COLLECTIONS.USERS, uid));
@@ -68,6 +68,10 @@ export async function signOut(): Promise<void> {
 
 export async function resetPassword(email: string): Promise<void> {
   await sendPasswordResetEmail(auth, email);
+}
+
+export async function saveCustomCategories(uid: string, categories: CustomCategory[]): Promise<void> {
+  await updateDoc(doc(db, COLLECTIONS.USERS, uid), { customCategories: categories });
 }
 
 export async function deleteAccount(): Promise<void> {

@@ -2,8 +2,9 @@ import { httpsCallable } from 'firebase/functions';
 import { functions } from '../firebase/config';
 import { sanitizeUserInput, MAX_INPUT_LENGTH } from '../../utils/sanitization';
 import type { AIParsedItem, AIParseResult, AIParseError } from '../../types/ai';
+import type { CustomCategory } from '../../types/user';
 
-export async function parseItemsWithAI(input: string): Promise<AIParseResult> {
+export async function parseItemsWithAI(input: string, customCategories: CustomCategory[] = []): Promise<AIParseResult> {
   const sanitized = sanitizeUserInput(input);
   if (!sanitized) {
     const error: AIParseError = {
@@ -25,12 +26,12 @@ export async function parseItemsWithAI(input: string): Promise<AIParseResult> {
 
   try {
     // Call Cloud Function instead of direct Gemini API
-    const parseFunction = httpsCallable<{ input: string }, { items: AIParsedItem[]; language: string }>(
+    const parseFunction = httpsCallable<{ input: string; customCategories: CustomCategory[] }, { items: AIParsedItem[]; language: string }>(
       functions,
       'parseItemsWithAI'
     );
 
-    const result = await parseFunction({ input: sanitized });
+    const result = await parseFunction({ input: sanitized, customCategories });
 
     if (!result.data.items || result.data.items.length === 0) {
       const error: AIParseError = {

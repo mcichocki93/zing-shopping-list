@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, StyleSheet, Modal } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { PixelInput, PixelButton, PixelTabs, QuantityStepper } from '../../../components/ui';
-import { CATEGORIES, UNITS, DECIMAL_UNITS, COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
+import { UNITS, DECIMAL_UNITS, COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useSpeechInput } from '../hooks/useSpeechInput';
-import type { Category, Unit } from '../../../constants';
+import { useCategories } from '../../categories';
+import type { Unit } from '../../../constants';
 
-const DEFAULT_CATEGORY: Category = 'Inne';
+const DEFAULT_CATEGORY = 'Inne';
 const DEFAULT_UNIT: Unit = 'szt';
 const TABS = ['RĘCZNIE', 'AI'];
 
@@ -15,7 +16,7 @@ export interface ManualItemData {
   name: string;
   quantity: number;
   unit?: string;
-  category: Category;
+  category: string;
 }
 
 interface AIInputBarProps {
@@ -35,7 +36,8 @@ export function AIInputBar({ onParse, onAddManual, isParsing, disabled = false, 
   const [quantity, setQuantity] = useState(1);
   const [selectedUnit, setSelectedUnit] = useState<Unit>(DEFAULT_UNIT);
   const [showUnitPicker, setShowUnitPicker] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<Category>(DEFAULT_CATEGORY);
+  const [selectedCategory, setSelectedCategory] = useState<string>(DEFAULT_CATEGORY);
+  const { allCategories } = useCategories();
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
 
   // AI tab state
@@ -206,7 +208,7 @@ export function AIInputBar({ onParse, onAddManual, isParsing, disabled = false, 
         <Pressable style={styles.modalOverlay} onPress={() => setShowCategoryPicker(false)}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Wybierz kategorię</Text>
-            {CATEGORIES.map((cat) => {
+            {allCategories.map((cat) => {
               const isSelected = cat === selectedCategory;
               return (
                 <Pressable
