@@ -19,10 +19,11 @@ interface UseShoppingListsReturn {
   handleDelete: (listId: string) => Promise<void>;
   handleArchive: (listId: string) => Promise<void>;
   handleRestore: (listId: string) => Promise<void>;
+  handleReorder: (orderedIds: string[]) => Promise<void>;
 }
 
 export function useShoppingLists(): UseShoppingListsReturn {
-  const { user } = useAuth();
+  const { user, handleUpdateListOrder } = useAuth();
   const [lists, setLists] = useState<ShoppingList[]>([]);
   const [archivedLists, setArchivedLists] = useState<ShoppingList[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,7 +44,15 @@ export function useShoppingLists(): UseShoppingListsReturn {
 
     const unsubActive = subscribeToUserLists(user.id, (data) => {
       if (!mountedRef.current) return;
-      setLists(data);
+      const order = user.listOrder;
+      if (order && order.length > 0) {
+        const indexed = new Map(data.map((l) => [l.id, l]));
+        const sorted = order.flatMap((id) => (indexed.has(id) ? [indexed.get(id)!] : []));
+        const rest = data.filter((l) => !order.includes(l.id));
+        setLists([...sorted, ...rest]);
+      } else {
+        setLists(data);
+      }
       activeReceived = true;
       if (archivedReceived) setIsLoading(false);
     });
@@ -111,6 +120,17 @@ export function useShoppingLists(): UseShoppingListsReturn {
     }
   }, []);
 
+  const handleReorder = useCallback(
+    async (orderedIds: string[]) => {
+      setLists((prev) => {
+        const indexed = new Map(prev.map((l) => [l.id, l]));
+        return orderedIds.flatMap((id) => (indexed.has(id) ? [indexed.get(id)!] : []));
+      });
+      await handleUpdateListOrder(orderedIds);
+    },
+    [handleUpdateListOrder],
+  );
+
   return {
     lists,
     archivedLists,
@@ -120,5 +140,6 @@ export function useShoppingLists(): UseShoppingListsReturn {
     handleDelete,
     handleArchive,
     handleRestore,
+    handleReorder,
   };
 }

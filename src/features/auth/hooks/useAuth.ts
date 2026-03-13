@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { Alert } from 'react-native';
 import type { User, AuthState, CustomCategory } from '../../../types/user';
-import { signUp, signIn, signOut, onAuthChanged, resetPassword, deleteAccount, saveCustomCategories } from '../services';
+import { signUp, signIn, signOut, onAuthChanged, resetPassword, deleteAccount, saveCustomCategories, saveListOrder } from '../services';
 
 interface AuthContextValue extends AuthState {
   handleSignUp: (email: string, password: string, displayName: string) => Promise<void>;
@@ -10,6 +10,7 @@ interface AuthContextValue extends AuthState {
   handleResetPassword: (email: string) => Promise<void>;
   handleDeleteAccount: () => Promise<void>;
   handleUpdateCustomCategories: (categories: CustomCategory[]) => Promise<void>;
+  handleUpdateListOrder: (listOrder: string[]) => Promise<void>;
 }
 
 const initialState: AuthState = {
@@ -27,6 +28,7 @@ export const AuthContext = createContext<AuthContextValue>({
   handleResetPassword: async () => {},
   handleDeleteAccount: async () => {},
   handleUpdateCustomCategories: async () => {},
+  handleUpdateListOrder: async () => {},
 });
 
 export function useAuthProvider(): AuthContextValue {
@@ -137,6 +139,17 @@ export function useAuthProvider(): AuthContextValue {
     }));
   }, [state.user?.id]);
 
+  const handleUpdateListOrder = useCallback(async (listOrder: string[]) => {
+    const uid = state.user?.id;
+    if (!uid) return;
+    await saveListOrder(uid, listOrder);
+    if (!mountedRef.current) return;
+    setState((prev) => ({
+      ...prev,
+      user: prev.user ? { ...prev.user, listOrder } : null,
+    }));
+  }, [state.user?.id]);
+
   return {
     ...state,
     handleSignUp,
@@ -145,6 +158,7 @@ export function useAuthProvider(): AuthContextValue {
     handleResetPassword,
     handleDeleteAccount,
     handleUpdateCustomCategories,
+    handleUpdateListOrder,
   };
 }
 

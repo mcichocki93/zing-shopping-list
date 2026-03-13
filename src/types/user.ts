@@ -16,6 +16,7 @@ export interface User {
   aiUsageThisMonth: number;
   aiUsageResetDate: Date;
   customCategories?: CustomCategory[];
+  listOrder?: string[];
 }
 
 export const AI_FREE_DAILY_LIMIT = 1; // calls per 24h for free users

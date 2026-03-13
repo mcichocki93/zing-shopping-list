@@ -74,6 +74,10 @@ export async function saveCustomCategories(uid: string, categories: CustomCatego
   await updateDoc(doc(db, COLLECTIONS.USERS, uid), { customCategories: categories });
 }
 
+export async function saveListOrder(uid: string, listOrder: string[]): Promise<void> {
+  await updateDoc(doc(db, COLLECTIONS.USERS, uid), { listOrder });
+}
+
 export async function deleteAccount(): Promise<void> {
   const fn = httpsCallable(functions, 'deleteUserAccount');
   await fn({});

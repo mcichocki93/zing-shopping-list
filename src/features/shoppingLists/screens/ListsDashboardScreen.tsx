@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  FlatList,
   Pressable,
   ActivityIndicator,
   StyleSheet,
   Alert,
   Linking,
 } from 'react-native';
+import DraggableFlatList, { RenderItemParams, ScaleDecorator } from 'react-native-draggable-flatlist';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -35,7 +35,7 @@ export function ListsDashboardScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const { user, handleSignOut, handleDeleteAccount, isLoading: isAuthLoading } = useAuth();
-  const { lists, isLoading, error, handleCreate, handleDelete } = useShoppingLists();
+  const { lists, isLoading, error, handleCreate, handleDelete, handleReorder } = useShoppingLists();
   const [newTitle, setNewTitle] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [joinCode, setJoinCode] = useState('');
@@ -141,39 +141,43 @@ export function ListsDashboardScreen({ navigation }: Props) {
     );
   };
 
-  const renderItem = ({ item }: { item: ShoppingList }) => {
+  const renderItem = ({ item, drag, isActive }: RenderItemParams<ShoppingList>) => {
     const allCompleted = item.items.length > 0 && item.items.every((i) => i.isCompleted);
 
     return (
-      <Pressable
-        onPress={() => navigation.navigate('ListDetail', { listId: item.id })}
-        onLongPress={() => onDeleteList(item)}
-        accessibilityRole="button"
-        accessibilityLabel={`${item.title}, ${allCompleted ? 'zrealizowana' : `${item.items.length} produktów`}`}
-        accessibilityHint="Otwórz listę zakupów. Przytrzymaj aby usunąć."
-      >
-        <PixelCard style={styles.listCard}>
-          <View style={styles.listRow}>
-            <MaterialCommunityIcons
-              name={allCompleted ? 'check-circle' : 'cart-outline'}
-              size={24}
-              color={allCompleted ? theme.accent : COLORS.primary}
-              style={styles.cartIcon}
-            />
-            <View style={styles.listInfo}>
-              <Text style={styles.listTitle}>{item.title}</Text>
-              <Text style={[styles.listMeta, allCompleted && { color: theme.accent }]}>
-                {allCompleted ? 'Zrealizowana' : `Produkty: ${item.items.length}`}
-              </Text>
-            </View>
-            {item.inviteCode && (
-              <View style={[styles.codeBadge, { backgroundColor: theme.accent }]}>
-                <Text style={styles.codeBadgeText}>{item.inviteCode}</Text>
+      <ScaleDecorator>
+        <Pressable
+          onPress={() => !isActive && navigation.navigate('ListDetail', { listId: item.id })}
+          onLongPress={drag}
+          delayLongPress={200}
+          accessibilityRole="button"
+          accessibilityLabel={`${item.title}, ${allCompleted ? 'zrealizowana' : `${item.items.length} produktów`}`}
+          accessibilityHint="Otwórz listę zakupów. Przytrzymaj aby zmienić kolejność."
+        >
+          <PixelCard style={isActive ? { ...styles.listCard, ...styles.listCardDragging } : styles.listCard}>
+            <View style={styles.listRow}>
+              <MaterialCommunityIcons
+                name={allCompleted ? 'check-circle' : 'cart-outline'}
+                size={24}
+                color={allCompleted ? theme.accent : COLORS.primary}
+                style={styles.cartIcon}
+              />
+              <View style={styles.listInfo}>
+                <Text style={styles.listTitle}>{item.title}</Text>
+                <Text style={[styles.listMeta, allCompleted && { color: theme.accent }]}>
+                  {allCompleted ? 'Zrealizowana' : `Produkty: ${item.items.length}`}
+                </Text>
               </View>
-            )}
-          </View>
-        </PixelCard>
-      </Pressable>
+              {item.inviteCode && (
+                <View style={[styles.codeBadge, { backgroundColor: theme.accent }]}>
+                  <Text style={styles.codeBadgeText}>{item.inviteCode}</Text>
+                </View>
+              )}
+              <MaterialCommunityIcons name="drag-horizontal-variant" size={20} color={COLORS.disabled} style={styles.dragHandle} />
+            </View>
+          </PixelCard>
+        </Pressable>
+      </ScaleDecorator>
     );
   };
 
@@ -244,10 +248,11 @@ export function ListsDashboardScreen({ navigation }: Props) {
           <Text style={styles.emptyText}>Brak list. Utwórz pierwszą!</Text>
         </View>
       ) : (
-        <FlatList
+        <DraggableFlatList
           data={lists}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
+          onDragEnd={({ data }) => handleReorder(data.map((l) => l.id))}
           contentContainerStyle={styles.listContent}
         />
       )}
@@ -418,6 +423,13 @@ const styles = StyleSheet.create({
   },
   listCard: {
     padding: SPACING.sm,
+  },
+  listCardDragging: {
+    opacity: 0.85,
+    borderColor: COLORS.primary,
+  },
+  dragHandle: {
+    marginLeft: SPACING.xs,
   },
   listRow: {
     flexDirection: 'row',
