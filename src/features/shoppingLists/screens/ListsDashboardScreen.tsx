@@ -130,8 +130,12 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
   const onCreateFromTemplate = async (template: ListTemplate) => {
     if (!user) return;
     const listId = await handleCreate(template.name);
-    if (!listId || template.items.length === 0) {
-      if (listId) navigation.navigate('ListDetail', { listId });
+    if (!listId) {
+      Alert.alert('Błąd', 'Nie udało się utworzyć listy.');
+      return;
+    }
+    if (template.items.length === 0) {
+      navigation.navigate('ListDetail', { listId });
       return;
     }
     const itemsToAdd = template.items.map((item: TemplateItem) => ({
@@ -142,7 +146,11 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
       isCompleted: false,
       createdBy: user.id,
     }));
-    await addItems(listId, itemsToAdd);
+    try {
+      await addItems(listId, itemsToAdd);
+    } catch {
+      Alert.alert('Błąd', 'Nie udało się dodać produktów do listy.');
+    }
     navigation.navigate('ListDetail', { listId });
   };
 

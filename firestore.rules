@@ -47,8 +47,15 @@ service cloud.firestore {
         && request.auth.uid == userId;
 
       match /templates/{templateId} {
-        allow read, write: if isAuthenticated()
+        allow read, delete: if isAuthenticated()
           && request.auth.uid == userId;
+        allow create, update: if isAuthenticated()
+          && request.auth.uid == userId
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.name.size() <= 100
+          && request.resource.data.items is list
+          && request.resource.data.items.size() <= 100;
       }
     }
 

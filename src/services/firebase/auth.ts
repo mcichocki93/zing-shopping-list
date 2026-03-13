@@ -18,6 +18,7 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { auth, db, functions } from './config';
+import { sanitizeString } from './validation';
 import { COLLECTIONS } from '../../constants';
 import type { User, CustomCategory } from '../../types/user';
 
@@ -102,9 +103,10 @@ export async function signInWithApple(): Promise<User> {
   const provider = new OAuthProvider('apple.com');
   const oauthCredential = provider.credential({ idToken: credential.identityToken });
   const result = await signInWithCredential(auth, oauthCredential);
-  const displayName = credential.fullName
+  const rawName = credential.fullName
     ? `${credential.fullName.givenName ?? ''} ${credential.fullName.familyName ?? ''}`.trim()
     : result.user.displayName ?? '';
+  const displayName = sanitizeString(rawName, 100);
   return getOrCreateProfile(result.user, displayName);
 }
 
