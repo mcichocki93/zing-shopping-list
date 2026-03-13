@@ -59,7 +59,7 @@ export async function updateDocument<T extends DocumentData>(
   id: string,
   data: Partial<T>,
 ): Promise<void> {
-  await updateDoc(doc(db, path, id), data);
+  await updateDoc(doc(db, path, id), data as DocumentData);
 }
 
 export async function deleteDocument(
