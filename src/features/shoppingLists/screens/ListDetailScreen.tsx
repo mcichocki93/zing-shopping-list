@@ -55,7 +55,7 @@ export function ListDetailScreen({ route, navigation }: Props) {
     limitReached, aiCallsRemaining, isPremium, hoursUntilReset,
     parse, retry, removeItem: removePreviewItem, clear: clearPreview,
   } = useAIParser();
-  const { handleSave: saveTemplate } = useTemplates();
+  const { handleSave: saveTemplate } = useTemplates({ load: false });
   const [inputClearTrigger, setInputClearTrigger] = useState(0);
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);

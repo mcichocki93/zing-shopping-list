@@ -3,7 +3,7 @@ import { saveTemplate, getTemplates, deleteTemplate } from '../../../services/fi
 import { useAuth } from '../../auth/hooks';
 import type { ListTemplate, TemplateItem } from '../../../types/template';
 
-export function useTemplates() {
+export function useTemplates({ load = true }: { load?: boolean } = {}) {
   const { user } = useAuth();
   const [templates, setTemplates] = useState<ListTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -24,20 +24,19 @@ export function useTemplates() {
   }, [user]);
 
   useEffect(() => {
-    reload();
-  }, [reload]);
+    if (load) reload();
+  }, [load, reload]);
 
   const handleSave = useCallback(async (name: string, items: TemplateItem[]): Promise<string | null> => {
     if (!user) return null;
     try {
       const id = await saveTemplate(user.id, name, items);
-      await reload();
       return id;
     } catch {
       setError('Nie udało się zapisać szablonu.');
       return null;
     }
-  }, [user, reload]);
+  }, [user]);
 
   const handleDelete = useCallback(async (templateId: string): Promise<void> => {
     if (!user) return;
