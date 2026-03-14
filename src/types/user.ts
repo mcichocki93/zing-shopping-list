@@ -13,6 +13,8 @@ export interface User {
   lastActiveAt: Date;
   // Monetization
   isPremium: boolean;
+  premiumExpiresAt?: Date;      // when the current subscription period ends
+  subscriptionToken?: string;  // last known Google Play purchase token
   aiUsageThisMonth: number;
   aiUsageResetDate: Date;
   customCategories?: CustomCategory[];

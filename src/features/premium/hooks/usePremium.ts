@@ -19,7 +19,12 @@ export function usePremium(): PremiumStatus {
     return { isPremium: false, aiUsageThisMonth: 0, aiCallsRemaining: 0, hasAIAccess: false, hoursUntilReset: null };
   }
 
-  const isPremium = user.isPremium ?? false;
+  // Defensive client-side expiry check — Cloud Function scheduler is authoritative
+  const rawExpiry = user.premiumExpiresAt as (Date & { toDate?: () => Date }) | undefined;
+  const expiresAt: Date | null = rawExpiry
+    ? (typeof rawExpiry.toDate === 'function' ? rawExpiry.toDate() : rawExpiry)
+    : null;
+  const isPremium = (user.isPremium ?? false) && (!expiresAt || expiresAt > new Date());
 
   if (isPremium) {
     return { isPremium: true, aiUsageThisMonth: 0, aiCallsRemaining: Infinity, hasAIAccess: true, hoursUntilReset: null };

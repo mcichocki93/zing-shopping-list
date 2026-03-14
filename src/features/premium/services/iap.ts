@@ -1,42 +1,118 @@
-/**
- * In-App Purchase service — skeleton for Google Play Billing.
- *
- * Full integration requires:
- *   1. Published app in Google Play Console
- *   2. Product created: "zing_premium" (one-time purchase)
- *   3. Install: npx expo install expo-iap
- *   4. Uncomment and implement the real purchase flow below
- *
- * For now this module exports types and stubs so the rest of the
- * app can be wired up without a live Play Store product.
- */
+import {
+  initConnection,
+  endConnection,
+  requestPurchase,
+  purchaseUpdatedListener,
+  purchaseErrorListener,
+  finishTransaction,
+  getAvailablePurchases,
+  type Purchase,
+} from 'expo-iap';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '../../../services/firebase/config';
+import Constants from 'expo-constants';
 
-export const IAP_PRODUCT_ID = 'zing_premium';
+export const IAP_PRODUCT_ID = 'zing_premium_monthly';
 
 export type PurchaseResult = 'success' | 'cancelled' | 'error';
 
-/**
- * Stub — replace with real expo-iap call after publishing to Play Store.
- * Returns 'success' in development so the UI can be tested end-to-end.
- */
-export async function purchasePremium(): Promise<PurchaseResult> {
-  // TODO: Replace with expo-iap implementation
-  // import * as IAP from 'expo-iap';
-  // const products = await IAP.getProducts([IAP_PRODUCT_ID]);
-  // const result = await IAP.requestPurchase(IAP_PRODUCT_ID);
-  // verify receipt server-side via Cloud Function, then call grantPremium()
+let connectionActive = false;
 
-  if (__DEV__) {
-    return 'success'; // simulate purchase in dev
+export async function initIAP(): Promise<void> {
+  if (connectionActive) return;
+  try {
+    await initConnection();
+    connectionActive = true;
+  } catch {
+    // Play Billing not available (emulator, unsupported device)
   }
-
-  return 'error';
 }
 
-/**
- * Stub — restore previous purchase on new device / reinstall.
- */
+export async function endIAP(): Promise<void> {
+  if (!connectionActive) return;
+  try {
+    await endConnection();
+    connectionActive = false;
+  } catch {
+    // ignore
+  }
+}
+
+type VerifyPayload = { purchaseToken: string; packageName: string } | { devGrant: boolean };
+type VerifyResult = { success: boolean };
+
+async function verifyWithServer(purchaseToken: string): Promise<void> {
+  const packageName = Constants.expoConfig?.android?.package ?? '';
+  const fn = httpsCallable<VerifyPayload, VerifyResult>(functions, 'verifyAndGrantPremium');
+  const result = await fn({ purchaseToken, packageName });
+  if (!result.data.success) {
+    throw new Error('Weryfikacja zakupu nieudana.');
+  }
+}
+
+export async function purchasePremium(): Promise<PurchaseResult> {
+  if (__DEV__) {
+    // In dev, call server with devGrant flag — only works against the local emulator
+    try {
+      const fn = httpsCallable<VerifyPayload, VerifyResult>(functions, 'verifyAndGrantPremium');
+      await fn({ devGrant: true });
+    } catch {
+      // dev grant not available — ignore for UI testing
+    }
+    return 'success';
+  }
+
+  return new Promise<PurchaseResult>((resolve) => {
+    const updateSub = purchaseUpdatedListener(async (purchase: Purchase) => {
+      if (purchase.productId !== IAP_PRODUCT_ID) return;
+      try {
+        const token = (purchase as { purchaseToken?: string | null }).purchaseToken ?? '';
+        if (!token) throw new Error('Brak tokenu zakupu.');
+        await verifyWithServer(token);
+        await finishTransaction({ purchase });
+        cleanup();
+        resolve('success');
+      } catch {
+        cleanup();
+        resolve('error');
+      }
+    });
+
+    const errorSub = purchaseErrorListener((error) => {
+      cleanup();
+      const msg = String((error as { message?: unknown }).message ?? '');
+      if (msg.includes('cancel') || msg.includes('E_USER_CANCELLED')) {
+        resolve('cancelled');
+      } else {
+        resolve('error');
+      }
+    });
+
+    function cleanup() {
+      updateSub.remove();
+      errorSub.remove();
+    }
+
+    requestPurchase({
+      request: { google: { skus: [IAP_PRODUCT_ID] } },
+      type: 'subs',
+    }).catch(() => {
+      cleanup();
+      resolve('error');
+    });
+  });
+}
+
 export async function restorePurchases(): Promise<boolean> {
-  // TODO: implement with expo-iap
-  return false;
+  try {
+    const purchases = await getAvailablePurchases();
+    const premium = purchases.find((p) => p.productId === IAP_PRODUCT_ID);
+    if (!premium) return false;
+    const token = (premium as { purchaseToken?: string | null }).purchaseToken ?? '';
+    if (!token) return false;
+    await verifyWithServer(token);
+    return true;
+  } catch {
+    return false;
+  }
 }
