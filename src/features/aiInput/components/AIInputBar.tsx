@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, StyleSheet, Modal } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { PixelInput, PixelButton, PixelTabs, QuantityStepper } from '../../../components/ui';
@@ -44,10 +44,22 @@ export function AIInputBar({ onParse, onAddManual, isParsing, disabled = false, 
   const [aiText, setAiText] = useState('');
   const { isListening, transcript, error: speechError, isSupported: isSpeechSupported, startListening, stopListening, clearTranscript } = useSpeechInput();
 
-  // Fill text field with speech transcript
+  // Captures the text already in the field before a new dictation session starts
+  const sessionBaseRef = useRef('');
+
+  // Append live transcript to existing text (instead of replacing)
   useEffect(() => {
-    if (transcript) setAiText(transcript);
+    if (!transcript) return;
+    const base = sessionBaseRef.current.trim();
+    setAiText(base ? base + ' ' + transcript : transcript);
   }, [transcript]);
+
+  const handleMicPressIn = async () => {
+    // Save current text as the base before this session adds to it
+    sessionBaseRef.current = aiText;
+    clearTranscript();
+    await startListening();
+  };
 
   useEffect(() => {
     if (clearTrigger > 0) {
@@ -152,27 +164,39 @@ export function AIInputBar({ onParse, onAddManual, isParsing, disabled = false, 
           <View style={styles.field}>
             <View style={styles.labelRow}>
               <Text style={styles.label}>TEKST:</Text>
-              {isSpeechSupported && (
-                <Pressable
-                  onPressIn={startListening}
-                  onPressOut={stopListening}
-                  disabled={isParsing || disabled}
-                  style={[styles.micBtn, isListening && { backgroundColor: COLORS.danger }]}
-                  accessibilityRole="button"
-                  accessibilityLabel="Przytrzymaj aby dyktować"
-                >
-                  <MaterialCommunityIcons
-                    name={isListening ? 'microphone' : 'microphone-outline'}
-                    size={18}
-                    color={isListening ? COLORS.white : COLORS.primary}
-                  />
-                </Pressable>
-              )}
+              <View style={styles.labelActions}>
+                {aiText.length > 0 && (
+                  <Pressable
+                    onPress={() => { setAiText(''); sessionBaseRef.current = ''; clearTranscript(); }}
+                    style={styles.clearBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Wyczyść tekst"
+                  >
+                    <MaterialCommunityIcons name="close-circle" size={18} color={COLORS.disabled} />
+                  </Pressable>
+                )}
+                {isSpeechSupported && (
+                  <Pressable
+                    onPressIn={handleMicPressIn}
+                    onPressOut={stopListening}
+                    disabled={isParsing || disabled}
+                    style={[styles.micBtn, isListening && { backgroundColor: COLORS.danger }]}
+                    accessibilityRole="button"
+                    accessibilityLabel="Przytrzymaj aby dyktować"
+                  >
+                    <MaterialCommunityIcons
+                      name={isListening ? 'microphone' : 'microphone-outline'}
+                      size={18}
+                      color={isListening ? COLORS.white : COLORS.primary}
+                    />
+                  </Pressable>
+                )}
+              </View>
             </View>
             <PixelInput
               placeholder={isListening ? 'Słucham...' : 'np. 2x mleko, 3 jabłka, chleb...'}
               value={aiText}
-              onChangeText={setAiText}
+              onChangeText={(t) => { setAiText(t); if (!isListening) sessionBaseRef.current = t; }}
               multiline
               numberOfLines={3}
               editable={!isParsing && !disabled && !isListening}
@@ -315,6 +339,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  labelActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+  clearBtn: {
+    width: TOUCH.minTarget,
+    height: TOUCH.minTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   micBtn: {
     width: TOUCH.minTarget,

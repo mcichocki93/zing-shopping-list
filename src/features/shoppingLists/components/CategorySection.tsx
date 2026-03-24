@@ -1,5 +1,6 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ShoppingItemRow } from './ShoppingItemRow';
 import { COLORS, SPACING, BORDERS, FONT_SIZE, FONT_WEIGHT, getCategoryColor } from '../../../constants';
 import type { ShoppingItem } from '../../../types/shoppingList';
@@ -29,6 +30,7 @@ export const CategorySection = memo(function CategorySection({
   isFirst = false,
   isLast = false,
 }: CategorySectionProps) {
+  const [collapsed, setCollapsed] = useState(false);
   const showArrows = !drag && (onMoveUp != null || onMoveDown != null);
   const isKupione = category === 'Kupione';
   const headerColor = isKupione ? COLORS.disabled : getCategoryColor(category);
@@ -36,10 +38,12 @@ export const CategorySection = memo(function CategorySection({
   return (
     <View style={styles.section}>
       <Pressable
+        onPress={() => setCollapsed((c) => !c)}
         onLongPress={drag}
         delayLongPress={150}
         style={[styles.header, { backgroundColor: headerColor }]}
-        accessibilityRole="header"
+        accessibilityRole="button"
+        accessibilityState={{ expanded: !collapsed }}
         accessibilityLabel={`${category}, ${items.length} produktów${drag ? '. Przytrzymaj aby zmienić kolejność' : ''}`}
       >
         {!isKupione && (
@@ -47,7 +51,7 @@ export const CategorySection = memo(function CategorySection({
         )}
         <Text style={styles.title}>{category}</Text>
         <View style={styles.headerRight}>
-          {showArrows && (
+          {showArrows && !collapsed && (
             <View style={styles.moveControls}>
               <Pressable
                 onPress={onMoveUp}
@@ -72,9 +76,14 @@ export const CategorySection = memo(function CategorySection({
             </View>
           )}
           <Text style={styles.count}>{items.length}</Text>
+          <MaterialCommunityIcons
+            name={collapsed ? 'chevron-down' : 'chevron-up'}
+            size={16}
+            color={COLORS.primary}
+          />
         </View>
       </Pressable>
-      {items.map((item) => (
+      {!collapsed && items.map((item) => (
         <ShoppingItemRow
           key={item.id}
           item={item}
