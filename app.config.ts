@@ -38,6 +38,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         speechRecognitionPermission: 'Zing potrzebuje dostępu do rozpoznawania mowy.',
       }],
       '@react-native-google-signin/google-signin',
+      'expo-iap',
     ],
     extra: {
       firebaseApiKey: process.env.FIREBASE_API_KEY,

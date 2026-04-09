@@ -1,13 +1,3 @@
-import {
-  initConnection,
-  endConnection,
-  requestPurchase,
-  purchaseUpdatedListener,
-  purchaseErrorListener,
-  finishTransaction,
-  getAvailablePurchases,
-  type Purchase,
-} from 'expo-iap';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../../../services/firebase/config';
 import Constants from 'expo-constants';
@@ -16,10 +6,33 @@ export const IAP_PRODUCT_ID = 'zing_premium_monthly';
 
 export type PurchaseResult = 'success' | 'cancelled' | 'error';
 
+// Lazy / guarded import — expo-iap requires a native build with the plugin linked.
+// If the native module is not registered (e.g. missing plugin, emulator), importing
+// expo-iap throws at runtime. We catch that here so the rest of the app still works.
+let iapModule: typeof import('expo-iap') | null = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  iapModule = require('expo-iap');
+} catch {
+  // Native module not available — IAP will be disabled
+}
+
+const {
+  initConnection,
+  endConnection,
+  requestPurchase,
+  purchaseUpdatedListener,
+  purchaseErrorListener,
+  finishTransaction,
+  getAvailablePurchases,
+} = iapModule ?? {};
+
+import type { Purchase } from 'expo-iap';
+
 let connectionActive = false;
 
 export async function initIAP(): Promise<void> {
-  if (connectionActive) return;
+  if (!initConnection || connectionActive) return;
   try {
     await initConnection();
     connectionActive = true;
@@ -29,7 +42,7 @@ export async function initIAP(): Promise<void> {
 }
 
 export async function endIAP(): Promise<void> {
-  if (!connectionActive) return;
+  if (!endConnection || !connectionActive) return;
   try {
     await endConnection();
     connectionActive = false;
@@ -62,14 +75,18 @@ export async function purchasePremium(): Promise<PurchaseResult> {
     return 'success';
   }
 
+  if (!requestPurchase || !purchaseUpdatedListener || !purchaseErrorListener || !finishTransaction) {
+    return 'error';
+  }
+
   return new Promise<PurchaseResult>((resolve) => {
-    const updateSub = purchaseUpdatedListener(async (purchase: Purchase) => {
+    const updateSub = purchaseUpdatedListener!(async (purchase: Purchase) => {
       if (purchase.productId !== IAP_PRODUCT_ID) return;
       try {
         const token = (purchase as { purchaseToken?: string | null }).purchaseToken ?? '';
         if (!token) throw new Error('Brak tokenu zakupu.');
         await verifyWithServer(token);
-        await finishTransaction({ purchase });
+        await finishTransaction!({ purchase });
         cleanup();
         resolve('success');
       } catch {
@@ -78,7 +95,7 @@ export async function purchasePremium(): Promise<PurchaseResult> {
       }
     });
 
-    const errorSub = purchaseErrorListener((error) => {
+    const errorSub = purchaseErrorListener!((error) => {
       cleanup();
       const msg = String((error as { message?: unknown }).message ?? '');
       if (msg.includes('cancel') || msg.includes('E_USER_CANCELLED')) {
@@ -93,7 +110,7 @@ export async function purchasePremium(): Promise<PurchaseResult> {
       errorSub.remove();
     }
 
-    requestPurchase({
+    requestPurchase!({
       request: { google: { skus: [IAP_PRODUCT_ID] } },
       type: 'subs',
     }).catch(() => {
@@ -104,6 +121,7 @@ export async function purchasePremium(): Promise<PurchaseResult> {
 }
 
 export async function restorePurchases(): Promise<boolean> {
+  if (!getAvailablePurchases) return false;
   try {
     const purchases = await getAvailablePurchases();
     const premium = purchases.find((p) => p.productId === IAP_PRODUCT_ID);
