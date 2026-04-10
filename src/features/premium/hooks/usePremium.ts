@@ -12,11 +12,18 @@ export interface PremiumStatus {
   hoursUntilReset: number | null; // null = no limit (premium) or already reset
 }
 
+// TODO: remove before release — forces premium for testing
+const FORCE_PREMIUM_FOR_TESTING = true;
+
 export function usePremium(): PremiumStatus {
   const { user } = useAuth();
 
   if (!user) {
     return { isPremium: false, aiUsageThisMonth: 0, aiCallsRemaining: 0, hasAIAccess: false, hoursUntilReset: null };
+  }
+
+  if (FORCE_PREMIUM_FOR_TESTING) {
+    return { isPremium: true, aiUsageThisMonth: 0, aiCallsRemaining: Infinity, hasAIAccess: true, hoursUntilReset: null };
   }
 
   // Defensive client-side expiry check — Cloud Function scheduler is authoritative
