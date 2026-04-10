@@ -3,9 +3,13 @@ import { Linking } from 'react-native';
 import { isExpoGo } from '../../../utils/platform';
 
 // expo-speech-recognition requires a native build — not available in Expo Go
-const SpeechModule = !isExpoGo
-  ? require('expo-speech-recognition')
-  : null;
+let SpeechModule: typeof import('expo-speech-recognition') | null = null;
+try {
+  if (!isExpoGo) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    SpeechModule = require('expo-speech-recognition');
+  }
+} catch { /* not available in this build */ }
 
 interface SpeechResultEvent {
   results: { transcript: string }[];
@@ -26,24 +30,28 @@ export function useSpeechInput(): UseSpeechInputReturn {
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  // Register event listeners via useEffect — satisfies rules of hooks (no conditional calls)
+  // Use addListener directly on ExpoSpeechRecognitionModule (NOT useSpeechRecognitionEvent hook)
+  // Calling a hook inside useEffect violates Rules of Hooks and crashes on Android
   useEffect(() => {
     if (!SpeechModule) return;
-    const unsubStart = SpeechModule.useSpeechRecognitionEvent('start', () => setIsListening(true));
-    const unsubEnd = SpeechModule.useSpeechRecognitionEvent('end', () => setIsListening(false));
-    const unsubResult = SpeechModule.useSpeechRecognitionEvent('result', (event: SpeechResultEvent) => {
+    const module = SpeechModule.ExpoSpeechRecognitionModule;
+
+    const subStart = module.addListener('start', () => setIsListening(true));
+    const subEnd = module.addListener('end', () => setIsListening(false));
+    const subResult = module.addListener('result', (event: SpeechResultEvent) => {
       const text: string = event.results[0]?.transcript ?? '';
       if (text) setTranscript(text);
     });
-    const unsubError = SpeechModule.useSpeechRecognitionEvent('error', () => {
+    const subError = module.addListener('error', () => {
       setError('Nie udało się rozpoznać mowy. Spróbuj ponownie.');
       setIsListening(false);
     });
+
     return () => {
-      unsubStart?.();
-      unsubEnd?.();
-      unsubResult?.();
-      unsubError?.();
+      subStart.remove();
+      subEnd.remove();
+      subResult.remove();
+      subError.remove();
     };
   }, []);
 

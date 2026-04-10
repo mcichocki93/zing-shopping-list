@@ -4,13 +4,14 @@ import { COLORS, SPACING, FONT_SIZE, FONT_WEIGHT } from '../constants';
 
 interface State {
   hasError: boolean;
+  errorMessage: string;
 }
 
 export class ErrorBoundary extends React.Component<{ children: React.ReactNode }, State> {
-  state: State = { hasError: false };
+  state: State = { hasError: false, errorMessage: '' };
 
-  static getDerivedStateFromError(): State {
-    return { hasError: true };
+  static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, errorMessage: error?.message ?? String(error) };
   }
 
   componentDidCatch(error: Error): void {
@@ -23,8 +24,9 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
         <View style={styles.container}>
           <Text style={styles.title}>Coś poszło nie tak</Text>
           <Text style={styles.message}>Spróbuj ponownie uruchomić aplikację.</Text>
+          <Text style={styles.errorDetail} selectable>{this.state.errorMessage}</Text>
           <Pressable
-            onPress={() => this.setState({ hasError: false })}
+            onPress={() => this.setState({ hasError: false, errorMessage: '' })}
             style={styles.button}
             accessibilityRole="button"
             accessibilityLabel="Spróbuj ponownie"
@@ -57,7 +59,14 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.body,
     color: COLORS.disabled,
     textAlign: 'center',
+    marginBottom: SPACING.sm,
+  },
+  errorDetail: {
+    fontSize: FONT_SIZE.caption,
+    color: COLORS.danger,
+    textAlign: 'center',
     marginBottom: SPACING.lg,
+    paddingHorizontal: SPACING.sm,
   },
   button: {
     paddingHorizontal: SPACING.lg,

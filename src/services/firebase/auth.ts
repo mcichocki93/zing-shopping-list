@@ -13,7 +13,16 @@ import {
 } from 'firebase/auth';
 import { httpsCallable } from 'firebase/functions';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { GoogleSignin, isSuccessResponse } from '@react-native-google-signin/google-signin';
+// Defensive import — native module may not be registered in older dev builds
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let GoogleSignin: any = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let isSuccessResponse: ((response: any) => boolean) | null = null;
+try {
+  const mod = require('@react-native-google-signin/google-signin');
+  GoogleSignin = mod.GoogleSignin;
+  isSuccessResponse = mod.isSuccessResponse;
+} catch { /* native module not available */ }
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
@@ -77,6 +86,7 @@ export async function signIn(
 }
 
 export async function signInWithGoogle(): Promise<User> {
+  if (!GoogleSignin || !isSuccessResponse) throw new Error('Google Sign-In niedostępny w tej wersji.');
   const webClientId = Constants.expoConfig?.extra?.googleWebClientId as string | undefined;
   GoogleSignin.configure({ webClientId });
   await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
@@ -113,7 +123,7 @@ export async function signInWithApple(): Promise<User> {
 export async function signOut(): Promise<void> {
   await firebaseSignOut(auth);
   // Also sign out from Google if active
-  try { await GoogleSignin.signOut(); } catch { /* not signed in via Google */ }
+  try { await GoogleSignin?.signOut(); } catch { /* not signed in via Google */ }
 }
 
 export async function resetPassword(email: string): Promise<void> {
