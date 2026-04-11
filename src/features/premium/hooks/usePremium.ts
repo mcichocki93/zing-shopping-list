@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../../services/firebase/config';
 import { COLLECTIONS } from '../../../constants';
@@ -17,6 +18,12 @@ const FORCE_PREMIUM_FOR_TESTING = true;
 
 export function usePremium(): PremiumStatus {
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (FORCE_PREMIUM_FOR_TESTING && user && !user.isPremium) {
+      grantPremium(user.id);
+    }
+  }, [user?.id]);
 
   if (!user) {
     return { isPremium: false, aiUsageThisMonth: 0, aiCallsRemaining: 0, hasAIAccess: false, hoursUntilReset: null };

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { PixelModal, PixelButton } from '../../../components/ui';
@@ -13,7 +13,11 @@ interface Props {
 
 export function TemplateManagerModal({ visible, onClose }: Props) {
   const { isPremium } = usePremium();
-  const { templates, isLoading, handleDelete } = useTemplates();
+  const { templates, isLoading, handleDelete, reload } = useTemplates();
+
+  useEffect(() => {
+    if (visible) reload();
+  }, [visible]);
 
   const onDelete = (id: string, name: string) => {
     Alert.alert(
