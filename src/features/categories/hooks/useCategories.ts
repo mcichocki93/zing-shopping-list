@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { CATEGORIES } from '../../../constants';
 import { useAuth } from '../../auth/hooks/useAuth';
+import { usePremium } from '../../premium/hooks/usePremium';
 import type { CustomCategory } from '../../../types/user';
 
 export interface UseCategoriesReturn {
@@ -15,7 +16,7 @@ export interface UseCategoriesReturn {
 export function useCategories(): UseCategoriesReturn {
   const { user, handleUpdateCustomCategories } = useAuth();
   const customCategories: CustomCategory[] = user?.customCategories ?? [];
-  const isPremium = user?.isPremium ?? false;
+  const { isPremium } = usePremium();
 
   const allCategories = [
     ...CATEGORIES,
