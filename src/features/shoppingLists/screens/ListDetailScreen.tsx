@@ -144,8 +144,12 @@ Lub wpisz kod: ${code}`,
         ...(unit !== undefined ? { unit } : {}),
         ...(category !== undefined ? { category } : {}),
       }));
-    await saveTemplate(name, items);
+    const saved = await saveTemplate(name, items);
     setIsSavingTemplate(false);
+    if (!saved) {
+      Alert.alert('Błąd', 'Nie udało się zapisać szablonu. Spróbuj ponownie.');
+      return;
+    }
     setShowSaveTemplate(false);
     setTemplateName('');
     Alert.alert('Szablon zapisany', `"${name}" został zapisany jako szablon.`);

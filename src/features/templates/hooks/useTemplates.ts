@@ -32,7 +32,8 @@ export function useTemplates({ load = true }: { load?: boolean } = {}) {
     try {
       const id = await saveTemplate(user.id, name, items);
       return id;
-    } catch {
+    } catch (err) {
+      console.error('[useTemplates] handleSave failed:', err);
       setError('Nie udało się zapisać szablonu.');
       return null;
     }

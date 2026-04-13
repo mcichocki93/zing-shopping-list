@@ -17,7 +17,7 @@ export function TemplateManagerModal({ visible, onClose }: Props) {
 
   useEffect(() => {
     if (visible) reload();
-  }, [visible]);
+  }, [visible, reload]);
 
   const onDelete = (id: string, name: string) => {
     Alert.alert(
