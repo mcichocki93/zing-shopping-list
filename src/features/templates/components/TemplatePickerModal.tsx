@@ -1,19 +1,24 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { PixelModal, PixelButton } from '../../../components/ui';
 import { COLORS, SPACING, BORDERS, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
+import { useTemplates } from '../hooks/useTemplates';
 import type { ListTemplate } from '../../../types/template';
 
 interface Props {
   visible: boolean;
-  templates: ListTemplate[];
-  isLoading: boolean;
   onSelect: (template: ListTemplate) => void;
   onClose: () => void;
 }
 
-export function TemplatePickerModal({ visible, templates, isLoading, onSelect, onClose }: Props) {
+export function TemplatePickerModal({ visible, onSelect, onClose }: Props) {
+  const { templates, isLoading, reload } = useTemplates();
+
+  useEffect(() => {
+    if (visible) reload();
+  }, [visible, reload]);
+
   return (
     <PixelModal visible={visible} onClose={onClose} title="Wybierz szablon">
       {isLoading ? (

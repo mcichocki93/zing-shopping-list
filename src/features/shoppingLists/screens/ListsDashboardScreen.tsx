@@ -15,7 +15,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { PixelButton, PixelInput, PixelCard, PixelModal } from '../../../components/ui';
 import { ThemePickerModal } from '../../../components/ThemePickerModal';
 import { CategoryManagerModal } from '../../categories';
-import { TemplatePickerModal, TemplateManagerModal, useTemplates, type ListTemplate, type TemplateItem } from '../../templates';
+import { TemplatePickerModal, TemplateManagerModal, type ListTemplate, type TemplateItem } from '../../templates';
 import { PremiumGateModal } from '../../premium/components/PremiumGateModal';
 import { usePremium } from '../../premium/hooks/usePremium';
 import { OfflineBanner } from '../../../components/OfflineBanner';
@@ -54,7 +54,6 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
   const [showTemplateManager, setShowTemplateManager] = useState(false);
   const [showTemplatesPremium, setShowTemplatesPremium] = useState(false);
   const { isPremium } = usePremium();
-  const { templates, isLoading: isLoadingTemplates } = useTemplates();
   const deepLinkHandled = useRef(false);
 
   // Handle incoming deep link: zing://join/CODE
@@ -369,8 +368,6 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
 
       <TemplatePickerModal
         visible={showTemplatePicker}
-        templates={templates}
-        isLoading={isLoadingTemplates}
         onSelect={onCreateFromTemplate}
         onClose={() => setShowTemplatePicker(false)}
       />
