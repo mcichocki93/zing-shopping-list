@@ -6,24 +6,36 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "GOOGLE_WEB_CLIENT_ID": "345202642275-vm1fd3t3fjvr3hu2t3sjl5oo6919128q.apps.googleusercontent.com"
+      }
     },
     "preview": {
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "GOOGLE_WEB_CLIENT_ID": "345202642275-vm1fd3t3fjvr3hu2t3sjl5oo6919128q.apps.googleusercontent.com"
       }
     },
     "preview-simulator": {
       "distribution": "internal",
       "ios": {
         "simulator": true
+      },
+      "env": {
+        "GOOGLE_WEB_CLIENT_ID": "345202642275-vm1fd3t3fjvr3hu2t3sjl5oo6919128q.apps.googleusercontent.com"
       }
     },
     "production": {
       "autoIncrement": true,
       "android": {
         "buildType": "app-bundle"
+      },
+      "env": {
+        "GOOGLE_WEB_CLIENT_ID": "345202642275-vm1fd3t3fjvr3hu2t3sjl5oo6919128q.apps.googleusercontent.com"
       }
     }
   },
