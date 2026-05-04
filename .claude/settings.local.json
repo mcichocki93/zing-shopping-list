@@ -45,7 +45,11 @@
       "Bash(grep:*)",
       "Bash(grep '\"\"version\"\"')",
       "Bash(python3 -c \":*)",
-      "Bash(grep -E \"\"\"sku\"\": string|sku: string\" node_modules/expo-iap/build/types.d.ts)"
+      "Bash(grep -E \"\"\"sku\"\": string|sku: string\" node_modules/expo-iap/build/types.d.ts)",
+      "Bash(eas secret:list)",
+      "Bash(eas env:list --environment production)",
+      "Bash(sed -n '50,80p' src/features/shoppingLists/screens/ListDetailScreen.tsx)",
+      "Bash(sed -n '190,270p' src/features/shoppingLists/screens/ListDetailScreen.tsx)"
     ]
   }
 }
