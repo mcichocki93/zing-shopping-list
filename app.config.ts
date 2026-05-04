@@ -39,6 +39,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       }],
       '@react-native-google-signin/google-signin',
       'expo-iap',
+      '@sentry/react-native',
     ],
     extra: {
       firebaseApiKey: process.env.FIREBASE_API_KEY,
