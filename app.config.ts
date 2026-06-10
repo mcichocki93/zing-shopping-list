@@ -39,7 +39,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       }],
       '@react-native-google-signin/google-signin',
       'expo-iap',
-      '@sentry/react-native',
+      ['@sentry/react-native', {
+        organization: 'marcin-cichocki',
+        project: 'zing',
+      }],
     ],
     extra: {
       firebaseApiKey: process.env.FIREBASE_API_KEY,
