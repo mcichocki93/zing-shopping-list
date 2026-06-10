@@ -1,5 +1,6 @@
 import { recordEvent } from 'expo-insights';
 import * as Sentry from '@sentry/react-native';
+import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -8,8 +9,6 @@ import { ThemeProvider } from './src/contexts/ThemeContext';
 import { RootNavigator } from './src/navigation';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 
-recordEvent('app_open');
-
 Sentry.init({
   dsn: 'https://41b29658697bb4dcb421bf10599f7cfb@o4510665312108544.ingest.de.sentry.io/4511330230730832',
   tracesSampleRate: 0.2,
@@ -17,6 +16,10 @@ Sentry.init({
 });
 
 export default Sentry.wrap(function App() {
+  useEffect(() => {
+    recordEvent('app_open');
+  }, []);
+
   return (
     <ErrorBoundary>
       <GestureHandlerRootView style={{ flex: 1 }}>
