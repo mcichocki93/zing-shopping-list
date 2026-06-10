@@ -5,6 +5,7 @@
   <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
   <uses-permission android:name="android.permission.VIBRATE"/>
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+  <uses-permission android:name="com.android.vending.BILLING"/>
   <queries>
     <intent>
       <action android:name="android.intent.action.VIEW"/>
@@ -32,6 +33,7 @@
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="exp+zing"/>
+        <data android:scheme="zing"/>
       </intent-filter>
     </activity>
   </application>
