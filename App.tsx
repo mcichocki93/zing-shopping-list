@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -7,9 +7,10 @@ import { AuthProvider } from './src/features/auth/components';
 import { ThemeProvider } from './src/contexts/ThemeContext';
 import { RootNavigator } from './src/navigation';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
+import { usePixelPopFonts } from './src/fonts';
 
 let sentryInitError: string | null = null;
-let SentryWrap: ((fn: () => JSX.Element) => () => JSX.Element) | null = null;
+let SentryWrap: ((fn: () => React.ReactElement) => () => React.ReactElement) | null = null;
 
 try {
   const Sentry = require('@sentry/react-native');
@@ -23,12 +24,16 @@ try {
 }
 
 function AppInner() {
+  const fontsLoaded = usePixelPopFonts();
+
   useEffect(() => {
     try {
       const { recordEvent } = require('expo-insights');
       recordEvent('app_open');
     } catch {}
   }, []);
+
+  if (!fontsLoaded) return null;
 
   return (
     <ErrorBoundary>

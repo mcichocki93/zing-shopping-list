@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, Share, Alert, StyleSheet, Pressable, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -6,6 +6,8 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AIInputBar, type ManualItemData } from '../../aiInput/components/AIInputBar';
 import { PreviewModal } from '../../aiInput/components/PreviewModal';
 import { useAIParser } from '../../aiInput/hooks/useAIParser';
+import { useSpeechInput } from '../../aiInput/hooks/useSpeechInput';
+import type { AIParsedItem } from '../../../types/ai';
 import { PremiumGateModal } from '../../premium/components/PremiumGateModal';
 import { PixelButton } from '../../../components/ui';
 import { OfflineBanner } from '../../../components/OfflineBanner';
@@ -15,6 +17,8 @@ import { EditItemModal } from '../components/EditItemModal';
 import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useShoppingList } from '../hooks';
+import { PP, PP_BORDER, PP_FONT, ppText } from '../../../constants/pixelPopTheme';
+import { HardShadow, SegmentProgress, CategoryCard, ComposeBar, PixelIcon } from '../../../components/ui-pixelpop';
 import type { CategoryGroup } from '../hooks/useShoppingList';
 import { useAuth } from '../../auth/hooks';
 import { isExpoGo } from '../../../utils/platform';
@@ -31,7 +35,7 @@ type Props = NativeStackScreenProps<ShoppingListsStackParamList, 'ListDetail'>;
 
 export function ListDetailScreen({ route, navigation }: Props) {
   const insets = useSafeAreaInsets();
-  const { theme } = useTheme();
+  const { theme, pixelPopEnabled, pixelPopAccent } = useTheme();
   const { listId } = route.params;
   const { user } = useAuth();
   const {
@@ -189,6 +193,88 @@ Lub wpisz kod: ${code}`,
 
   const movableCategories = sortedCategories.filter((g) => g.category !== 'Kupione');
   const kupioneGroup = sortedCategories.find((g) => g.category === 'Kupione');
+
+  if (pixelPopEnabled) {
+    return (
+      <PixelPopDetailView
+        list={list}
+        groups={sortedCategories}
+        accent={pixelPopAccent}
+        onBack={() => navigation.goBack()}
+        onShare={onShare}
+        onMenu={() => {
+          if (!isPremium) { setShowPremiumModal(true); return; }
+          setTemplateName(list?.title ?? '');
+          setShowSaveTemplate(true);
+        }}
+        onToggle={handleToggleItem}
+        onEdit={onEditItem}
+        isParsing={isParsing}
+        onParse={parse}
+        onAddManual={onAddManual}
+        onConfirmItems={onConfirmItems}
+        parsedItems={parsedItems}
+        clearPreview={clearPreview}
+        removePreviewItem={removePreviewItem}
+        inputClearTrigger={inputClearTrigger}
+        setInputClearTrigger={setInputClearTrigger}
+        insets={insets}
+        allCompleted={allCompleted}
+        onResetAll={handleResetAll}
+        aiError={aiError}
+        canRetry={canRetry}
+        onRetry={retry}
+        aiCallsRemaining={aiCallsRemaining}
+        hoursUntilReset={hoursUntilReset}
+        isPremium={isPremium}
+        onOpenPremium={() => setShowPremiumModal(true)}
+      >
+        <EditItemModal
+          visible={editingItem !== null}
+          item={editingItem}
+          onSave={onSaveEdit}
+          onClose={() => setEditingItem(null)}
+        />
+        <PremiumGateModal
+          visible={showPremiumModal}
+          onClose={() => setShowPremiumModal(false)}
+          limitReached={limitReached}
+        />
+        <ThemePickerModal visible={showThemePicker} onClose={() => setShowThemePicker(false)} />
+        {showSaveTemplate && (
+          <View style={styles.templateOverlay}>
+            <View style={styles.templateModal}>
+              <Text style={styles.templateTitle}>Zapisz jako szablon</Text>
+              <TextInput
+                style={styles.templateInput}
+                value={templateName}
+                onChangeText={setTemplateName}
+                placeholder="Nazwa szablonu"
+                autoFocus
+                maxLength={100}
+                returnKeyType="done"
+                onSubmitEditing={onSaveAsTemplate}
+              />
+              <View style={styles.templateButtons}>
+                <PixelButton
+                  title={isSavingTemplate ? 'Zapisuję...' : 'Zapisz'}
+                  onPress={onSaveAsTemplate}
+                  disabled={isSavingTemplate || !templateName.trim()}
+                  style={styles.templateBtn}
+                />
+                <PixelButton
+                  title="Anuluj"
+                  onPress={() => { setShowSaveTemplate(false); setTemplateName(''); }}
+                  variant="accentMuted"
+                  style={styles.templateBtn}
+                />
+              </View>
+            </View>
+          </View>
+        )}
+      </PixelPopDetailView>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: theme.accentLight }]}>
@@ -616,4 +702,214 @@ const styles = StyleSheet.create({
   templateBtn: {
     flex: 1,
   },
+});
+
+// ─── Pixel Pop Detail View ──────────────────────────────────────────────────
+
+interface PixelPopDetailViewProps {
+  list: NonNullable<ReturnType<typeof useShoppingList>['list']>;
+  groups: CategoryGroup[];
+  accent: string;
+  onBack: () => void;
+  onShare: () => void;
+  onMenu: () => void;
+  onToggle: (id: string) => void;
+  onEdit: (id: string) => void;
+  isParsing: boolean;
+  onParse: (text: string) => void;
+  onAddManual: (item: ManualItemData) => void;
+  onConfirmItems: () => void;
+  parsedItems: AIParsedItem[];
+  clearPreview: () => void;
+  removePreviewItem: (index: number) => void;
+  inputClearTrigger: number;
+  setInputClearTrigger: React.Dispatch<React.SetStateAction<number>>;
+  insets: { top: number; bottom: number };
+  allCompleted: boolean;
+  onResetAll: () => void;
+  aiError: string | null;
+  canRetry: boolean;
+  onRetry: () => void;
+  aiCallsRemaining: number;
+  hoursUntilReset: number | null;
+  isPremium: boolean;
+  onOpenPremium: () => void;
+  children?: React.ReactNode;
+}
+
+function PixelPopDetailView({
+  list, groups, accent,
+  onBack, onShare, onMenu,
+  onToggle, onEdit,
+  isParsing, onParse, onAddManual, onConfirmItems,
+  parsedItems, clearPreview, removePreviewItem, inputClearTrigger, setInputClearTrigger,
+  insets, allCompleted, onResetAll,
+  aiError, canRetry, onRetry,
+  aiCallsRemaining, hoursUntilReset, isPremium, onOpenPremium,
+  children,
+}: PixelPopDetailViewProps) {
+  const [mode, setMode] = useState(0); // 0=AI, 1=manual
+  const [composeText, setComposeText] = useState('');
+  const { isListening, transcript, startListening, stopListening, clearTranscript } = useSpeechInput();
+  const sessionBaseRef = useRef('');
+  const showPreview = parsedItems.length > 0;
+
+  useEffect(() => {
+    if (!transcript) return;
+    const base = sessionBaseRef.current.trim();
+    setComposeText(base ? base + ' ' + transcript : transcript);
+  }, [transcript]);
+
+  useEffect(() => {
+    if (inputClearTrigger > 0) {
+      setComposeText('');
+      clearTranscript();
+    }
+  }, [inputClearTrigger, clearTranscript]);
+
+  const handleMicPressIn = async () => {
+    sessionBaseRef.current = composeText;
+    clearTranscript();
+    await startListening();
+  };
+
+  const handleSend = () => {
+    if (mode === 0) {
+      const t = composeText.trim();
+      if (!t || isParsing) return;
+      onParse(t);
+    }
+  };
+
+  const allItems = groups.flatMap((g) => g.items);
+  const done = allItems.filter((i) => i.isCompleted).length;
+  const total = allItems.length;
+
+  function categoryIcon(cat: string): string {
+    const map: Record<string, string> = {
+      'Owoce i warzywa': 'apple', 'Nabiał': 'milk', 'Pieczywo': 'bread', 'Napoje': 'drink',
+    };
+    return map[cat] ?? 'cart';
+  }
+
+  return (
+    <View style={{ flex: 1, backgroundColor: PP.paper }}>
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: insets.bottom + 180 }}>
+        {/* Nav */}
+        <View style={ppDetailStyles.nav}>
+          <Pressable onPress={onBack} style={ppDetailStyles.iconBtn} accessibilityLabel="Wróć">
+            <PixelIcon name="chevronL" size={16} color={PP.ink} />
+          </Pressable>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Pressable onPress={onShare} style={ppDetailStyles.iconBtn} accessibilityLabel="Udostępnij">
+              <PixelIcon name="share" size={14} color={PP.ink} />
+            </Pressable>
+            <Pressable onPress={onMenu} style={ppDetailStyles.iconBtn} accessibilityLabel="Menu">
+              <PixelIcon name="menu" size={14} color={PP.ink} />
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Title + meta */}
+        <View style={{ paddingHorizontal: 18, paddingTop: 8 }}>
+          <Text style={ppText.title}>{list.title}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
+            {list.inviteCode ? (
+              <Text style={ppDetailStyles.code}>KOD · {list.inviteCode}</Text>
+            ) : null}
+            <Text style={ppText.meta}>{list.memberIds.length} {list.memberIds.length === 1 ? 'osoba' : 'osoby'}</Text>
+            <Text style={ppText.meta}>{done}/{total}</Text>
+          </View>
+        </View>
+
+        {/* Progress card */}
+        <View style={{ paddingHorizontal: 16, marginTop: 14, marginBottom: 16 }}>
+          <HardShadow offset={4}>
+            <View style={ppDetailStyles.progressCard}>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
+                <Text style={ppText.catLabel}>POSTĘP</Text>
+                <Text style={{ fontFamily: PP_FONT.display, fontSize: 16, color: PP.ink }}>
+                  {done}<Text style={{ fontSize: 10, color: PP.muted }}>/{total}</Text>
+                </Text>
+              </View>
+              <SegmentProgress total={Math.max(total, 1)} done={done} height={10} fill={accent} empty="#EFE7DA" gap={3} />
+            </View>
+          </HardShadow>
+        </View>
+
+        {/* Completed banner */}
+        {allCompleted && (
+          <View style={[ppDetailStyles.completedBanner, { backgroundColor: accent }]}>
+            <Text style={{ fontFamily: PP_FONT.display, fontSize: 12, color: PP.ink }}>✓ LISTA ZREALIZOWANA!</Text>
+            <Pressable onPress={onResetAll} style={ppDetailStyles.resetBtn} accessibilityLabel="Resetuj listę">
+              <Text style={{ fontFamily: PP_FONT.uiSemi, fontSize: 12, color: PP.ink }}>Resetuj listę</Text>
+            </Pressable>
+          </View>
+        )}
+
+        {/* AI errors */}
+        {aiError ? (
+          <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
+            <Text style={{ color: '#FF3B30', fontSize: 12, fontFamily: PP_FONT.uiSemi }}>{aiError}</Text>
+          </View>
+        ) : null}
+
+        {/* Category groups */}
+        <View style={{ paddingHorizontal: 16, gap: 14 }}>
+          {groups.map((g) => (
+            <CategoryCard
+              key={g.category}
+              category={g.category}
+              icon={categoryIcon(g.category)}
+              items={g.items.map((i) => ({
+                id: i.id,
+                name: i.name,
+                quantity: i.quantity,
+                unit: i.unit,
+                isCompleted: i.isCompleted,
+              }))}
+              onToggle={onToggle}
+              onEdit={onEdit}
+            />
+          ))}
+          {groups.length === 0 && (
+            <Text style={[ppText.meta, { textAlign: 'center', marginTop: 24 }]}>Lista jest pusta. Dodaj produkty poniżej.</Text>
+          )}
+        </View>
+      </ScrollView>
+
+      {/* Preview modal for AI results */}
+      <PreviewModal
+        visible={showPreview}
+        items={parsedItems}
+        onConfirm={onConfirmItems}
+        onCancel={clearPreview}
+        onRemoveItem={removePreviewItem}
+      />
+
+      {/* Compose bar */}
+      <ComposeBar
+        mode={mode}
+        onModeChange={setMode}
+        value={composeText}
+        onChangeText={setComposeText}
+        onSend={handleSend}
+        onMicPressIn={handleMicPressIn}
+        onMicPressOut={stopListening}
+        accent={accent}
+        placeholder={mode === 0 ? (isListening ? 'Słucham...' : '2x mleko, chleb, jabłka…') : 'Nazwa produktu'}
+      />
+
+      {children}
+    </View>
+  );
+}
+
+const ppDetailStyles = StyleSheet.create({
+  nav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 4 },
+  iconBtn: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: PP.panel, borderWidth: PP_BORDER.thick, borderColor: PP.ink },
+  code: { fontFamily: 'Inter_600SemiBold', fontSize: 10, color: PP.paper, backgroundColor: PP.ink, paddingHorizontal: 6, paddingVertical: 3 },
+  progressCard: { backgroundColor: PP.panel, borderWidth: PP_BORDER.thick, borderColor: PP.ink, padding: 12 },
+  completedBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: 16, marginBottom: 16, paddingHorizontal: 14, paddingVertical: 12, borderWidth: PP_BORDER.thick, borderColor: PP.ink },
+  resetBtn: { paddingHorizontal: 10, paddingVertical: 4, backgroundColor: PP.paper, borderWidth: PP_BORDER.thin, borderColor: PP.ink },
 });

@@ -3,23 +3,34 @@ import { doc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../services/firebase/config';
 import { COLLECTIONS } from '../constants';
 import { THEMES, DEFAULT_THEME, type ThemeName, type AppTheme } from '../constants/themes';
+import { PP } from '../constants/pixelPopTheme';
 import { useAuth } from '../features/auth/hooks';
 
 interface ThemeContextValue {
   theme: AppTheme;
   themeName: ThemeName;
   setTheme: (name: ThemeName) => Promise<void>;
+  pixelPopEnabled: boolean;
+  setPixelPopEnabled: (enabled: boolean) => void;
+  pixelPopAccent: string;
+  setPixelPopAccent: (color: string) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
   theme: THEMES[DEFAULT_THEME],
   themeName: DEFAULT_THEME,
   setTheme: async () => {},
+  pixelPopEnabled: false,
+  setPixelPopEnabled: () => {},
+  pixelPopAccent: PP.pink,
+  setPixelPopAccent: () => {},
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [themeName, setThemeName] = useState<ThemeName>(DEFAULT_THEME);
+  const [pixelPopEnabled, setPixelPopEnabled] = useState(false);
+  const [pixelPopAccent, setPixelPopAccent] = useState<string>(PP.pink);
 
   useEffect(() => {
     if (!user) {
@@ -52,7 +63,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const theme = THEMES[themeName];
 
   return (
-    <ThemeContext.Provider value={{ theme, themeName, setTheme }}>
+    <ThemeContext.Provider value={{ theme, themeName, setTheme, pixelPopEnabled, setPixelPopEnabled, pixelPopAccent, setPixelPopAccent }}>
       {children}
     </ThemeContext.Provider>
   );
