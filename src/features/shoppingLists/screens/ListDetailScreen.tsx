@@ -749,6 +749,7 @@ function PixelPopDetailView({
   aiCallsRemaining, hoursUntilReset, isPremium, onOpenPremium,
   children,
 }: PixelPopDetailViewProps) {
+  const tabBarHeight = useBottomTabBarHeight();
   const [mode, setMode] = useState(0); // 0=AI, 1=manual
   const [composeText, setComposeText] = useState('');
   const { isListening, transcript, startListening, stopListening, clearTranscript } = useSpeechInput();
@@ -800,7 +801,7 @@ function PixelPopDetailView({
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: PP.paper }}
+      style={{ flex: 1, backgroundColor: PP.paper, paddingBottom: tabBarHeight }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: 24 }} style={{ flex: 1 }}>
