@@ -29,7 +29,7 @@ const ThemeContext = createContext<ThemeContextValue>({
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [themeName, setThemeName] = useState<ThemeName>(DEFAULT_THEME);
-  const [pixelPopEnabled, setPixelPopEnabled] = useState(false);
+  const [pixelPopEnabled, setPixelPopEnabled] = useState(true);
   const [pixelPopAccent, setPixelPopAccent] = useState<string>(PP.pink);
 
   useEffect(() => {
