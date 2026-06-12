@@ -776,10 +776,15 @@ function PixelPopDetailView({
   };
 
   const handleSend = () => {
+    const t = composeText.trim();
+    if (!t) return;
     if (mode === 0) {
-      const t = composeText.trim();
-      if (!t || isParsing) return;
+      if (isParsing) return;
       onParse(t);
+    } else {
+      onAddManual({ name: t, quantity: 1, unit: 'szt', category: 'Inne' });
+      setComposeText('');
+      sessionBaseRef.current = '';
     }
   };
 
@@ -795,7 +800,11 @@ function PixelPopDetailView({
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: PP.paper }}>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: PP.paper }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={tabBarHeight}
+    >
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: tabBarHeight + 170 }}>
         {/* Nav */}
         <View style={ppDetailStyles.nav}>
@@ -889,7 +898,7 @@ function PixelPopDetailView({
         onRemoveItem={removePreviewItem}
       />
 
-      {/* Compose bar — positioned above the tab bar */}
+      {/* Compose bar — full-width, positioned flush above tab bar */}
       <ComposeBar
         mode={mode}
         onModeChange={setMode}
@@ -900,11 +909,12 @@ function PixelPopDetailView({
         onMicPressOut={stopListening}
         accent={accent}
         placeholder={mode === 0 ? (isListening ? 'Słucham...' : '2x mleko, chleb, jabłka…') : 'Nazwa produktu'}
-        style={{ bottom: tabBarHeight + 8 }}
+        floating={false}
+        style={{ bottom: tabBarHeight }}
       />
 
       {children}
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

@@ -25,15 +25,16 @@ interface ComposeBarProps {
   accent?: string;
   placeholder?: string;
   style?: ViewStyle;
+  floating?: boolean;
 }
 
 export function ComposeBar({
   mode, onModeChange, value, onChangeText, onSend,
   onMicPressIn, onMicPressOut, accent = PP.pink,
-  placeholder = '2x mleko, chleb, jabłka…', style,
+  placeholder = '2x mleko, chleb, jabłka…', style, floating = true,
 }: ComposeBarProps) {
   return (
-    <GlassBar floating contentStyle={styles.content} style={style}>
+    <GlassBar floating={floating} contentStyle={styles.content} style={style}>
       <SegmentedControl options={['✦ AI', '+ RĘCZNIE']} value={mode} onChange={onModeChange} accent={accent} />
       <View style={styles.row}>
         <TextInput
