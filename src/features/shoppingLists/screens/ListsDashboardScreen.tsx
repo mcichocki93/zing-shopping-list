@@ -13,6 +13,7 @@ import DraggableFlatList, { RenderItemParams, ScaleDecorator } from 'react-nativ
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { PixelButton, PixelInput, PixelCard, PixelModal } from '../../../components/ui';
 import { ThemePickerModal } from '../../../components/ThemePickerModal';
 import { CategoryManagerModal } from '../../categories';
@@ -693,6 +694,7 @@ function PixelPopDashboardView({
   lists, isLoading, doneItems, totalItems, displayName, accent,
   onOpenList, onCreate, onOpenSettings, onShare, insets,
 }: PixelPopDashboardViewProps) {
+  const tabBarHeight = useBottomTabBarHeight();
   const [search, setSearch] = useState('');
   const filtered = search
     ? lists.filter((l) => l.title.toLowerCase().includes(search.toLowerCase()))
@@ -714,7 +716,7 @@ function PixelPopDashboardView({
 
   return (
     <View style={{ flex: 1, backgroundColor: PP.paper }}>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: insets.bottom + 110 }}>
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: tabBarHeight + 70 }}>
         {/* Header */}
         <View style={ppStyles.header}>
           <View style={ppStyles.brandRow}>
@@ -793,7 +795,7 @@ function PixelPopDashboardView({
         </View>
       </ScrollView>
 
-      <Fab onPress={onCreate} accent={accent} bottomOffset={insets.bottom + 86} accessibilityLabel="Nowa lista" />
+      <Fab onPress={onCreate} accent={accent} bottomOffset={tabBarHeight + 16} accessibilityLabel="Nowa lista" />
     </View>
   );
 }

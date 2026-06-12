@@ -6,14 +6,19 @@ import { HardShadow, PixelIcon } from '../../../components/ui-pixelpop';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { CategoryManagerModal } from '../../categories';
-import { ThemePickerModal } from '../../../components/ThemePickerModal';
+
+const ACCENT_COLORS = [
+  { key: 'pink',   color: PP.pink },
+  { key: 'yellow', color: PP.yellow },
+  { key: 'violet', color: PP.violet },
+  { key: 'cyan',   color: PP.cyan },
+];
 
 export function PixelPopProfileScreen() {
   const insets = useSafeAreaInsets();
   const { user, handleSignOut, handleDeleteAccount, isLoading } = useAuth();
-  const { pixelPopAccent } = useTheme();
+  const { pixelPopAccent, setPixelPopAccent } = useTheme();
   const [showCategories, setShowCategories] = React.useState(false);
-  const [showTheme, setShowTheme] = React.useState(false);
 
   const onDeleteAccount = () => {
     Alert.alert(
@@ -47,7 +52,29 @@ export function PixelPopProfileScreen() {
           <View style={styles.block}>
             <SettingsRow icon="gear" label="Zarządzaj kategoriami" onPress={() => setShowCategories(true)} />
             <View style={styles.divider} />
-            <SettingsRow icon="template" label="Motyw aplikacji" onPress={() => setShowTheme(true)} />
+            {/* Pixel Pop accent color picker */}
+            <View style={styles.accentRow}>
+              <PixelIcon name="template" size={16} color={PP.ink} />
+              <Text style={[ppText.rowBody, { flex: 1 }]}>Kolor akcentu</Text>
+              <View style={styles.swatches}>
+                {ACCENT_COLORS.map(({ key, color }) => (
+                  <Pressable
+                    key={key}
+                    onPress={() => setPixelPopAccent(color)}
+                    accessibilityLabel={`Akcent: ${key}`}
+                    style={[
+                      styles.swatch,
+                      { backgroundColor: color },
+                      pixelPopAccent === color && styles.swatchActive,
+                    ]}
+                  >
+                    {pixelPopAccent === color && (
+                      <Text style={styles.swatchCheck}>✓</Text>
+                    )}
+                  </Pressable>
+                ))}
+              </View>
+            </View>
             <View style={styles.divider} />
             <SettingsRow
               icon="share"
@@ -88,7 +115,6 @@ export function PixelPopProfileScreen() {
       </View>
 
       <CategoryManagerModal visible={showCategories} onClose={() => setShowCategories(false)} />
-      <ThemePickerModal visible={showTheme} onClose={() => setShowTheme(false)} />
     </View>
   );
 }
@@ -112,4 +138,9 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     paddingVertical: 14, borderWidth: PP_BORDER.thick, borderColor: PP.ink,
   },
+  accentRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 12, minHeight: 48 },
+  swatches: { flexDirection: 'row', gap: 8 },
+  swatch: { width: 28, height: 28, borderWidth: PP_BORDER.thick, borderColor: PP.ink, alignItems: 'center', justifyContent: 'center' },
+  swatchActive: { borderWidth: PP_BORDER.thick + 1, borderColor: PP.ink },
+  swatchCheck: { fontFamily: PP_FONT.uiBold, fontSize: 14, color: PP.ink },
 });

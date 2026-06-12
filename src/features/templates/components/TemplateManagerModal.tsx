@@ -5,6 +5,9 @@ import { PixelModal, PixelButton } from '../../../components/ui';
 import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
 import { useTemplates } from '../hooks/useTemplates';
 import { usePremium } from '../../premium/hooks/usePremium';
+import { useTheme } from '../../../contexts/ThemeContext';
+import { PP, PP_BORDER, PP_FONT, ppText } from '../../../constants/pixelPopTheme';
+import { PPModal, PixelIcon } from '../../../components/ui-pixelpop';
 
 interface Props {
   visible: boolean;
@@ -14,6 +17,7 @@ interface Props {
 export function TemplateManagerModal({ visible, onClose }: Props) {
   const { isPremium } = usePremium();
   const { templates, isLoading, handleDelete, reload } = useTemplates();
+  const { pixelPopEnabled, pixelPopAccent } = useTheme();
 
   useEffect(() => {
     if (visible) reload();
@@ -29,6 +33,53 @@ export function TemplateManagerModal({ visible, onClose }: Props) {
       ],
     );
   };
+
+  if (pixelPopEnabled) {
+    return (
+      <PPModal visible={visible} onClose={onClose} title="SZABLONY LIST">
+        {!isPremium && (
+          <View style={pp.premiumBanner}>
+            <PixelIcon name="star" size={14} color={PP.muted} />
+            <Text style={pp.premiumText}>Szablony list — tylko dla Premium</Text>
+          </View>
+        )}
+
+        {isPremium && (
+          <>
+            {isLoading ? (
+              <ActivityIndicator size="small" color={pixelPopAccent} style={pp.loader} />
+            ) : templates.length === 0 ? (
+              <Text style={pp.emptyText}>Brak szablonów. Zapisz listę jako szablon z ekranu listy.</Text>
+            ) : (
+              <ScrollView style={pp.scroll} showsVerticalScrollIndicator={false}>
+                {templates.map((t) => (
+                  <View key={t.id} style={pp.row}>
+                    <PixelIcon name="template" size={16} color={PP.ink} />
+                    <View style={pp.rowInfo}>
+                      <Text style={ppText.rowBody}>{t.name}</Text>
+                      <Text style={ppText.meta}>{t.items.length} produktów</Text>
+                    </View>
+                    <Pressable
+                      onPress={() => onDelete(t.id, t.name)}
+                      style={pp.deleteBtn}
+                      accessibilityLabel={`Usuń szablon ${t.name}`}
+                      hitSlop={8}
+                    >
+                      <PixelIcon name="trash" size={14} color={PP.panel} />
+                    </Pressable>
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+          </>
+        )}
+
+        <Pressable onPress={onClose} style={pp.closeBtn} accessibilityLabel="Zamknij">
+          <Text style={pp.closeBtnText}>ZAMKNIJ</Text>
+        </Pressable>
+      </PPModal>
+    );
+  }
 
   return (
     <PixelModal visible={visible} onClose={onClose} title="Szablony list">
@@ -75,56 +126,45 @@ export function TemplateManagerModal({ visible, onClose }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  premiumBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-    paddingVertical: SPACING.sm,
-  },
-  premiumText: {
-    fontSize: FONT_SIZE.caption,
-    color: COLORS.disabled,
-  },
-  loader: {
-    marginVertical: SPACING.md,
-  },
-  scroll: {
-    maxHeight: 380,
-  },
-  emptyText: {
-    fontSize: FONT_SIZE.caption,
-    color: COLORS.disabled,
-    paddingVertical: SPACING.sm,
-    lineHeight: 20,
-  },
+// ─── Pixel Pop styles ────────────────────────────────────────────────────────
+
+const pp = StyleSheet.create({
+  premiumBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 12 },
+  premiumText: { fontFamily: PP_FONT.uiSemi, fontSize: 12, color: PP.muted },
+  loader: { marginVertical: 16 },
+  scroll: { maxHeight: 360 },
+  emptyText: { fontFamily: PP_FONT.uiSemi, fontSize: 12, color: PP.muted, paddingVertical: 12, lineHeight: 20 },
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: SPACING.xs,
-    gap: SPACING.sm,
-    borderBottomWidth: BORDERS.width,
-    borderBottomColor: COLORS.border,
+    flexDirection: 'row', alignItems: 'center', paddingVertical: 12,
+    gap: 10, borderBottomWidth: PP_BORDER.thin, borderBottomColor: PP.ink + '33',
   },
-  rowInfo: {
-    flex: 1,
-  },
-  rowName: {
-    fontSize: FONT_SIZE.body,
-    fontWeight: FONT_WEIGHT.bold,
-    color: COLORS.primary,
-  },
-  rowMeta: {
-    fontSize: FONT_SIZE.caption,
-    color: COLORS.disabled,
-    marginTop: 2,
-  },
+  rowInfo: { flex: 1 },
   deleteBtn: {
-    padding: SPACING.xs,
-    minWidth: TOUCH.minTarget / 2,
-    alignItems: 'center',
+    width: 32, height: 32, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#FF3B30', borderWidth: PP_BORDER.base, borderColor: PP.ink,
   },
   closeBtn: {
-    marginTop: SPACING.sm,
+    marginTop: 14, alignItems: 'center', paddingVertical: 12,
+    borderWidth: PP_BORDER.thick, borderColor: PP.ink, backgroundColor: PP.ink,
   },
+  closeBtnText: { fontFamily: PP_FONT.display, fontSize: 9, color: PP.paper },
+});
+
+// ─── Legacy styles ───────────────────────────────────────────────────────────
+
+const styles = StyleSheet.create({
+  premiumBanner: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, paddingVertical: SPACING.sm },
+  premiumText: { fontSize: FONT_SIZE.caption, color: COLORS.disabled },
+  loader: { marginVertical: SPACING.md },
+  scroll: { maxHeight: 380 },
+  emptyText: { fontSize: FONT_SIZE.caption, color: COLORS.disabled, paddingVertical: SPACING.sm, lineHeight: 20 },
+  row: {
+    flexDirection: 'row', alignItems: 'center', paddingVertical: SPACING.xs,
+    gap: SPACING.sm, borderBottomWidth: BORDERS.width, borderBottomColor: COLORS.border,
+  },
+  rowInfo: { flex: 1 },
+  rowName: { fontSize: FONT_SIZE.body, fontWeight: FONT_WEIGHT.bold, color: COLORS.primary },
+  rowMeta: { fontSize: FONT_SIZE.caption, color: COLORS.disabled, marginTop: 2 },
+  deleteBtn: { padding: SPACING.xs, minWidth: TOUCH.minTarget / 2, alignItems: 'center' },
+  closeBtn: { marginTop: SPACING.sm },
 });

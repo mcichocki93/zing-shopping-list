@@ -8,7 +8,7 @@
 // Dla zwięzłości pole tekstowe jest tu kontrolowane przez propsy.
 
 import React from 'react';
-import { View, TextInput, Pressable, StyleSheet } from 'react-native';
+import { View, TextInput, Pressable, StyleSheet, ViewStyle } from 'react-native';
 import { PP, PP_BORDER, PP_FONT } from '../../constants/pixelPopTheme';
 import { GlassBar } from './GlassBar';
 import { SegmentedControl } from './SegmentedControl';
@@ -24,15 +24,16 @@ interface ComposeBarProps {
   onMicPressOut?: () => void;
   accent?: string;
   placeholder?: string;
+  style?: ViewStyle;
 }
 
 export function ComposeBar({
   mode, onModeChange, value, onChangeText, onSend,
   onMicPressIn, onMicPressOut, accent = PP.pink,
-  placeholder = '2x mleko, chleb, jabłka…',
+  placeholder = '2x mleko, chleb, jabłka…', style,
 }: ComposeBarProps) {
   return (
-    <GlassBar floating contentStyle={styles.content}>
+    <GlassBar floating contentStyle={styles.content} style={style}>
       <SegmentedControl options={['✦ AI', '+ RĘCZNIE']} value={mode} onChange={onModeChange} accent={accent} />
       <View style={styles.row}>
         <TextInput

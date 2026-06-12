@@ -3,6 +3,7 @@ import { View, Text, ScrollView, ActivityIndicator, Share, Alert, StyleSheet, Pr
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { AIInputBar, type ManualItemData } from '../../aiInput/components/AIInputBar';
 import { PreviewModal } from '../../aiInput/components/PreviewModal';
 import { useAIParser } from '../../aiInput/hooks/useAIParser';
@@ -748,6 +749,7 @@ function PixelPopDetailView({
   aiCallsRemaining, hoursUntilReset, isPremium, onOpenPremium,
   children,
 }: PixelPopDetailViewProps) {
+  const tabBarHeight = useBottomTabBarHeight();
   const [mode, setMode] = useState(0); // 0=AI, 1=manual
   const [composeText, setComposeText] = useState('');
   const { isListening, transcript, startListening, stopListening, clearTranscript } = useSpeechInput();
@@ -794,7 +796,7 @@ function PixelPopDetailView({
 
   return (
     <View style={{ flex: 1, backgroundColor: PP.paper }}>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: insets.bottom + 180 }}>
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: tabBarHeight + 170 }}>
         {/* Nav */}
         <View style={ppDetailStyles.nav}>
           <Pressable onPress={onBack} style={ppDetailStyles.iconBtn} accessibilityLabel="Wróć">
@@ -887,7 +889,7 @@ function PixelPopDetailView({
         onRemoveItem={removePreviewItem}
       />
 
-      {/* Compose bar */}
+      {/* Compose bar — positioned above the tab bar */}
       <ComposeBar
         mode={mode}
         onModeChange={setMode}
@@ -898,6 +900,7 @@ function PixelPopDetailView({
         onMicPressOut={stopListening}
         accent={accent}
         placeholder={mode === 0 ? (isListening ? 'Słucham...' : '2x mleko, chleb, jabłka…') : 'Nazwa produktu'}
+        style={{ bottom: tabBarHeight + 8 }}
       />
 
       {children}

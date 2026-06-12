@@ -13,3 +13,4 @@ export { CategoryCard } from './CategoryCard';
 export type { CategoryItem } from './CategoryCard';
 export { PixelPopTabBar } from './PixelPopTabBar';
 export { ComposeBar } from './ComposeBar';
+export { PPModal } from './PPModal';
