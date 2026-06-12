@@ -800,12 +800,9 @@ function PixelPopDetailView({
   }
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: PP.paper, paddingBottom: tabBarHeight }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: 24 }} style={{ flex: 1 }}>
-        {/* Nav */}
+    <View style={{ flex: 1, backgroundColor: PP.paper }}>
+      {/* ── Fixed header: nav + compose bar ── */}
+      <View style={[ppDetailStyles.header, { paddingTop: insets.top + 8 }]}>
         <View style={ppDetailStyles.nav}>
           <Pressable onPress={onBack} style={ppDetailStyles.iconBtn} accessibilityLabel="Wróć">
             <PixelIcon name="chevronL" size={16} color={PP.ink} />
@@ -820,10 +817,27 @@ function PixelPopDetailView({
           </View>
         </View>
 
+        <ComposeBar
+          mode={mode}
+          onModeChange={setMode}
+          value={composeText}
+          onChangeText={setComposeText}
+          onSend={handleSend}
+          onMicPressIn={handleMicPressIn}
+          onMicPressOut={stopListening}
+          accent={accent}
+          placeholder={mode === 0 ? (isListening ? 'Słucham...' : '2x mleko, chleb, jabłka…') : 'Nazwa produktu'}
+          floating={false}
+          style={{ position: 'relative' }}
+        />
+      </View>
+
+      {/* ── Scrollable list content ── */}
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingTop: 16, paddingBottom: tabBarHeight + 16 }}>
         {/* Title + meta */}
-        <View style={{ paddingHorizontal: 18, paddingTop: 8 }}>
+        <View style={{ paddingHorizontal: 18 }}>
           <Text style={ppText.title}>{list.title}</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
             {list.inviteCode ? (
               <Text style={ppDetailStyles.code}>KOD · {list.inviteCode}</Text>
             ) : null}
@@ -883,12 +897,11 @@ function PixelPopDetailView({
             />
           ))}
           {groups.length === 0 && (
-            <Text style={[ppText.meta, { textAlign: 'center', marginTop: 24 }]}>Lista jest pusta. Dodaj produkty poniżej.</Text>
+            <Text style={[ppText.meta, { textAlign: 'center', marginTop: 24 }]}>Lista jest pusta. Dodaj produkty powyżej.</Text>
           )}
         </View>
       </ScrollView>
 
-      {/* Preview modal for AI results */}
       <PreviewModal
         visible={showPreview}
         items={parsedItems}
@@ -897,27 +910,13 @@ function PixelPopDetailView({
         onRemoveItem={removePreviewItem}
       />
 
-      {/* Compose bar — full-width, positioned flush above tab bar */}
-      <ComposeBar
-        mode={mode}
-        onModeChange={setMode}
-        value={composeText}
-        onChangeText={setComposeText}
-        onSend={handleSend}
-        onMicPressIn={handleMicPressIn}
-        onMicPressOut={stopListening}
-        accent={accent}
-        placeholder={mode === 0 ? (isListening ? 'Słucham...' : '2x mleko, chleb, jabłka…') : 'Nazwa produktu'}
-        floating={false}
-        style={{ position: 'relative' }}
-      />
-
       {children}
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const ppDetailStyles = StyleSheet.create({
+  header: { backgroundColor: PP.paper, borderBottomWidth: PP_BORDER.thin, borderBottomColor: PP.ink },
   nav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 4 },
   iconBtn: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: PP.panel, borderWidth: PP_BORDER.thick, borderColor: PP.ink },
   code: { fontFamily: 'Inter_600SemiBold', fontSize: 10, color: PP.paper, backgroundColor: PP.ink, paddingHorizontal: 6, paddingVertical: 3 },
