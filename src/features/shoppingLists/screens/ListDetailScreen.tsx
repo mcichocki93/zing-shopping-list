@@ -749,7 +749,6 @@ function PixelPopDetailView({
   aiCallsRemaining, hoursUntilReset, isPremium, onOpenPremium,
   children,
 }: PixelPopDetailViewProps) {
-  const tabBarHeight = useBottomTabBarHeight();
   const [mode, setMode] = useState(0); // 0=AI, 1=manual
   const [composeText, setComposeText] = useState('');
   const { isListening, transcript, startListening, stopListening, clearTranscript } = useSpeechInput();
@@ -803,9 +802,8 @@ function PixelPopDetailView({
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: PP.paper }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={tabBarHeight}
     >
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: tabBarHeight + 170 }}>
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: 24 }} style={{ flex: 1 }}>
         {/* Nav */}
         <View style={ppDetailStyles.nav}>
           <Pressable onPress={onBack} style={ppDetailStyles.iconBtn} accessibilityLabel="Wróć">
@@ -910,7 +908,7 @@ function PixelPopDetailView({
         accent={accent}
         placeholder={mode === 0 ? (isListening ? 'Słucham...' : '2x mleko, chleb, jabłka…') : 'Nazwa produktu'}
         floating={false}
-        style={{ bottom: tabBarHeight }}
+        style={{ position: 'relative' }}
       />
 
       {children}
