@@ -53,13 +53,13 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
   const [showSettings, setShowSettings] = useState(false);
   const [showCategoryManager, setShowCategoryManager] = useState(false);
   const { isPremium } = usePremium();
-  const deepLinkHandled = useRef(false);
+  const deepLinkHandled = useRef<string | null>(null);
 
   // Handle incoming deep link: zing://join/CODE
   useEffect(() => {
     const code = route.params?.inviteCode;
-    if (!code || deepLinkHandled.current || !user) return;
-    deepLinkHandled.current = true;
+    if (!code || deepLinkHandled.current === code || !user) return;
+    deepLinkHandled.current = code;
     setJoinCode(code.toUpperCase());
     setShowJoinModal(true);
   }, [route.params?.inviteCode, user]);
