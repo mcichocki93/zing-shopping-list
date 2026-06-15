@@ -19,7 +19,7 @@ export const PP_CAT: Record<string, string> = {
   'Owoce i warzywa': '#7EE29A',
   'Nabiał':          '#3BE3FF',
   'Pieczywo':        '#FFD12E',
-  'Mięso i wędliny': '#FF9CCB',
+  'Mięso i ryby':    '#FF9CCB',
   'Napoje':          '#C7A8FF',
 };
 

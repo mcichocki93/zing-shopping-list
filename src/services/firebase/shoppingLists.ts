@@ -7,6 +7,7 @@ import {
   getDoc,
   arrayUnion,
   arrayRemove,
+  deleteField,
   serverTimestamp,
   query,
   where,
@@ -100,6 +101,7 @@ export async function addMember(listId: string, userId: string): Promise<void> {
 export async function removeMember(listId: string, userId: string): Promise<void> {
   await updateDoc(listDoc(listId), {
     memberIds: arrayRemove(userId),
+    [`memberNames.${userId}`]: deleteField(),
     updatedAt: serverTimestamp(),
   });
 

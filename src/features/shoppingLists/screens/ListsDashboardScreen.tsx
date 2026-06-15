@@ -643,11 +643,15 @@ function PixelPopDashboardView({
     ? lists.filter((l) => l.title.toLowerCase().includes(search.toLowerCase()))
     : lists;
 
-  function categoryIcon(list: ShoppingList): string {
+  function topCategory(list: ShoppingList): string {
     const cats = list.items.map((i) => i.category ?? 'Inne');
     const freq: Record<string, number> = {};
     for (const c of cats) freq[c] = (freq[c] ?? 0) + 1;
-    const top = Object.entries(freq).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'Inne';
+    return Object.entries(freq).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'Inne';
+  }
+
+  function categoryIcon(list: ShoppingList): string {
+    const top = topCategory(list);
     const map: Record<string, string> = {
       'Owoce i warzywa': 'leaf',
       'Nabiał': 'milk',
@@ -729,7 +733,7 @@ function PixelPopDashboardView({
                       total={l.items.length}
                       completed={completed}
                       code={l.inviteCode}
-                      tint={ppCategoryColor(l.items[0]?.category ?? 'Inne')}
+                      tint={ppCategoryColor(topCategory(l))}
                       icon={categoryIcon(l)}
                       isLast={i === filtered.length - 1}
                       accent={accent}
