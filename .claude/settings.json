@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:pixeliconlibrary.com)",
+      "Bash(npx --yes @hackernoon/pixel-icon-library)",
+      "Bash(ls node_modules/@hackernoon/pixel-icon-library)",
+      "Bash(npm info *)",
+      "Bash(git merge feature/pixel-pop-redesign --no-ff -m ' *)"
+    ]
+  }
+}
