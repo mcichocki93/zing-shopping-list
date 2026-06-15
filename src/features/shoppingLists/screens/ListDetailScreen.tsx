@@ -662,7 +662,15 @@ function PixelPopDetailView({
 
   function categoryIcon(cat: string): string {
     const map: Record<string, string> = {
-      'Owoce i warzywa': 'apple', 'Nabiał': 'milk', 'Pieczywo': 'bread', 'Napoje': 'drink',
+      'Owoce i warzywa': 'leaf',
+      'Nabiał': 'milk',
+      'Mięso i ryby': 'fish',
+      'Pieczywo': 'bread',
+      'Napoje': 'coffee',
+      'Przekąski': 'cake',
+      'Mrożonki': 'snowflake',
+      'Chemia': 'spray-can',
+      'Inne': 'package',
     };
     return map[cat] ?? 'cart';
   }

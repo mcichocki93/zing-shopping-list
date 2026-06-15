@@ -649,10 +649,15 @@ function PixelPopDashboardView({
     for (const c of cats) freq[c] = (freq[c] ?? 0) + 1;
     const top = Object.entries(freq).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'Inne';
     const map: Record<string, string> = {
-      'Owoce i warzywa': 'apple',
+      'Owoce i warzywa': 'leaf',
       'Nabiał': 'milk',
+      'Mięso i ryby': 'fish',
       'Pieczywo': 'bread',
-      'Napoje': 'drink',
+      'Napoje': 'coffee',
+      'Przekąski': 'cake',
+      'Mrożonki': 'snowflake',
+      'Chemia': 'spray-can',
+      'Inne': 'package',
     };
     return map[top] ?? 'cart';
   }
