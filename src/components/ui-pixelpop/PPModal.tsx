@@ -12,9 +12,12 @@ interface PPModalProps {
 export function PPModal({ visible, onClose, title, children }: PPModalProps) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <Pressable style={s.overlay} onPress={onClose}>
-          <Pressable style={s.sheet} onPress={(e) => e.stopPropagation()}>
+      <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <View style={s.overlay}>
+          {/* Backdrop: absolutnie pod contentem, nie owija ScrollView */}
+          <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+          {/* Sheet: zwykły View — nie blokuje gestów przewijania */}
+          <View style={s.sheet}>
             <View style={s.header}>
               <Text style={ppText.catLabel}>{title}</Text>
               <Pressable onPress={onClose} style={s.closeBtn} accessibilityLabel="Zamknij">
@@ -22,14 +25,15 @@ export function PPModal({ visible, onClose, title, children }: PPModalProps) {
               </Pressable>
             </View>
             {children}
-          </Pressable>
-        </Pressable>
+          </View>
+        </View>
       </KeyboardAvoidingView>
     </Modal>
   );
 }
 
 const s = StyleSheet.create({
+  flex: { flex: 1 },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(18,14,34,0.65)',

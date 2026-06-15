@@ -4,11 +4,11 @@
 // To jest WARSTWA PREZENTACJI. Podłącz do istniejącej logiki:
 //   - tryb AI:     onSend(text) -> useAIParser().parse(text)
 //   - tryb Ręcznie: przełącz na istniejący formularz ręczny (pickery ilości/jednostki/kategorii)
-//   - mic:         onMicPressIn / onMicPressOut -> useSpeechInput()
+//   - mic:         onMicPress (toggle) + isListening -> useSpeechInput()
 // Dla zwięzłości pole tekstowe jest tu kontrolowane przez propsy.
 
 import React from 'react';
-import { View, TextInput, Pressable, StyleSheet, ViewStyle } from 'react-native';
+import { View, TextInput, Pressable, Text, StyleSheet, ViewStyle } from 'react-native';
 import { PP, PP_BORDER, PP_FONT } from '../../constants/pixelPopTheme';
 import { GlassBar } from './GlassBar';
 import { SegmentedControl } from './SegmentedControl';
@@ -20,8 +20,9 @@ interface ComposeBarProps {
   value: string;
   onChangeText: (t: string) => void;
   onSend: () => void;
-  onMicPressIn?: () => void;
-  onMicPressOut?: () => void;
+  onMicPress?: () => void;
+  isListening?: boolean;
+  micDisabled?: boolean;
   accent?: string;
   placeholder?: string;
   style?: ViewStyle;
@@ -30,7 +31,7 @@ interface ComposeBarProps {
 
 export function ComposeBar({
   mode, onModeChange, value, onChangeText, onSend,
-  onMicPressIn, onMicPressOut, accent = PP.pink,
+  onMicPress, isListening = false, micDisabled = false, accent = PP.pink,
   placeholder = '2x mleko, chleb, jabłka…', style, floating = true,
 }: ComposeBarProps) {
   return (
@@ -45,8 +46,12 @@ export function ComposeBar({
           style={styles.input}
           accessibilityLabel="Dodaj produkt"
         />
-        {onMicPressIn && (
-          <Pressable onPressIn={onMicPressIn} onPressOut={onMicPressOut} accessibilityLabel="Dyktuj" style={[styles.btn, { backgroundColor: PP.yellow }]}>
+        {onMicPress && mode === 0 && (
+          <Pressable
+            onPress={micDisabled ? undefined : onMicPress}
+            accessibilityLabel={isListening ? 'Zatrzymaj dyktowanie' : 'Dyktuj'}
+            style={[styles.btn, { backgroundColor: isListening ? '#FF3B30' : PP.yellow, opacity: micDisabled ? 0.35 : 1 }]}
+          >
             <PixelIcon name="mic" size={16} color={PP.ink} />
           </Pressable>
         )}
@@ -54,6 +59,11 @@ export function ComposeBar({
           <PixelIcon name="chevron" size={16} color={PP.ink} />
         </Pressable>
       </View>
+      {onMicPress && !micDisabled && mode === 0 && (
+        <Text style={[styles.hint, isListening && styles.hintActive]}>
+          {isListening ? '🎙 Mów... naciśnij ponownie by zatrzymać' : '🎙 Naciśnij żółty przycisk by dyktować'}
+        </Text>
+      )}
     </GlassBar>
   );
 }
@@ -66,6 +76,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12, paddingVertical: 10, fontFamily: PP_FONT.ui, fontSize: 13, color: PP.ink,
   },
   btn: { width: 44, alignItems: 'center', justifyContent: 'center', borderWidth: PP_BORDER.base, borderColor: PP.ink },
+  hint: { marginTop: 6, fontFamily: PP_FONT.ui, fontSize: 10, color: PP.muted, textAlign: 'center' },
+  hintActive: { color: '#FF3B30' },
 });
 
 export default ComposeBar;

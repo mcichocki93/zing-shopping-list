@@ -29,14 +29,14 @@ service cloud.firestore {
       ]);
     }
 
-    // Self-join: non-member adds ONLY themselves to memberIds
+    // Self-join: non-member adds ONLY themselves to memberIds (and optionally updates memberNames)
     function isSelfJoinOnly() {
       let after = request.resource.data;
       let before = resource.data;
       return after.memberIds.hasAll(before.memberIds)
         && after.memberIds.size() == before.memberIds.size() + 1
         && request.auth.uid in after.memberIds
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds', 'updatedAt']);
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds', 'memberNames', 'updatedAt']);
     }
 
     // ---------- Users ----------

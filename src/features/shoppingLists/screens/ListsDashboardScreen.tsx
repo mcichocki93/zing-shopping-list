@@ -17,7 +17,6 @@ import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { PixelButton, PixelInput, PixelCard, PixelModal } from '../../../components/ui';
 import { ThemePickerModal } from '../../../components/ThemePickerModal';
 import { CategoryManagerModal } from '../../categories';
-import { TemplatePickerModal, TemplateManagerModal, type ListTemplate, type TemplateItem } from '../../templates';
 import { PremiumGateModal } from '../../premium/components/PremiumGateModal';
 import { usePremium } from '../../premium/hooks/usePremium';
 import { OfflineBanner } from '../../../components/OfflineBanner';
@@ -26,7 +25,6 @@ import { useTheme } from '../../../contexts/ThemeContext';
 import { useShoppingLists } from '../hooks';
 import { useAuth } from '../../auth/hooks';
 import { lookupInvite, joinList } from '../../../services/firebase/invites';
-import { addItems } from '../../../services/firebase/shoppingLists';
 import type { ShoppingListsStackParamList } from '../../../types/navigation';
 import type { ShoppingList } from '../../../types/shoppingList';
 import { PP, PP_BORDER, ppText, ppCategoryColor } from '../../../constants/pixelPopTheme';
@@ -44,7 +42,7 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
   const { theme, pixelPopEnabled, pixelPopAccent } = useTheme();
   const { user, handleSignOut, handleDeleteAccount, isLoading: isAuthLoading } = useAuth();
-  const { lists, isLoading, error, handleCreate, handleDelete, handleReorder } = useShoppingLists();
+  const { lists, isLoading, error, handleCreate, handleDelete, handleLeave, handleReorder } = useShoppingLists();
   const [newTitle, setNewTitle] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [joinCode, setJoinCode] = useState('');
@@ -54,9 +52,6 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showCategoryManager, setShowCategoryManager] = useState(false);
-  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
-  const [showTemplateManager, setShowTemplateManager] = useState(false);
-  const [showTemplatesPremium, setShowTemplatesPremium] = useState(false);
   const { isPremium } = usePremium();
   const deepLinkHandled = useRef(false);
 
@@ -100,7 +95,7 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
             text: 'Dołącz',
             onPress: async () => {
               try {
-                await joinList(invite.listId, user.id);
+                await joinList(invite.listId, user.id, user.displayName ?? user.email ?? '');
                 setJoinCode('');
                 setShowJoinModal(false);
               } catch {
@@ -128,33 +123,6 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
       setShowCreateModal(false);
       navigation.navigate('ListDetail', { listId });
     }
-  };
-
-  const onCreateFromTemplate = async (template: ListTemplate) => {
-    if (!user) return;
-    const listId = await handleCreate(template.name);
-    if (!listId) {
-      Alert.alert('Błąd', 'Nie udało się utworzyć listy.');
-      return;
-    }
-    if (template.items.length === 0) {
-      navigation.navigate('ListDetail', { listId });
-      return;
-    }
-    const itemsToAdd = template.items.map((item: TemplateItem) => ({
-      name: item.name,
-      quantity: item.quantity,
-      ...(item.unit !== undefined ? { unit: item.unit } : {}),
-      ...(item.category !== undefined ? { category: item.category } : {}),
-      isCompleted: false,
-      createdBy: user.id,
-    }));
-    try {
-      await addItems(listId, itemsToAdd);
-    } catch {
-      Alert.alert('Błąd', 'Nie udało się dodać produktów do listy.');
-    }
-    navigation.navigate('ListDetail', { listId });
   };
 
   const onDeleteAccount = () => {
@@ -186,6 +154,22 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
           text: 'Usuń',
           style: 'destructive',
           onPress: () => handleDelete(list.id),
+        },
+      ],
+    );
+  };
+
+  const onLeaveList = (list: ShoppingList) => {
+    if (!user || list.ownerId === user.id) return;
+    Alert.alert(
+      'Opuść listę',
+      `Odpiąć się od "${list.title}"? Lista pozostanie aktywna dla właściciela.`,
+      [
+        { text: 'Anuluj', style: 'cancel' },
+        {
+          text: 'Odepnij się',
+          style: 'destructive',
+          onPress: () => handleLeave(list.id),
         },
       ],
     );
@@ -253,11 +237,14 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
           doneItems={doneItems}
           totalItems={totalItems}
           displayName={user?.displayName ?? ''}
+          userId={user?.id ?? ''}
           accent={pixelPopAccent}
           onOpenList={(id) => navigation.navigate('ListDetail', { listId: id })}
           onCreate={() => setShowCreateModal(true)}
           onOpenSettings={() => setShowSettings(true)}
           onShare={() => setShowJoinModal(true)}
+          onDeleteList={onDeleteList}
+          onLeaveList={onLeaveList}
           insets={insets}
         />
         <PixelModal visible={showCreateModal} onClose={() => setShowCreateModal(false)} title="Nowa lista">
@@ -296,11 +283,6 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
             <Text style={styles.settingsRowText}>Zarządzaj kategoriami</Text>
             <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.disabled} />
           </Pressable>
-          <Pressable onPress={() => { setShowSettings(false); setShowTemplateManager(true); }} style={styles.settingsRow} accessibilityRole="button" accessibilityLabel="Zarządzaj szablonami">
-            <MaterialCommunityIcons name="file-outline" size={20} color={COLORS.primary} />
-            <Text style={styles.settingsRowText}>Szablony list</Text>
-            <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.disabled} />
-          </Pressable>
           <View style={styles.settingsDivider} />
           <Pressable onPress={() => Linking.openURL('https://mcichocki93.github.io/zing-shopping-list/privacy-policy')} style={styles.settingsRow} accessibilityRole="link" accessibilityLabel="Polityka prywatności">
             <MaterialCommunityIcons name="shield-account-outline" size={20} color={COLORS.primary} />
@@ -309,10 +291,7 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
           </Pressable>
           <PixelButton title="Zamknij" onPress={() => setShowSettings(false)} variant="accentMuted" style={styles.settingsClose} />
         </PixelModal>
-        <TemplatePickerModal visible={showTemplatePicker} onSelect={onCreateFromTemplate} onClose={() => setShowTemplatePicker(false)} />
-        <TemplateManagerModal visible={showTemplateManager} onClose={() => setShowTemplateManager(false)} />
         <CategoryManagerModal visible={showCategoryManager} onClose={() => setShowCategoryManager(false)} />
-        <PremiumGateModal visible={showTemplatesPremium} onClose={() => setShowTemplatesPremium(false)} limitReached={false} />
         <ThemePickerModal visible={showThemePicker} onClose={() => setShowThemePicker(false)} />
       </>
     );
@@ -372,18 +351,6 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
         >
           <MaterialCommunityIcons name="account-plus-outline" size={32} color={COLORS.white} />
           <Text style={styles.actionText}>Dołącz do listy</Text>
-        </Pressable>
-        <Pressable
-          onPress={() => {
-            if (!isPremium) { setShowTemplatesPremium(true); return; }
-            setShowTemplatePicker(true);
-          }}
-          style={[styles.actionCard, { backgroundColor: theme.accent }]}
-          accessibilityRole="button"
-          accessibilityLabel="Utwórz listę z szablonu"
-        >
-          <MaterialCommunityIcons name="file-outline" size={32} color={COLORS.white} />
-          <Text style={styles.actionText}>Z szablonu</Text>
         </Pressable>
       </View>
 
@@ -446,23 +413,6 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
         onClose={() => setShowCategoryManager(false)}
       />
 
-      <TemplatePickerModal
-        visible={showTemplatePicker}
-        onSelect={onCreateFromTemplate}
-        onClose={() => setShowTemplatePicker(false)}
-      />
-
-      <TemplateManagerModal
-        visible={showTemplateManager}
-        onClose={() => setShowTemplateManager(false)}
-      />
-
-      <PremiumGateModal
-        visible={showTemplatesPremium}
-        onClose={() => setShowTemplatesPremium(false)}
-        limitReached={false}
-      />
-
       <PixelModal visible={showSettings} onClose={() => setShowSettings(false)} title="Ustawienia">
         <Pressable
           onPress={() => { setShowSettings(false); setShowCategoryManager(true); }}
@@ -472,16 +422,6 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
         >
           <MaterialCommunityIcons name="tag-multiple-outline" size={20} color={COLORS.primary} />
           <Text style={styles.settingsRowText}>Zarządzaj kategoriami</Text>
-          <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.disabled} />
-        </Pressable>
-        <Pressable
-          onPress={() => { setShowSettings(false); setShowTemplateManager(true); }}
-          style={styles.settingsRow}
-          accessibilityRole="button"
-          accessibilityLabel="Zarządzaj szablonami"
-        >
-          <MaterialCommunityIcons name="file-outline" size={20} color={COLORS.primary} />
-          <Text style={styles.settingsRowText}>Szablony list</Text>
           <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.disabled} />
         </Pressable>
         <View style={styles.settingsDivider} />
@@ -682,17 +622,20 @@ interface PixelPopDashboardViewProps {
   doneItems: number;
   totalItems: number;
   displayName: string;
+  userId: string;
   accent: string;
   onOpenList: (id: string) => void;
   onCreate: () => void;
   onOpenSettings: () => void;
   onShare: () => void;
+  onDeleteList: (list: ShoppingList) => void;
+  onLeaveList: (list: ShoppingList) => void;
   insets: { top: number; bottom: number };
 }
 
 function PixelPopDashboardView({
-  lists, isLoading, doneItems, totalItems, displayName, accent,
-  onOpenList, onCreate, onOpenSettings, onShare, insets,
+  lists, isLoading, doneItems, totalItems, displayName, userId, accent,
+  onOpenList, onCreate, onOpenSettings, onShare, onDeleteList, onLeaveList, insets,
 }: PixelPopDashboardViewProps) {
   const tabBarHeight = useBottomTabBarHeight();
   const [search, setSearch] = useState('');
@@ -786,6 +729,8 @@ function PixelPopDashboardView({
                       isLast={i === filtered.length - 1}
                       accent={accent}
                       onPress={() => onOpenList(l.id)}
+                      onDelete={l.ownerId === userId ? () => onDeleteList(l) : undefined}
+                      onLeave={l.ownerId !== userId ? () => onLeaveList(l) : undefined}
                     />
                   );
                 })}
@@ -795,7 +740,7 @@ function PixelPopDashboardView({
         </View>
       </ScrollView>
 
-      <Fab onPress={onCreate} accent={accent} bottomOffset={tabBarHeight + 16} accessibilityLabel="Nowa lista" />
+      <Fab onPress={onCreate} accent={accent} bottomOffset={tabBarHeight + insets.bottom + 26} accessibilityLabel="Nowa lista" />
     </View>
   );
 }

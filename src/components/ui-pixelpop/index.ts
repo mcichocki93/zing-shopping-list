@@ -14,3 +14,5 @@ export type { CategoryItem } from './CategoryCard';
 export { PixelPopTabBar } from './PixelPopTabBar';
 export { ComposeBar } from './ComposeBar';
 export { PPModal } from './PPModal';
+export { ColorWheelPicker } from './ColorWheelPicker';
+export { MembersModal } from './MembersModal';

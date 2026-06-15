@@ -107,8 +107,9 @@ export function AIInputBar({ onParse, onAddManual, isParsing, disabled = false, 
             onParse(t);
           }
         }}
-        onMicPressIn={isSpeechSupported ? handleMicPressIn : undefined}
-        onMicPressOut={isSpeechSupported ? stopListening : undefined}
+        onMicPress={async () => { if (isListening) { stopListening(); } else { sessionBaseRef.current = aiText; clearTranscript(); await startListening(); } }}
+        isListening={isListening}
+        micDisabled={!isSpeechSupported}
         accent={pixelPopAccent}
         placeholder={isListening ? 'Słucham...' : '2x mleko, chleb, jabłka…'}
       />

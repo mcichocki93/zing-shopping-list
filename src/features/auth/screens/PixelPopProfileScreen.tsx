@@ -2,23 +2,17 @@ import React from 'react';
 import { View, Text, StyleSheet, Pressable, Alert, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PP, PP_BORDER, PP_FONT, ppText } from '../../../constants/pixelPopTheme';
-import { HardShadow, PixelIcon } from '../../../components/ui-pixelpop';
+import { HardShadow, PixelIcon, PPModal, ColorWheelPicker } from '../../../components/ui-pixelpop';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { CategoryManagerModal } from '../../categories';
-
-const ACCENT_COLORS = [
-  { key: 'pink',   color: PP.pink },
-  { key: 'yellow', color: PP.yellow },
-  { key: 'violet', color: PP.violet },
-  { key: 'cyan',   color: PP.cyan },
-];
 
 export function PixelPopProfileScreen() {
   const insets = useSafeAreaInsets();
   const { user, handleSignOut, handleDeleteAccount, isLoading } = useAuth();
   const { pixelPopAccent, setPixelPopAccent } = useTheme();
   const [showCategories, setShowCategories] = React.useState(false);
+  const [showColorPicker, setShowColorPicker] = React.useState(false);
 
   const onDeleteAccount = () => {
     Alert.alert(
@@ -53,28 +47,16 @@ export function PixelPopProfileScreen() {
             <SettingsRow icon="gear" label="Zarządzaj kategoriami" onPress={() => setShowCategories(true)} />
             <View style={styles.divider} />
             {/* Pixel Pop accent color picker */}
-            <View style={styles.accentRow}>
+            <Pressable
+              onPress={() => setShowColorPicker(true)}
+              style={styles.accentRow}
+              accessibilityLabel="Wybierz kolor akcentu"
+            >
               <PixelIcon name="template" size={16} color={PP.ink} />
               <Text style={[ppText.rowBody, { flex: 1 }]}>Kolor akcentu</Text>
-              <View style={styles.swatches}>
-                {ACCENT_COLORS.map(({ key, color }) => (
-                  <Pressable
-                    key={key}
-                    onPress={() => setPixelPopAccent(color)}
-                    accessibilityLabel={`Akcent: ${key}`}
-                    style={[
-                      styles.swatch,
-                      { backgroundColor: color },
-                      pixelPopAccent === color && styles.swatchActive,
-                    ]}
-                  >
-                    {pixelPopAccent === color && (
-                      <Text style={styles.swatchCheck}>✓</Text>
-                    )}
-                  </Pressable>
-                ))}
-              </View>
-            </View>
+              <View style={[styles.colorPreview, { backgroundColor: pixelPopAccent }]} />
+              <PixelIcon name="chevron" size={12} color={PP.muted} />
+            </Pressable>
             <View style={styles.divider} />
             <SettingsRow
               icon="share"
@@ -115,6 +97,16 @@ export function PixelPopProfileScreen() {
       </View>
 
       <CategoryManagerModal visible={showCategories} onClose={() => setShowCategories(false)} />
+
+      <PPModal visible={showColorPicker} onClose={() => setShowColorPicker(false)} title="KOLOR AKCENTU">
+        <ColorWheelPicker
+          value={pixelPopAccent}
+          onChange={(color) => {
+            setPixelPopAccent(color);
+            setShowColorPicker(false);
+          }}
+        />
+      </PPModal>
     </View>
   );
 }
@@ -138,9 +130,6 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     paddingVertical: 14, borderWidth: PP_BORDER.thick, borderColor: PP.ink,
   },
-  accentRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 12, minHeight: 48 },
-  swatches: { flexDirection: 'row', gap: 8 },
-  swatch: { width: 28, height: 28, borderWidth: PP_BORDER.thick, borderColor: PP.ink, alignItems: 'center', justifyContent: 'center' },
-  swatchActive: { borderWidth: PP_BORDER.thick + 1, borderColor: PP.ink },
-  swatchCheck: { fontFamily: PP_FONT.uiBold, fontSize: 14, color: PP.ink },
+  accentRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 14, minHeight: 48 },
+  colorPreview: { width: 24, height: 24, borderWidth: PP_BORDER.thick, borderColor: PP.ink },
 });

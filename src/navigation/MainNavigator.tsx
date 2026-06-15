@@ -3,7 +3,6 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { ListsDashboardScreen } from '../features/shoppingLists/screens/ListsDashboardScreen';
 import { ListDetailScreen } from '../features/shoppingLists/screens/ListDetailScreen';
-import { PixelPopTemplatesScreen } from '../features/templates/screens/PixelPopTemplatesScreen';
 import { PixelPopProfileScreen } from '../features/auth/screens/PixelPopProfileScreen';
 import { PixelPopTabBar } from '../components/ui-pixelpop';
 import { useIAPInit } from '../features/premium';
@@ -29,7 +28,6 @@ function PixelPopTabs() {
       tabBar={(props) => <PixelPopTabBar {...props} />}
     >
       <Tab.Screen name="Listy" component={ListsStack} />
-      <Tab.Screen name="Szablony" component={PixelPopTemplatesScreen} />
       <Tab.Screen name="Profil" component={PixelPopProfileScreen} />
     </Tab.Navigator>
   );

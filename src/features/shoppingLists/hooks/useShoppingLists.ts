@@ -6,6 +6,7 @@ import {
   deleteList,
   archiveList,
   restoreList,
+  removeMember,
 } from '../../../services/firebase/shoppingLists';
 import { useAuth } from '../../auth/hooks';
 import type { ShoppingList } from '../../../types/shoppingList';
@@ -17,6 +18,7 @@ interface UseShoppingListsReturn {
   error: string | null;
   handleCreate: (title: string) => Promise<string | null>;
   handleDelete: (listId: string) => Promise<void>;
+  handleLeave: (listId: string) => Promise<void>;
   handleArchive: (listId: string) => Promise<void>;
   handleRestore: (listId: string) => Promise<void>;
   handleReorder: (orderedIds: string[]) => Promise<void>;
@@ -81,7 +83,7 @@ export function useShoppingLists(): UseShoppingListsReturn {
       if (!user) return null;
       setError(null);
       try {
-        return await createList(title, user.id);
+        return await createList(title, user.id, user.displayName ?? user.email ?? '');
       } catch (err) {
         if (!mountedRef.current) return null;
         setError(err instanceof Error ? err.message : 'Nie udało się utworzyć listy.');
@@ -100,6 +102,20 @@ export function useShoppingLists(): UseShoppingListsReturn {
       } catch (err) {
         if (!mountedRef.current) return;
         setError(err instanceof Error ? err.message : 'Nie udało się usunąć listy.');
+      }
+    },
+    [user],
+  );
+
+  const handleLeave = useCallback(
+    async (listId: string) => {
+      if (!user) return;
+      setError(null);
+      try {
+        await removeMember(listId, user.id);
+      } catch (err) {
+        if (!mountedRef.current) return;
+        setError(err instanceof Error ? err.message : 'Nie udało się opuścić listy.');
       }
     },
     [user],
@@ -141,6 +157,7 @@ export function useShoppingLists(): UseShoppingListsReturn {
     error,
     handleCreate,
     handleDelete,
+    handleLeave,
     handleArchive,
     handleRestore,
     handleReorder,
