@@ -49,6 +49,8 @@ export function ListRow({ title, done, total, completed, code, tint = PP.cyan, i
       friction={2}
       rightThreshold={60}
       overshootRight={false}
+      activeOffsetX={[-10, 10]}
+      failOffsetY={[-5, 5]}
     >
       <Pressable
         onPress={onPress}

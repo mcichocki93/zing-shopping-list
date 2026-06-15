@@ -64,6 +64,8 @@ function SwipeableRow({
       friction={2}
       rightThreshold={50}
       overshootRight={false}
+      activeOffsetX={[-10, 10]}
+      failOffsetY={[-5, 5]}
     >
       <View
         style={[
