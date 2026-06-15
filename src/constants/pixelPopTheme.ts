@@ -33,9 +33,13 @@ export function ppCategoryColor(category: string): string {
 }
 
 // Nazwy rodzin fontów — muszą zgadzać się z tym, co ładujesz w fonts.ts
+// Silkscreen: ASCII-only labels (codes, segment labels, short caps)
+// PixelifySans: pixel-art display font with full Latin Extended (Polish chars)
 export const PP_FONT = {
-  display: 'Silkscreen_400Regular',
-  displayBold: 'Silkscreen_700Bold',
+  display: 'PixelifySans_400Regular',
+  displayBold: 'PixelifySans_700Bold',
+  displayAscii: 'Silkscreen_400Regular',
+  displayAsciiB: 'Silkscreen_700Bold',
   ui: 'Inter_400Regular',
   uiMed: 'Inter_500Medium',
   uiSemi: 'Inter_600SemiBold',

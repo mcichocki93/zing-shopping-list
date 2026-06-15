@@ -11,6 +11,7 @@
 
 import { useFonts } from 'expo-font';
 import { Silkscreen_400Regular, Silkscreen_700Bold } from '@expo-google-fonts/silkscreen';
+import { PixelifySans_400Regular, PixelifySans_700Bold } from '@expo-google-fonts/pixelify-sans';
 import {
   Inter_400Regular,
   Inter_500Medium,
@@ -23,6 +24,8 @@ export function usePixelPopFonts(): boolean {
   const [loaded] = useFonts({
     Silkscreen_400Regular,
     Silkscreen_700Bold,
+    PixelifySans_400Regular,
+    PixelifySans_700Bold,
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,

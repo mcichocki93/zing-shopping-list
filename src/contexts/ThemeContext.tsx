@@ -13,7 +13,7 @@ interface ThemeContextValue {
   pixelPopEnabled: boolean;
   setPixelPopEnabled: (enabled: boolean) => void;
   pixelPopAccent: string;
-  setPixelPopAccent: (color: string) => void;
+  setPixelPopAccent: (color: string) => Promise<void>;
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
@@ -23,18 +23,19 @@ const ThemeContext = createContext<ThemeContextValue>({
   pixelPopEnabled: false,
   setPixelPopEnabled: () => {},
   pixelPopAccent: PP.pink,
-  setPixelPopAccent: () => {},
+  setPixelPopAccent: async () => {},
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [themeName, setThemeName] = useState<ThemeName>(DEFAULT_THEME);
   const [pixelPopEnabled, setPixelPopEnabled] = useState(true);
-  const [pixelPopAccent, setPixelPopAccent] = useState<string>(PP.pink);
+  const [pixelPopAccent, setPixelPopAccentState] = useState<string>(PP.pink);
 
   useEffect(() => {
     if (!user) {
       setThemeName(DEFAULT_THEME);
+      setPixelPopAccentState(PP.pink);
       return;
     }
 
@@ -44,6 +45,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         const data = snapshot.data();
         if (data?.theme && data.theme in THEMES) {
           setThemeName(data.theme as ThemeName);
+        }
+        if (data?.pixelPopAccent && typeof data.pixelPopAccent === 'string') {
+          setPixelPopAccentState(data.pixelPopAccent);
         }
       },
     );
@@ -56,6 +60,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       if (!user) return;
       setThemeName(name);
       await updateDoc(doc(db, COLLECTIONS.USERS, user.id), { theme: name });
+    },
+    [user],
+  );
+
+  const setPixelPopAccent = useCallback(
+    async (color: string) => {
+      setPixelPopAccentState(color);
+      if (!user) return;
+      await updateDoc(doc(db, COLLECTIONS.USERS, user.id), { pixelPopAccent: color });
     },
     [user],
   );

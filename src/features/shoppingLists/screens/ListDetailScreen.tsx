@@ -164,9 +164,6 @@ Lub wpisz kod: ${code}`,
     );
   }
 
-  const movableCategories = sortedCategories.filter((g) => g.category !== 'Kupione');
-  const kupioneGroup = sortedCategories.find((g) => g.category === 'Kupione');
-
   if (pixelPopEnabled) {
     return (
       <PixelPopDetailView
@@ -353,43 +350,30 @@ Lub wpisz kod: ${code}`,
           <View style={styles.scroll}>
             <DraggableFlatList
               contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + SPACING.sm }]}
-              data={movableCategories}
+              data={sortedCategories}
               keyExtractor={(item: CategoryGroup) => item.category}
               onDragEnd={({ data }: { data: CategoryGroup[] }) => {
                 handleSetCategoryOrder(data.map((g) => g.category));
               }}
-              ListFooterComponent={kupioneGroup ? (
-                <CategorySection
-                  category={kupioneGroup.category}
-                  items={kupioneGroup.items}
-                  onToggle={handleToggleItem}
-                  onRemove={handleRemoveItem}
-                  onEdit={onEditItem}
-                />
-              ) : null}
               renderItem={renderDraggableItem}
             />
           </View>
         ) : (
           <ScrollView style={styles.scroll} contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + SPACING.sm }]}>
-            {sortedCategories.map((group) => {
-              const isKupione = group.category === 'Kupione';
-              const movableIdx = isKupione ? -1 : movableCategories.indexOf(group);
-              return (
-                <CategorySection
-                  key={group.category}
-                  category={group.category}
-                  items={group.items}
-                  onToggle={handleToggleItem}
-                  onRemove={handleRemoveItem}
-                  onEdit={onEditItem}
-                  onMoveUp={isKupione ? undefined : () => handleReorderCategory(group.category, 'up')}
-                  onMoveDown={isKupione ? undefined : () => handleReorderCategory(group.category, 'down')}
-                  isFirst={movableIdx === 0}
-                  isLast={isKupione || movableIdx === movableCategories.length - 1}
-                />
-              );
-            })}
+            {sortedCategories.map((group, idx) => (
+              <CategorySection
+                key={group.category}
+                category={group.category}
+                items={group.items}
+                onToggle={handleToggleItem}
+                onRemove={handleRemoveItem}
+                onEdit={onEditItem}
+                onMoveUp={() => handleReorderCategory(group.category, 'up')}
+                onMoveDown={() => handleReorderCategory(group.category, 'down')}
+                isFirst={idx === 0}
+                isLast={idx === sortedCategories.length - 1}
+              />
+            ))}
           </ScrollView>
         )}
       </KeyboardAvoidingView>
@@ -657,9 +641,6 @@ function PixelPopDetailView({
   const done = allItems.filter((i) => i.isCompleted).length;
   const total = allItems.length;
 
-  const movableGroups = groups.filter((g) => g.category !== 'Kupione');
-  const kupioneGroup = groups.find((g) => g.category === 'Kupione');
-
   function categoryIcon(cat: string): string {
     const map: Record<string, string> = {
       'Owoce i warzywa': 'leaf',
@@ -805,11 +786,10 @@ function PixelPopDetailView({
       {/* ── Scrollable list content ── */}
       {!isExpoGo && DraggableFlatList && ScaleDecorator ? (
         <DraggableFlatList
-          data={movableGroups}
+          data={groups}
           keyExtractor={(g: CategoryGroup) => g.category}
           contentContainerStyle={{ paddingBottom: tabBarHeight + 16 }}
           ListHeaderComponent={listHeaderContent}
-          ListFooterComponent={kupioneGroup ? renderCategoryCard(kupioneGroup) : null}
           onDragEnd={({ data }: { data: CategoryGroup[] }) => {
             onSetCategoryOrder(data.map((g: CategoryGroup) => g.category));
           }}

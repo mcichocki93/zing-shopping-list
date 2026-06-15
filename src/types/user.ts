@@ -19,6 +19,7 @@ export interface User {
   aiUsageResetDate: Date;
   customCategories?: CustomCategory[];
   listOrder?: string[];
+  pixelPopAccent?: string;
 }
 
 export const AI_FREE_DAILY_LIMIT = 1; // calls per 24h for free users

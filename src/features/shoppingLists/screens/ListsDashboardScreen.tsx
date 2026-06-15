@@ -760,5 +760,5 @@ const ppStyles = StyleSheet.create({
   logo: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderWidth: PP_BORDER.thick, borderColor: PP.ink, transform: [{ rotate: '-4deg' }] },
   iconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', backgroundColor: PP.panel, borderWidth: PP_BORDER.thick, borderColor: PP.ink },
   sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 10 },
-  listBlock: { backgroundColor: PP.panel, borderWidth: PP_BORDER.thick, borderColor: PP.ink },
+  listBlock: { backgroundColor: PP.panel, borderWidth: PP_BORDER.thick, borderColor: PP.ink, overflow: 'hidden' },
 });
