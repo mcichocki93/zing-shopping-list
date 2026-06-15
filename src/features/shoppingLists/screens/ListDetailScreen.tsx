@@ -1,11 +1,14 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, Share, Alert, StyleSheet, Pressable, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
+import { View, Text, ScrollView, ActivityIndicator, Share, Alert, StyleSheet, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { AIInputBar, type ManualItemData } from '../../aiInput/components/AIInputBar';
 import { PreviewModal } from '../../aiInput/components/PreviewModal';
 import { useAIParser } from '../../aiInput/hooks/useAIParser';
+import { useSpeechInput } from '../../aiInput/hooks/useSpeechInput';
+import type { AIParsedItem } from '../../../types/ai';
 import { PremiumGateModal } from '../../premium/components/PremiumGateModal';
 import { PixelButton } from '../../../components/ui';
 import { OfflineBanner } from '../../../components/OfflineBanner';
@@ -15,6 +18,9 @@ import { EditItemModal } from '../components/EditItemModal';
 import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useShoppingList } from '../hooks';
+import { useCategories } from '../../categories';
+import { PP, PP_BORDER, PP_FONT, ppText } from '../../../constants/pixelPopTheme';
+import { HardShadow, SegmentProgress, CategoryCard, ComposeBar, PixelIcon, MembersModal } from '../../../components/ui-pixelpop';
 import type { CategoryGroup } from '../hooks/useShoppingList';
 import { useAuth } from '../../auth/hooks';
 import { isExpoGo } from '../../../utils/platform';
@@ -23,7 +29,6 @@ import { isExpoGo } from '../../../utils/platform';
 const DraggableFlatList = !isExpoGo ? require('react-native-draggable-flatlist').default : null;
 const ScaleDecorator = !isExpoGo ? require('react-native-draggable-flatlist').ScaleDecorator : null;
 import { createInvite } from '../../../services/firebase/invites';
-import { useTemplates } from '../../templates';
 import type { ShoppingListsStackParamList } from '../../../types/navigation';
 import type { ShoppingItem } from '../../../types/shoppingList';
 
@@ -31,7 +36,7 @@ type Props = NativeStackScreenProps<ShoppingListsStackParamList, 'ListDetail'>;
 
 export function ListDetailScreen({ route, navigation }: Props) {
   const insets = useSafeAreaInsets();
-  const { theme } = useTheme();
+  const { theme, pixelPopEnabled, pixelPopAccent } = useTheme();
   const { listId } = route.params;
   const { user } = useAuth();
   const {
@@ -55,15 +60,11 @@ export function ListDetailScreen({ route, navigation }: Props) {
     limitReached, aiCallsRemaining, isPremium, hoursUntilReset,
     parse, retry, removeItem: removePreviewItem, clear: clearPreview,
   } = useAIParser();
-  const { handleSave: saveTemplate } = useTemplates({ load: false });
   const [inputClearTrigger, setInputClearTrigger] = useState(0);
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
   const [inputCollapsed, setInputCollapsed] = useState(false);
-  const [showSaveTemplate, setShowSaveTemplate] = useState(false);
-  const [templateName, setTemplateName] = useState('');
-  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
   const showPreview = parsedItems.length > 0;
 
   useEffect(() => {
@@ -131,30 +132,6 @@ Lub wpisz kod: ${code}`,
     handleUpdateItem(itemId, updates);
   }, [handleUpdateItem]);
 
-  const onSaveAsTemplate = useCallback(async () => {
-    if (!list) return;
-    const name = templateName.trim();
-    if (!name) return;
-    setIsSavingTemplate(true);
-    const items = list.items
-      .filter((i) => !i.isCompleted)
-      .map(({ name: n, quantity, unit, category }) => ({
-        name: n,
-        quantity,
-        ...(unit !== undefined ? { unit } : {}),
-        ...(category !== undefined ? { category } : {}),
-      }));
-    const saved = await saveTemplate(name, items);
-    setIsSavingTemplate(false);
-    if (!saved) {
-      Alert.alert('Błąd', 'Nie udało się zapisać szablonu. Spróbuj ponownie.');
-      return;
-    }
-    setShowSaveTemplate(false);
-    setTemplateName('');
-    Alert.alert('Szablon zapisany', `"${name}" został zapisany jako szablon.`);
-  }, [list, templateName, saveTemplate]);
-
   const renderDraggableItem = useCallback(
     ({ item, drag }: { item: CategoryGroup; drag: () => void; isActive: boolean; getIndex: () => number | undefined }) => (
       <ScaleDecorator>
@@ -187,8 +164,53 @@ Lub wpisz kod: ${code}`,
     );
   }
 
-  const movableCategories = sortedCategories.filter((g) => g.category !== 'Kupione');
-  const kupioneGroup = sortedCategories.find((g) => g.category === 'Kupione');
+  if (pixelPopEnabled) {
+    return (
+      <PixelPopDetailView
+        list={list}
+        groups={sortedCategories}
+        accent={pixelPopAccent}
+        onBack={() => navigation.goBack()}
+        onShare={onShare}
+        onToggle={handleToggleItem}
+        onRemove={handleRemoveItem}
+        onEdit={onEditItem}
+        onSetCategoryOrder={handleSetCategoryOrder}
+        isParsing={isParsing}
+        onParse={parse}
+        onAddManual={onAddManual}
+        onConfirmItems={onConfirmItems}
+        parsedItems={parsedItems}
+        clearPreview={clearPreview}
+        removePreviewItem={removePreviewItem}
+        inputClearTrigger={inputClearTrigger}
+        setInputClearTrigger={setInputClearTrigger}
+        insets={insets}
+        allCompleted={allCompleted}
+        onResetAll={handleResetAll}
+        aiError={aiError}
+        canRetry={canRetry}
+        onRetry={retry}
+        aiCallsRemaining={aiCallsRemaining}
+        hoursUntilReset={hoursUntilReset}
+        isPremium={isPremium}
+        onOpenPremium={() => setShowPremiumModal(true)}
+      >
+        <EditItemModal
+          visible={editingItem !== null}
+          item={editingItem}
+          onSave={onSaveEdit}
+          onClose={() => setEditingItem(null)}
+        />
+        <PremiumGateModal
+          visible={showPremiumModal}
+          onClose={() => setShowPremiumModal(false)}
+          limitReached={limitReached}
+        />
+        <ThemePickerModal visible={showThemePicker} onClose={() => setShowThemePicker(false)} />
+      </PixelPopDetailView>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: theme.accentLight }]}>
@@ -202,18 +224,6 @@ Lub wpisz kod: ${code}`,
           <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.white} />
         </Pressable>
         <Text style={styles.title} numberOfLines={1} accessibilityRole="header">{list.title}</Text>
-        <Pressable
-          onPress={() => {
-            if (!isPremium) { setShowPremiumModal(true); return; }
-            setTemplateName(list?.title ?? '');
-            setShowSaveTemplate(true);
-          }}
-          style={styles.iconBtn}
-          accessibilityRole="button"
-          accessibilityLabel="Zapisz jako szablon"
-        >
-          <MaterialCommunityIcons name="content-save-outline" size={24} color={COLORS.white} />
-        </Pressable>
         <Pressable
           onPress={() => setShowThemePicker(true)}
           style={styles.iconBtn}
@@ -340,43 +350,30 @@ Lub wpisz kod: ${code}`,
           <View style={styles.scroll}>
             <DraggableFlatList
               contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + SPACING.sm }]}
-              data={movableCategories}
+              data={sortedCategories}
               keyExtractor={(item: CategoryGroup) => item.category}
               onDragEnd={({ data }: { data: CategoryGroup[] }) => {
                 handleSetCategoryOrder(data.map((g) => g.category));
               }}
-              ListFooterComponent={kupioneGroup ? (
-                <CategorySection
-                  category={kupioneGroup.category}
-                  items={kupioneGroup.items}
-                  onToggle={handleToggleItem}
-                  onRemove={handleRemoveItem}
-                  onEdit={onEditItem}
-                />
-              ) : null}
               renderItem={renderDraggableItem}
             />
           </View>
         ) : (
           <ScrollView style={styles.scroll} contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + SPACING.sm }]}>
-            {sortedCategories.map((group) => {
-              const isKupione = group.category === 'Kupione';
-              const movableIdx = isKupione ? -1 : movableCategories.indexOf(group);
-              return (
-                <CategorySection
-                  key={group.category}
-                  category={group.category}
-                  items={group.items}
-                  onToggle={handleToggleItem}
-                  onRemove={handleRemoveItem}
-                  onEdit={onEditItem}
-                  onMoveUp={isKupione ? undefined : () => handleReorderCategory(group.category, 'up')}
-                  onMoveDown={isKupione ? undefined : () => handleReorderCategory(group.category, 'down')}
-                  isFirst={movableIdx === 0}
-                  isLast={isKupione || movableIdx === movableCategories.length - 1}
-                />
-              );
-            })}
+            {sortedCategories.map((group, idx) => (
+              <CategorySection
+                key={group.category}
+                category={group.category}
+                items={group.items}
+                onToggle={handleToggleItem}
+                onRemove={handleRemoveItem}
+                onEdit={onEditItem}
+                onMoveUp={() => handleReorderCategory(group.category, 'up')}
+                onMoveDown={() => handleReorderCategory(group.category, 'down')}
+                isFirst={idx === 0}
+                isLast={idx === sortedCategories.length - 1}
+              />
+            ))}
           </ScrollView>
         )}
       </KeyboardAvoidingView>
@@ -395,38 +392,6 @@ Lub wpisz kod: ${code}`,
       />
 
       <ThemePickerModal visible={showThemePicker} onClose={() => setShowThemePicker(false)} />
-
-      {showSaveTemplate && (
-        <View style={styles.templateOverlay}>
-          <View style={styles.templateModal}>
-            <Text style={styles.templateTitle}>Zapisz jako szablon</Text>
-            <TextInput
-              style={styles.templateInput}
-              value={templateName}
-              onChangeText={setTemplateName}
-              placeholder="Nazwa szablonu"
-              autoFocus
-              maxLength={100}
-              returnKeyType="done"
-              onSubmitEditing={onSaveAsTemplate}
-            />
-            <View style={styles.templateButtons}>
-              <PixelButton
-                title={isSavingTemplate ? 'Zapisuję...' : 'Zapisz'}
-                onPress={onSaveAsTemplate}
-                disabled={isSavingTemplate || !templateName.trim()}
-                style={styles.templateBtn}
-              />
-              <PixelButton
-                title="Anuluj"
-                onPress={() => { setShowSaveTemplate(false); setTemplateName(''); }}
-                variant="accentMuted"
-                style={styles.templateBtn}
-              />
-            </View>
-          </View>
-        </View>
-      )}
     </View>
   );
 }
@@ -578,42 +543,302 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.body,
     fontWeight: FONT_WEIGHT.bold,
   },
-  templateOverlay: {
-    position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: SPACING.lg,
-  },
-  templateModal: {
-    backgroundColor: COLORS.white,
-    borderWidth: BORDERS.width,
-    borderColor: COLORS.border,
-    padding: SPACING.md,
-    width: '100%',
-    gap: SPACING.sm,
-  },
-  templateTitle: {
-    fontSize: FONT_SIZE.h3,
-    fontWeight: FONT_WEIGHT.bold,
-    color: COLORS.primary,
-  },
-  templateInput: {
-    borderWidth: BORDERS.width,
-    borderColor: COLORS.border,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    fontSize: FONT_SIZE.body,
-    color: COLORS.primary,
-    backgroundColor: COLORS.white,
-  },
-  templateButtons: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-    marginTop: SPACING.xs,
-  },
-  templateBtn: {
-    flex: 1,
-  },
+});
+
+// ─── Pixel Pop Detail View ──────────────────────────────────────────────────
+
+interface PixelPopDetailViewProps {
+  list: NonNullable<ReturnType<typeof useShoppingList>['list']>;
+  groups: CategoryGroup[];
+  accent: string;
+  onBack: () => void;
+  onShare: () => void;
+  onToggle: (id: string) => void;
+  onRemove: (id: string) => void;
+  onEdit: (id: string) => void;
+  onSetCategoryOrder: (cats: string[]) => void;
+  isParsing: boolean;
+  onParse: (text: string) => void;
+  onAddManual: (item: ManualItemData) => void;
+  onConfirmItems: () => void;
+  parsedItems: AIParsedItem[];
+  clearPreview: () => void;
+  removePreviewItem: (index: number) => void;
+  inputClearTrigger: number;
+  setInputClearTrigger: React.Dispatch<React.SetStateAction<number>>;
+  insets: { top: number; bottom: number };
+  allCompleted: boolean;
+  onResetAll: () => void;
+  aiError: string | null;
+  canRetry: boolean;
+  onRetry: () => void;
+  aiCallsRemaining: number;
+  hoursUntilReset: number | null;
+  isPremium: boolean;
+  onOpenPremium: () => void;
+  children?: React.ReactNode;
+}
+
+function PixelPopDetailView({
+  list, groups, accent,
+  onBack, onShare,
+  onToggle, onRemove, onEdit, onSetCategoryOrder,
+  isParsing, onParse, onAddManual, onConfirmItems,
+  parsedItems, clearPreview, removePreviewItem, inputClearTrigger, setInputClearTrigger,
+  insets, allCompleted, onResetAll,
+  aiError, canRetry, onRetry,
+  aiCallsRemaining, hoursUntilReset, isPremium, onOpenPremium,
+  children,
+}: PixelPopDetailViewProps) {
+  const tabBarHeight = useBottomTabBarHeight();
+  const { user: currentUser } = useAuth();
+  const { allCategories } = useCategories();
+  const [mode, setMode] = useState(0); // 0=AI, 1=manual
+  const [composeText, setComposeText] = useState('');
+  const [showMembers, setShowMembers] = useState(false);
+  const [manualCategory, setManualCategory] = useState<string>(allCategories[0] ?? 'Inne');
+  const { isListening, transcript, startListening, stopListening, clearTranscript, isSupported: isSpeechSupported, error: speechError } = useSpeechInput();
+  const sessionBaseRef = useRef('');
+  const showPreview = parsedItems.length > 0;
+
+  useEffect(() => {
+    if (!transcript) return;
+    const base = sessionBaseRef.current.trim();
+    setComposeText(base ? base + ' ' + transcript : transcript);
+  }, [transcript]);
+
+  useEffect(() => {
+    if (inputClearTrigger > 0) {
+      setComposeText('');
+      clearTranscript();
+    }
+  }, [inputClearTrigger, clearTranscript]);
+
+  const handleMicPress = async () => {
+    if (isListening) {
+      stopListening();
+    } else {
+      sessionBaseRef.current = composeText;
+      clearTranscript();
+      await startListening();
+    }
+  };
+
+  const handleSend = () => {
+    const t = composeText.trim();
+    if (!t) return;
+    if (mode === 0) {
+      if (isParsing) return;
+      onParse(t);
+    } else {
+      onAddManual({ name: t, quantity: 1, unit: 'szt', category: manualCategory });
+      setComposeText('');
+      sessionBaseRef.current = '';
+    }
+  };
+
+  const allItems = groups.flatMap((g) => g.items);
+  const done = allItems.filter((i) => i.isCompleted).length;
+  const total = allItems.length;
+
+  function categoryIcon(cat: string): string {
+    const map: Record<string, string> = {
+      'Owoce i warzywa': 'leaf',
+      'Nabiał': 'milk',
+      'Mięso i ryby': 'fish',
+      'Pieczywo': 'bread',
+      'Napoje': 'coffee',
+      'Przekąski': 'cake',
+      'Mrożonki': 'snowflake',
+      'Chemia': 'spray-can',
+      'Inne': 'package',
+    };
+    return map[cat] ?? 'cart';
+  }
+
+  const mapItems = (g: CategoryGroup) => g.items.map((i) => ({
+    id: i.id, name: i.name, quantity: i.quantity, unit: i.unit, isCompleted: i.isCompleted,
+  }));
+
+  const renderCategoryCard = (g: CategoryGroup, drag?: () => void) => (
+    <View key={g.category} style={{ paddingHorizontal: 16, marginBottom: 14 }}>
+      <CategoryCard
+        category={g.category}
+        icon={categoryIcon(g.category)}
+        items={mapItems(g)}
+        onToggle={onToggle}
+        onEdit={onEdit}
+        onRemove={onRemove}
+        drag={drag}
+      />
+    </View>
+  );
+
+  const listHeaderContent = (
+    <View style={{ paddingTop: 16 }}>
+      <View style={{ paddingHorizontal: 18 }}>
+        <Text style={ppText.title}>{list.title}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
+          {list.inviteCode ? <Text style={ppDetailStyles.code}>KOD · {list.inviteCode}</Text> : null}
+          <Pressable
+            onPress={() => setShowMembers(true)}
+            style={ppDetailStyles.membersChip}
+            accessibilityLabel={`Uczestnicy: ${list.memberIds.length}`}
+          >
+            <PixelIcon name="user" size={10} color={PP.ink} />
+            <Text style={ppDetailStyles.membersChipText}>
+              {list.memberIds.length} {list.memberIds.length === 1 ? 'osoba' : 'osoby'}
+            </Text>
+          </Pressable>
+          <Text style={ppText.meta}>{done}/{total}</Text>
+        </View>
+      </View>
+      <View style={{ paddingHorizontal: 16, marginTop: 14, marginBottom: 16 }}>
+        <HardShadow offset={4}>
+          <View style={ppDetailStyles.progressCard}>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
+              <Text style={ppText.catLabel}>POSTĘP</Text>
+              <Text style={{ fontFamily: PP_FONT.display, fontSize: 16, color: PP.ink }}>
+                {done}<Text style={{ fontSize: 10, color: PP.muted }}>/{total}</Text>
+              </Text>
+            </View>
+            <SegmentProgress total={Math.max(total, 1)} done={done} height={10} fill={accent} empty="#EFE7DA" gap={3} />
+          </View>
+        </HardShadow>
+      </View>
+      {allCompleted && (
+        <View style={[ppDetailStyles.completedBanner, { backgroundColor: accent }]}>
+          <Text style={{ fontFamily: PP_FONT.display, fontSize: 12, color: PP.ink }}>✓ LISTA ZREALIZOWANA!</Text>
+          <Pressable onPress={onResetAll} style={ppDetailStyles.resetBtn} accessibilityLabel="Resetuj listę">
+            <Text style={{ fontFamily: PP_FONT.uiSemi, fontSize: 12, color: PP.ink }}>Resetuj listę</Text>
+          </Pressable>
+        </View>
+      )}
+      {aiError ? (
+        <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
+          <Text style={{ color: '#FF3B30', fontSize: 12, fontFamily: PP_FONT.uiSemi }}>{aiError}</Text>
+        </View>
+      ) : null}
+      {groups.length === 0 && (
+        <Text style={[ppText.meta, { textAlign: 'center', marginTop: 24 }]}>Lista jest pusta. Dodaj produkty powyżej.</Text>
+      )}
+    </View>
+  );
+
+  return (
+    <View style={{ flex: 1, backgroundColor: PP.paper }}>
+      {/* ── Fixed header: nav + compose bar ── */}
+      <View style={[ppDetailStyles.header, { paddingTop: insets.top + 8 }]}>
+        <View style={ppDetailStyles.nav}>
+          <Pressable onPress={onBack} style={ppDetailStyles.iconBtn} accessibilityLabel="Wróć">
+            <PixelIcon name="chevronL" size={16} color={PP.ink} />
+          </Pressable>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Pressable onPress={onShare} style={ppDetailStyles.iconBtn} accessibilityLabel="Udostępnij">
+              <PixelIcon name="share" size={14} color={PP.ink} />
+            </Pressable>
+          </View>
+        </View>
+
+        <ComposeBar
+          mode={mode}
+          onModeChange={setMode}
+          value={composeText}
+          onChangeText={setComposeText}
+          onSend={handleSend}
+          onMicPress={handleMicPress}
+          isListening={isListening}
+          micDisabled={!isSpeechSupported}
+          accent={accent}
+          placeholder={mode === 0 ? (isListening ? 'Słucham...' : '2x mleko, chleb, jabłka…') : 'Nazwa produktu'}
+          floating={false}
+          style={{ position: 'relative' }}
+        />
+
+        {/* Picker kategorii widoczny tylko w trybie ręcznym */}
+        {mode === 1 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={ppDetailStyles.catPickerBar}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 8, gap: 6 }}
+          >
+            {allCategories.map((cat) => (
+              <Pressable
+                key={cat}
+                onPress={() => setManualCategory(cat)}
+                style={[ppDetailStyles.catChip, manualCategory === cat && { backgroundColor: accent }]}
+                accessibilityLabel={`Kategoria ${cat}`}
+              >
+                <Text style={[ppDetailStyles.catChipText, manualCategory === cat && { color: PP.ink }]}>{cat}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        )}
+
+        {speechError ? (
+          <Text style={{ color: '#FF3B30', fontSize: 11, fontFamily: PP_FONT.uiSemi, paddingHorizontal: 16, paddingBottom: 6 }}>
+            {speechError}
+          </Text>
+        ) : null}
+      </View>
+
+      {/* ── Scrollable list content ── */}
+      {!isExpoGo && DraggableFlatList && ScaleDecorator ? (
+        <DraggableFlatList
+          data={groups}
+          keyExtractor={(g: CategoryGroup) => g.category}
+          contentContainerStyle={{ paddingBottom: tabBarHeight + 16 }}
+          ListHeaderComponent={listHeaderContent}
+          onDragEnd={({ data }: { data: CategoryGroup[] }) => {
+            onSetCategoryOrder(data.map((g: CategoryGroup) => g.category));
+          }}
+          renderItem={({ item, drag }: { item: CategoryGroup; drag: () => void; isActive: boolean }) => (
+            <ScaleDecorator>
+              {renderCategoryCard(item, drag)}
+            </ScaleDecorator>
+          )}
+        />
+      ) : (
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: tabBarHeight + 16 }}>
+          {listHeaderContent}
+          {groups.map((g) => renderCategoryCard(g))}
+        </ScrollView>
+      )}
+
+      <PreviewModal
+        visible={showPreview}
+        items={parsedItems}
+        onConfirm={onConfirmItems}
+        onCancel={clearPreview}
+        onRemoveItem={removePreviewItem}
+      />
+
+      <MembersModal
+        visible={showMembers}
+        onClose={() => setShowMembers(false)}
+        memberIds={list.memberIds}
+        memberNames={list.memberNames}
+        ownerId={list.ownerId}
+        currentUserId={currentUser?.id ?? ''}
+      />
+
+      {children}
+    </View>
+  );
+}
+
+const ppDetailStyles = StyleSheet.create({
+  header: { backgroundColor: PP.paper, borderBottomWidth: PP_BORDER.thin, borderBottomColor: PP.ink },
+  nav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 4 },
+  iconBtn: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: PP.panel, borderWidth: PP_BORDER.thick, borderColor: PP.ink },
+  code: { fontFamily: 'Inter_600SemiBold', fontSize: 10, color: PP.paper, backgroundColor: PP.ink, paddingHorizontal: 6, paddingVertical: 3 },
+  progressCard: { backgroundColor: PP.panel, borderWidth: PP_BORDER.thick, borderColor: PP.ink, padding: 12 },
+  completedBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: 16, marginBottom: 16, paddingHorizontal: 14, paddingVertical: 12, borderWidth: PP_BORDER.thick, borderColor: PP.ink },
+  resetBtn: { paddingHorizontal: 10, paddingVertical: 4, backgroundColor: PP.paper, borderWidth: PP_BORDER.thin, borderColor: PP.ink },
+  catPickerBar: { borderTopWidth: PP_BORDER.thin, borderTopColor: PP.ink + '33' },
+  catChip: { paddingHorizontal: 10, paddingVertical: 5, borderWidth: PP_BORDER.base, borderColor: PP.ink, backgroundColor: PP.panel },
+  catChipText: { fontFamily: PP_FONT.uiSemi, fontSize: 10, color: PP.muted },
+  membersChip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 7, paddingVertical: 3, borderWidth: PP_BORDER.base, borderColor: PP.ink, backgroundColor: PP.panel },
+  membersChipText: { fontFamily: PP_FONT.uiSemi, fontSize: 10, color: PP.ink },
 });

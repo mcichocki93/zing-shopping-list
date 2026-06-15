@@ -14,6 +14,7 @@ export interface ShoppingList {
   title: string;
   ownerId: string;
   memberIds: string[];
+  memberNames?: Record<string, string>;
   isArchived: boolean;
   items: ShoppingItem[];
   categoryOrder?: string[];

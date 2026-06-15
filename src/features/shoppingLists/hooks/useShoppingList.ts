@@ -68,11 +68,8 @@ export function useShoppingList(listId: string | null): UseShoppingListReturn {
   const sortedCategories = useMemo((): CategoryGroup[] => {
     if (!list) return [];
 
-    const uncompleted = list.items.filter((i) => !i.isCompleted);
-    const completed = list.items.filter((i) => i.isCompleted);
-
     const groups: Record<string, ShoppingItem[]> = {};
-    for (const item of uncompleted) {
+    for (const item of list.items) {
       const cat = item.category || 'Inne';
       if (!groups[cat]) groups[cat] = [];
       groups[cat].push(item);
@@ -84,19 +81,19 @@ export function useShoppingList(listId: string | null): UseShoppingListReturn {
     const sorted = presentCategories.sort((a, b) => {
       const ai = order.indexOf(a);
       const bi = order.indexOf(b);
-      // Categories not in order go to the end (before "Inne")
       const aIdx = ai !== -1 ? ai : order.length;
       const bIdx = bi !== -1 ? bi : order.length;
       return aIdx - bIdx;
     });
 
-    const result: CategoryGroup[] = sorted.map((cat) => ({ category: cat, items: groups[cat] }));
-
-    if (completed.length > 0) {
-      result.push({ category: 'Kupione', items: completed });
-    }
-
-    return result;
+    // Within each category: uncompleted first, completed sorted to bottom
+    return sorted.map((cat) => ({
+      category: cat,
+      items: [...groups[cat]].sort((a, b) => {
+        if (a.isCompleted === b.isCompleted) return 0;
+        return a.isCompleted ? 1 : -1;
+      }),
+    }));
   }, [list]);
 
   const withError = useCallback(
@@ -168,9 +165,7 @@ export function useShoppingList(listId: string | null): UseShoppingListReturn {
 
   const handleReorderCategory = useCallback(
     (category: string, direction: 'up' | 'down') => {
-      const currentOrder = sortedCategories
-        .filter((g) => g.category !== 'Kupione')
-        .map((g) => g.category);
+      const currentOrder = sortedCategories.map((g) => g.category);
       const idx = currentOrder.indexOf(category);
       if (idx === -1) return Promise.resolve();
       const swapIdx = direction === 'up' ? idx - 1 : idx + 1;

@@ -3,27 +3,39 @@ import { doc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../services/firebase/config';
 import { COLLECTIONS } from '../constants';
 import { THEMES, DEFAULT_THEME, type ThemeName, type AppTheme } from '../constants/themes';
+import { PP } from '../constants/pixelPopTheme';
 import { useAuth } from '../features/auth/hooks';
 
 interface ThemeContextValue {
   theme: AppTheme;
   themeName: ThemeName;
   setTheme: (name: ThemeName) => Promise<void>;
+  pixelPopEnabled: boolean;
+  setPixelPopEnabled: (enabled: boolean) => void;
+  pixelPopAccent: string;
+  setPixelPopAccent: (color: string) => Promise<void>;
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
   theme: THEMES[DEFAULT_THEME],
   themeName: DEFAULT_THEME,
   setTheme: async () => {},
+  pixelPopEnabled: false,
+  setPixelPopEnabled: () => {},
+  pixelPopAccent: PP.pink,
+  setPixelPopAccent: async () => {},
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [themeName, setThemeName] = useState<ThemeName>(DEFAULT_THEME);
+  const [pixelPopEnabled, setPixelPopEnabled] = useState(true);
+  const [pixelPopAccent, setPixelPopAccentState] = useState<string>(PP.pink);
 
   useEffect(() => {
     if (!user) {
       setThemeName(DEFAULT_THEME);
+      setPixelPopAccentState(PP.pink);
       return;
     }
 
@@ -33,6 +45,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         const data = snapshot.data();
         if (data?.theme && data.theme in THEMES) {
           setThemeName(data.theme as ThemeName);
+        }
+        if (data?.pixelPopAccent && typeof data.pixelPopAccent === 'string') {
+          setPixelPopAccentState(data.pixelPopAccent);
         }
       },
     );
@@ -49,10 +64,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     [user],
   );
 
+  const setPixelPopAccent = useCallback(
+    async (color: string) => {
+      setPixelPopAccentState(color);
+      if (!user) return;
+      await updateDoc(doc(db, COLLECTIONS.USERS, user.id), { pixelPopAccent: color });
+    },
+    [user],
+  );
+
   const theme = THEMES[themeName];
 
   return (
-    <ThemeContext.Provider value={{ theme, themeName, setTheme }}>
+    <ThemeContext.Provider value={{ theme, themeName, setTheme, pixelPopEnabled, setPixelPopEnabled, pixelPopAccent, setPixelPopAccent }}>
       {children}
     </ThemeContext.Provider>
   );

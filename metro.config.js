@@ -3,6 +3,18 @@ const path = require('path');
 
 const config = getDefaultConfig(__dirname);
 
+// SVG transformer — allows importing .svg files as React Native components
+const { transformer, resolver } = config;
+config.transformer = {
+  ...transformer,
+  babelTransformerPath: require.resolve('react-native-svg-transformer'),
+};
+config.resolver = {
+  ...resolver,
+  assetExts: resolver.assetExts.filter((ext) => ext !== 'svg'),
+  sourceExts: [...resolver.sourceExts, 'svg'],
+};
+
 const NATIVE_ONLY_MODULES = [
   'react-native-worklets',
 ];

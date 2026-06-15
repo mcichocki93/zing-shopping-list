@@ -80,10 +80,11 @@ export async function lookupInvite(code: string): Promise<Invite | null> {
 
 // ─── Join List via Invite ────────────────────────────────
 
-export async function joinList(listId: string, userId: string): Promise<void> {
+export async function joinList(listId: string, userId: string, displayName: string): Promise<void> {
   // Self-join: guarded by isSelfJoinOnly() Firestore rule
   await updateDoc(listDoc(listId), {
     memberIds: arrayUnion(userId),
+    [`memberNames.${userId}`]: displayName,
     updatedAt: serverTimestamp(),
   });
 

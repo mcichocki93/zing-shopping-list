@@ -5,6 +5,9 @@ import { PixelModal, PixelButton } from '../../../components/ui';
 import { CATEGORIES, COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
 import { getCategoryColor } from '../../../constants';
 import { useCategories } from '../hooks/useCategories';
+import { useTheme } from '../../../contexts/ThemeContext';
+import { PP, PP_BORDER, PP_FONT, ppText } from '../../../constants/pixelPopTheme';
+import { PPModal, PixelIcon } from '../../../components/ui-pixelpop';
 
 // Color palette for custom categories
 const PICKER_COLORS = [
@@ -27,6 +30,7 @@ interface CategoryManagerModalProps {
 
 export function CategoryManagerModal({ visible, onClose }: CategoryManagerModalProps) {
   const { customCategories, isPremium, addCategory, updateCategory, deleteCategory } = useCategories();
+  const { pixelPopEnabled, pixelPopAccent } = useTheme();
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -89,6 +93,112 @@ export function CategoryManagerModal({ visible, onClose }: CategoryManagerModalP
       ],
     );
   };
+
+  if (pixelPopEnabled) {
+    return (
+      <PPModal visible={visible} onClose={onClose} title="KATEGORIE">
+        <ScrollView style={pp.scroll} showsVerticalScrollIndicator={false}>
+          {/* Built-in */}
+          <Text style={pp.sectionLabel}>WBUDOWANE</Text>
+          {CATEGORIES.map((cat) => (
+            <View key={cat} style={pp.row}>
+              <View style={[pp.colorSquare, { backgroundColor: getCategoryColor(cat) }]} />
+              <Text style={ppText.rowBody}>{cat}</Text>
+            </View>
+          ))}
+
+          {/* Custom */}
+          <View style={pp.sectionHead}>
+            <Text style={pp.sectionLabel}>WŁASNE</Text>
+            {isPremium && customCategories.length < 20 && !editor && (
+              <Pressable onPress={openAdd} style={[pp.addBtn, { backgroundColor: pixelPopAccent }]} accessibilityLabel="Dodaj kategorię">
+                <Text style={pp.addBtnText}>+ DODAJ</Text>
+              </Pressable>
+            )}
+          </View>
+
+          {!isPremium && (
+            <View style={pp.premiumBanner}>
+              <PixelIcon name="star" size={14} color={PP.muted} />
+              <Text style={pp.premiumText}>Własne kategorie — tylko dla Premium</Text>
+            </View>
+          )}
+
+          {customCategories.length === 0 && isPremium && !editor && (
+            <Text style={pp.emptyText}>Brak własnych kategorii. Dodaj pierwszą!</Text>
+          )}
+
+          {customCategories.map((cat) => (
+            <View key={cat.name} style={pp.row}>
+              <View style={[pp.colorSquare, { backgroundColor: cat.color }]} />
+              <Text style={[ppText.rowBody, { flex: 1 }]}>{cat.name}</Text>
+              {isPremium && (
+                <View style={pp.actions}>
+                  <Pressable onPress={() => openEdit(cat.name, cat.color)} style={pp.iconBtn} accessibilityLabel={`Edytuj ${cat.name}`}>
+                    <PixelIcon name="edit" size={14} color={PP.ink} />
+                  </Pressable>
+                  <Pressable onPress={() => onDelete(cat.name)} style={[pp.iconBtn, { backgroundColor: '#FF3B30' }]} accessibilityLabel={`Usuń ${cat.name}`}>
+                    <PixelIcon name="trash" size={14} color={PP.panel} />
+                  </Pressable>
+                </View>
+              )}
+            </View>
+          ))}
+
+          {/* Inline editor */}
+          {editor && (
+            <View style={pp.editor}>
+              <Text style={pp.editorTitle}>
+                {editor.mode === 'add' ? 'NOWA KATEGORIA' : 'EDYTUJ KATEGORIĘ'}
+              </Text>
+              <TextInput
+                style={pp.input}
+                value={editor.name}
+                onChangeText={(t) => setEditor((prev) => prev ? { ...prev, name: t } : null)}
+                placeholder="Nazwa kategorii"
+                placeholderTextColor={PP.muted}
+                maxLength={30}
+                autoFocus
+              />
+              <Text style={[pp.sectionLabel, { marginTop: 12, marginBottom: 8 }]}>KOLOR</Text>
+              <View style={pp.colorGrid}>
+                {PICKER_COLORS.map((color) => (
+                  <Pressable
+                    key={color}
+                    onPress={() => setEditor((prev) => prev ? { ...prev, color } : null)}
+                    style={[
+                      pp.colorSwatch,
+                      { backgroundColor: color },
+                      editor.color === color && pp.colorSwatchSelected,
+                    ]}
+                    accessibilityLabel={`Kolor ${color}`}
+                  >
+                    {editor.color === color && <Text style={pp.swatchCheck}>✓</Text>}
+                  </Pressable>
+                ))}
+              </View>
+              <View style={pp.editorBtns}>
+                <Pressable
+                  onPress={onSave}
+                  disabled={saving}
+                  style={[pp.editorBtn, { backgroundColor: pixelPopAccent, opacity: saving ? 0.6 : 1 }]}
+                >
+                  <Text style={pp.editorBtnText}>{saving ? 'ZAPISUJĘ...' : 'ZAPISZ'}</Text>
+                </Pressable>
+                <Pressable onPress={closeEditor} style={[pp.editorBtn, { backgroundColor: PP.paper }]}>
+                  <Text style={pp.editorBtnText}>ANULUJ</Text>
+                </Pressable>
+              </View>
+            </View>
+          )}
+        </ScrollView>
+
+        <Pressable onPress={onClose} style={[pp.closeBtn, { backgroundColor: PP.ink }]} accessibilityLabel="Zamknij">
+          <Text style={[pp.editorBtnText, { color: PP.paper }]}>ZAMKNIJ</Text>
+        </Pressable>
+      </PPModal>
+    );
+  }
 
   return (
     <PixelModal visible={visible} onClose={onClose} title="Kategorie">
@@ -201,132 +311,71 @@ export function CategoryManagerModal({ visible, onClose }: CategoryManagerModalP
   );
 }
 
-const styles = StyleSheet.create({
-  scroll: {
-    maxHeight: 440,
-  },
-  sectionLabel: {
-    fontSize: FONT_SIZE.caption,
-    fontWeight: FONT_WEIGHT.bold,
-    color: COLORS.disabled,
-    marginTop: SPACING.sm,
-    marginBottom: SPACING.xs,
-    letterSpacing: 1,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: SPACING.sm,
-    marginBottom: SPACING.xs,
-  },
-  categoryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: SPACING.xs,
-    gap: SPACING.sm,
-    borderBottomWidth: BORDERS.width,
-    borderBottomColor: COLORS.border,
-  },
-  colorDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    borderWidth: BORDERS.width,
-    borderColor: COLORS.border,
-  },
-  categoryName: {
-    fontSize: FONT_SIZE.body,
-    color: COLORS.primary,
-  },
-  flex: {
-    flex: 1,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: SPACING.xs,
-  },
-  iconBtn: {
-    padding: SPACING.xs,
-    minWidth: TOUCH.minTarget / 2,
-    alignItems: 'center',
-  },
-  addBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 4,
-  },
-  addBtnText: {
-    fontSize: FONT_SIZE.caption,
-    fontWeight: FONT_WEIGHT.bold,
-    color: COLORS.white,
-  },
-  premiumBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-    paddingVertical: SPACING.sm,
-  },
-  premiumText: {
-    fontSize: FONT_SIZE.caption,
-    color: COLORS.disabled,
-  },
-  emptyText: {
-    fontSize: FONT_SIZE.caption,
-    color: COLORS.disabled,
-    paddingVertical: SPACING.sm,
-  },
-  editor: {
-    marginTop: SPACING.md,
-    borderTopWidth: BORDERS.width,
-    borderTopColor: COLORS.border,
-    paddingTop: SPACING.sm,
-    gap: SPACING.sm,
-  },
-  editorTitle: {
-    fontSize: FONT_SIZE.body,
-    fontWeight: FONT_WEIGHT.bold,
-    color: COLORS.primary,
-  },
+// ─── Pixel Pop styles ────────────────────────────────────────────────────────
+
+const pp = StyleSheet.create({
+  scroll: { maxHeight: 420 },
+  sectionLabel: { fontFamily: PP_FONT.display, fontSize: 9, color: PP.muted, letterSpacing: 1, marginTop: 12, marginBottom: 6 },
+  sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, marginBottom: 6 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderBottomWidth: PP_BORDER.thin, borderBottomColor: PP.ink + '33' },
+  colorSquare: { width: 16, height: 16, borderWidth: PP_BORDER.base, borderColor: PP.ink },
+  actions: { flexDirection: 'row', gap: 6 },
+  iconBtn: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center', borderWidth: PP_BORDER.base, borderColor: PP.ink, backgroundColor: PP.paper },
+  addBtn: { paddingHorizontal: 10, paddingVertical: 5, borderWidth: PP_BORDER.base, borderColor: PP.ink },
+  addBtnText: { fontFamily: PP_FONT.display, fontSize: 9, color: PP.ink },
+  premiumBanner: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 10 },
+  premiumText: { fontFamily: PP_FONT.uiSemi, fontSize: 12, color: PP.muted },
+  emptyText: { fontFamily: PP_FONT.uiSemi, fontSize: 12, color: PP.muted, paddingVertical: 10 },
+  editor: { marginTop: 14, paddingTop: 14, borderTopWidth: PP_BORDER.thin, borderTopColor: PP.ink },
+  editorTitle: { fontFamily: PP_FONT.display, fontSize: 9, color: PP.ink, letterSpacing: 1, marginBottom: 10 },
   input: {
-    borderWidth: BORDERS.width,
-    borderColor: COLORS.border,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    fontSize: FONT_SIZE.body,
-    color: COLORS.primary,
-    backgroundColor: COLORS.white,
+    backgroundColor: PP.paper, borderWidth: PP_BORDER.base, borderColor: PP.ink,
+    paddingHorizontal: 12, paddingVertical: 10, fontFamily: PP_FONT.ui, fontSize: 13, color: PP.ink,
   },
-  colorLabel: {
-    fontSize: FONT_SIZE.caption,
-    color: COLORS.disabled,
+  colorGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
+  colorSwatch: { width: 28, height: 28, borderWidth: PP_BORDER.base, borderColor: PP.ink, alignItems: 'center', justifyContent: 'center' },
+  colorSwatchSelected: { borderWidth: PP_BORDER.thick + 1, borderColor: PP.ink },
+  swatchCheck: { fontFamily: PP_FONT.uiBold, fontSize: 14, color: PP.ink },
+  editorBtns: { flexDirection: 'row', gap: 8, marginTop: 12 },
+  editorBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 12, borderWidth: PP_BORDER.thick, borderColor: PP.ink },
+  editorBtnText: { fontFamily: PP_FONT.display, fontSize: 9, color: PP.ink },
+  closeBtn: { marginTop: 14, alignItems: 'center', paddingVertical: 12, borderWidth: PP_BORDER.thick, borderColor: PP.ink },
+});
+
+// ─── Legacy styles ───────────────────────────────────────────────────────────
+
+const styles = StyleSheet.create({
+  scroll: { maxHeight: 440 },
+  sectionLabel: {
+    fontSize: FONT_SIZE.caption, fontWeight: FONT_WEIGHT.bold, color: COLORS.disabled,
+    marginTop: SPACING.sm, marginBottom: SPACING.xs, letterSpacing: 1,
   },
-  colorGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.xs,
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: SPACING.sm, marginBottom: SPACING.xs },
+  categoryRow: {
+    flexDirection: 'row', alignItems: 'center', paddingVertical: SPACING.xs,
+    gap: SPACING.sm, borderBottomWidth: BORDERS.width, borderBottomColor: COLORS.border,
   },
-  colorSwatch: {
-    width: 30,
-    height: 30,
-    borderWidth: BORDERS.width,
-    borderColor: COLORS.border,
+  colorDot: { width: 14, height: 14, borderRadius: 7, borderWidth: BORDERS.width, borderColor: COLORS.border },
+  categoryName: { fontSize: FONT_SIZE.body, color: COLORS.primary },
+  flex: { flex: 1 },
+  actions: { flexDirection: 'row', gap: SPACING.xs },
+  iconBtn: { padding: SPACING.xs, minWidth: TOUCH.minTarget / 2, alignItems: 'center' },
+  addBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: COLORS.primary, paddingHorizontal: SPACING.sm, paddingVertical: 4 },
+  addBtnText: { fontSize: FONT_SIZE.caption, fontWeight: FONT_WEIGHT.bold, color: COLORS.white },
+  premiumBanner: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, paddingVertical: SPACING.sm },
+  premiumText: { fontSize: FONT_SIZE.caption, color: COLORS.disabled },
+  emptyText: { fontSize: FONT_SIZE.caption, color: COLORS.disabled, paddingVertical: SPACING.sm },
+  editor: { marginTop: SPACING.md, borderTopWidth: BORDERS.width, borderTopColor: COLORS.border, paddingTop: SPACING.sm, gap: SPACING.sm },
+  editorTitle: { fontSize: FONT_SIZE.body, fontWeight: FONT_WEIGHT.bold, color: COLORS.primary },
+  input: {
+    borderWidth: BORDERS.width, borderColor: COLORS.border, paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs, fontSize: FONT_SIZE.body, color: COLORS.primary, backgroundColor: COLORS.white,
   },
-  colorSwatchSelected: {
-    borderWidth: 3,
-    borderColor: COLORS.primary,
-  },
-  editorButtons: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-  },
-  editorBtn: {
-    flex: 1,
-  },
-  closeBtn: {
-    marginTop: SPACING.sm,
-  },
+  colorLabel: { fontSize: FONT_SIZE.caption, color: COLORS.disabled },
+  colorGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.xs },
+  colorSwatch: { width: 30, height: 30, borderWidth: BORDERS.width, borderColor: COLORS.border },
+  colorSwatchSelected: { borderWidth: 3, borderColor: COLORS.primary },
+  editorButtons: { flexDirection: 'row', gap: SPACING.sm },
+  editorBtn: { flex: 1 },
+  closeBtn: { marginTop: SPACING.sm },
 });

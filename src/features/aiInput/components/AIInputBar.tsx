@@ -7,6 +7,7 @@ import { useTheme } from '../../../contexts/ThemeContext';
 import { useSpeechInput } from '../hooks/useSpeechInput';
 import { useCategories } from '../../categories';
 import type { Unit } from '../../../constants';
+import { ComposeBar } from '../../../components/ui-pixelpop';
 
 const DEFAULT_CATEGORY = 'Inne';
 const DEFAULT_UNIT: Unit = 'szt';
@@ -28,7 +29,7 @@ interface AIInputBarProps {
 }
 
 export function AIInputBar({ onParse, onAddManual, isParsing, disabled = false, clearTrigger = 0 }: AIInputBarProps) {
-  const { theme } = useTheme();
+  const { theme, pixelPopEnabled, pixelPopAccent } = useTheme();
   const [activeTab, setActiveTab] = useState(0);
 
   // Manual tab state
@@ -91,6 +92,29 @@ export function AIInputBar({ onParse, onAddManual, isParsing, disabled = false, 
     if (!trimmed || isParsing) return;
     onParse(trimmed);
   };
+
+  if (pixelPopEnabled) {
+    return (
+      <ComposeBar
+        mode={activeTab === 0 ? 1 : 0}
+        onModeChange={(i) => setActiveTab(i === 0 ? 1 : 0)}
+        value={aiText}
+        onChangeText={(t) => { setAiText(t); if (!isListening) sessionBaseRef.current = t; }}
+        onSend={() => {
+          if (activeTab === 1) {
+            const t = aiText.trim();
+            if (!t || isParsing) return;
+            onParse(t);
+          }
+        }}
+        onMicPress={async () => { if (isListening) { stopListening(); } else { sessionBaseRef.current = aiText; clearTranscript(); await startListening(); } }}
+        isListening={isListening}
+        micDisabled={!isSpeechSupported}
+        accent={pixelPopAccent}
+        placeholder={isListening ? 'Słucham...' : '2x mleko, chleb, jabłka…'}
+      />
+    );
+  }
 
   return (
     <View style={styles.container}>

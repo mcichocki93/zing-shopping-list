@@ -81,7 +81,8 @@ def enableMinifyInReleaseBuilds = (findProperty('android.enableMinifyInReleaseBu
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
-apply from: new File(["node", "--print", "require('path').dirname(require.resolve('@sentry/react-native/package.json'))"].execute().text.trim(), "sentry.gradle")
+// sentry.gradle intentionally omitted on this branch (preview/test builds)
+// Source maps are uploaded on production builds via the main branch.
 
 android {
     ndkVersion rootProject.ext.ndkVersion

@@ -4,8 +4,10 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
+  getDoc,
   arrayUnion,
   arrayRemove,
+  deleteField,
   serverTimestamp,
   query,
   where,
@@ -23,12 +25,13 @@ const userDoc = (id: string) => doc(db, COLLECTIONS.USERS, id);
 
 // ─── Create ──────────────────────────────────────────────
 
-export async function createList(title: string, ownerId: string): Promise<string> {
+export async function createList(title: string, ownerId: string, ownerName: string): Promise<string> {
   const sanitizedTitle = sanitizeString(title, 100);
   const data = {
     title: sanitizedTitle,
     ownerId,
     memberIds: [ownerId],
+    memberNames: { [ownerId]: ownerName },
     isArchived: false,
     items: [],
     createdAt: serverTimestamp(),
@@ -98,12 +101,35 @@ export async function addMember(listId: string, userId: string): Promise<void> {
 export async function removeMember(listId: string, userId: string): Promise<void> {
   await updateDoc(listDoc(listId), {
     memberIds: arrayRemove(userId),
+    [`memberNames.${userId}`]: deleteField(),
     updatedAt: serverTimestamp(),
   });
 
   await updateDoc(userDoc(userId), {
     sharedListIds: arrayRemove(listId),
   });
+}
+
+// ─── Members ─────────────────────────────────────────────
+
+export interface MemberProfile {
+  id: string;
+  displayName: string;
+}
+
+export async function fetchMemberProfiles(userIds: string[]): Promise<MemberProfile[]> {
+  const results = await Promise.all(
+    userIds.map(async (id) => {
+      try {
+        const snap = await getDoc(userDoc(id));
+        const name = snap.exists() ? (snap.data().displayName as string | undefined) ?? id : id;
+        return { id, displayName: name };
+      } catch {
+        return { id, displayName: id };
+      }
+    }),
+  );
+  return results;
 }
 
 // ─── Items ───────────────────────────────────────────────
