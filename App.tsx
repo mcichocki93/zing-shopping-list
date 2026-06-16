@@ -31,6 +31,12 @@ function AppInner() {
       const { recordEvent } = require('expo-insights');
       recordEvent('app_open');
     } catch {}
+    // Gather GDPR consent + initialize ads (no-op for Premium-served screens;
+    // banners themselves are hidden for Premium users in AdBanner).
+    try {
+      const { initAds } = require('./src/features/ads');
+      initAds();
+    } catch {}
   }, []);
 
   if (!fontsLoaded) return null;
