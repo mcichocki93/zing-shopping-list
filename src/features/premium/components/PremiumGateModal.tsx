@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { PixelModal } from '../../../components/ui/PixelModal';
 import { PixelButton } from '../../../components/ui/PixelButton';
 import { COLORS, SPACING, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
-import { AI_FREE_DAILY_LIMIT } from '../../../types/user';
 import { purchasePremium, restorePurchases } from '../services/iap';
 
 interface PremiumGateModalProps {
@@ -61,22 +60,22 @@ export function PremiumGateModal({ visible, onClose, limitReached = false }: Pre
     <PixelModal
       visible={visible}
       onClose={onClose}
-      title={limitReached ? 'Limit AI osiągnięty' : 'Zing Premium'}
+      title={limitReached ? 'Funkcja Premium' : 'Zing Premium'}
     >
       <View style={styles.container}>
         {limitReached ? (
           <Text style={styles.body}>
-            Wykorzystałeś dzienny limit AI ({AI_FREE_DAILY_LIMIT} wywołanie/24h).
+            Rozpoznawanie AI jest dostępne tylko w Zing Premium. Kup subskrypcję, aby dodawać produkty tekstem i głosem.
           </Text>
         ) : (
           <Text style={styles.body}>Odblokuj pełne możliwości Zing!</Text>
         )}
 
         <View style={styles.featureList}>
-          <FeatureRow label="Nieograniczone AI" free={false} />
-          <FeatureRow label={`${AI_FREE_DAILY_LIMIT} wywołanie AI / dzień`} free={true} />
+          <FeatureRow label="Rozpoznawanie AI (tekst i głos)" free={false} />
           <FeatureRow label="Szablony list" free={false} />
           <FeatureRow label="Niestandardowe kategorie" free={false} />
+          <FeatureRow label="Nieograniczona liczba list" free={true} />
           <FeatureRow label="Pełna lista zakupów" free={true} />
         </View>
 

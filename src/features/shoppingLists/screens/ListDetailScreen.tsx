@@ -272,14 +272,10 @@ Lub wpisz kod: ${code}`,
                 onPress={() => setShowPremiumModal(true)}
                 style={styles.aiQuotaRow}
                 accessibilityRole="button"
-                accessibilityLabel={aiCallsRemaining > 0 ? 'AI dostępne dziś. Kup Premium po nieograniczony dostęp.' : `Limit AI wyczerpany. Wróć za ${hoursUntilReset}h lub kup Premium.`}
+                accessibilityLabel="Rozpoznawanie AI dostępne tylko w Premium. Kup, aby odblokować."
               >
-                <MaterialCommunityIcons name="robot-outline" size={14} color={aiCallsRemaining === 0 ? COLORS.danger : COLORS.disabled} />
-                <Text style={[styles.aiQuotaText, aiCallsRemaining === 0 && styles.aiQuotaWarning]}>
-                  {aiCallsRemaining > 0
-                    ? 'AI: dostępne dziś'
-                    : `AI: wróć za ${hoursUntilReset}h — lub kup Premium`}
-                </Text>
+                <MaterialCommunityIcons name="robot-outline" size={14} color={COLORS.disabled} />
+                <Text style={styles.aiQuotaText}>AI tylko w Premium — kup, aby odblokować</Text>
                 <MaterialCommunityIcons name="crown-outline" size={14} color={COLORS.primary} />
               </Pressable>
             )}

@@ -1,19 +1,17 @@
-import { AI_FREE_DAILY_LIMIT } from '../../../types/user';
 import { useAuth } from '../../auth/hooks/useAuth';
 
 export interface PremiumStatus {
   isPremium: boolean;
-  aiUsageThisMonth: number;
-  aiCallsRemaining: number;
-  hasAIAccess: boolean;
-  hoursUntilReset: number | null; // null = no limit (premium) or already reset
+  aiCallsRemaining: number;       // Infinity for premium, 0 for free
+  hasAIAccess: boolean;           // AI is a Premium-only feature
+  hoursUntilReset: number | null; // kept for API compatibility — always null now
 }
 
 export function usePremium(): PremiumStatus {
   const { user } = useAuth();
 
   if (!user) {
-    return { isPremium: false, aiUsageThisMonth: 0, aiCallsRemaining: 0, hasAIAccess: false, hoursUntilReset: null };
+    return { isPremium: false, aiCallsRemaining: 0, hasAIAccess: false, hoursUntilReset: null };
   }
 
   // Defensive client-side expiry check — Cloud Function scheduler is authoritative
@@ -23,23 +21,8 @@ export function usePremium(): PremiumStatus {
     : null;
   const isPremium = (user.isPremium ?? false) && (!expiresAt || expiresAt > new Date());
 
-  if (isPremium) {
-    return { isPremium: true, aiUsageThisMonth: 0, aiCallsRemaining: Infinity, hasAIAccess: true, hoursUntilReset: null };
-  }
-
-  const now = new Date();
-  // Firestore returns Timestamps — handle both Timestamp (with .toDate()) and plain Date
-  const raw = user.aiUsageResetDate as Date & { toDate?: () => Date };
-  const resetDate: Date = typeof raw?.toDate === 'function' ? raw.toDate() : (raw instanceof Date ? raw : new Date(0));
-
-  const isReset = now >= resetDate;
-  const aiUsageThisMonth = user.aiUsageThisMonth ?? 0;
-  const aiCallsRemaining = isReset ? AI_FREE_DAILY_LIMIT : Math.max(0, AI_FREE_DAILY_LIMIT - aiUsageThisMonth);
-  const hasAIAccess = aiCallsRemaining > 0;
-
-  const hoursUntilReset = !hasAIAccess
-    ? Math.ceil((resetDate.getTime() - now.getTime()) / (1000 * 60 * 60))
-    : null;
-
-  return { isPremium, aiUsageThisMonth, aiCallsRemaining, hasAIAccess, hoursUntilReset };
+  // AI access is binary: Premium = unlimited, Free = none.
+  return isPremium
+    ? { isPremium: true, aiCallsRemaining: Infinity, hasAIAccess: true, hoursUntilReset: null }
+    : { isPremium: false, aiCallsRemaining: 0, hasAIAccess: false, hoursUntilReset: null };
 }

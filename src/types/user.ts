@@ -22,8 +22,6 @@ export interface User {
   pixelPopAccent?: string;
 }
 
-export const AI_FREE_DAILY_LIMIT = 1; // calls per 24h for free users
-
 export interface AuthState {
   user: User | null;
   isLoading: boolean;

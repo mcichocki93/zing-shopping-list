@@ -41,13 +41,11 @@ Zasady:
 - Używaj wielkich liter na początku nazwy
 - Odpowiedz TYLKO poprawnym JSON array, bez markdown, bez komentarzy`;
 
-// Server-side rate limit (abuse protection regardless of plan)
+// Server-side rate limit (abuse protection). AI is Premium-only, so this is a
+// light guard against a single premium account hammering the endpoint.
 const userCallCounts = new Map();
-const BURST_LIMIT = 10;
+const BURST_LIMIT = 20;
 const BURST_WINDOW = 60 * 60 * 1000; // 1 hour
-
-// Daily free tier limit (must match AI_FREE_DAILY_LIMIT in src/types/user.ts)
-const AI_FREE_DAILY_LIMIT = 1;
 
 function checkBurstLimit(userId) {
   const now = Date.now();
@@ -62,41 +60,25 @@ function checkBurstLimit(userId) {
 }
 
 /**
- * Checks 24h quota for free users and increments the counter atomically.
- * Throws resource-exhausted if limit already used within last 24h.
+ * Ensures the caller has an active Premium subscription. AI is a Premium-only
+ * feature — free users have no AI access at all. Premium status is managed
+ * exclusively by Cloud Functions (verifyAndGrantPremium / checkExpiredSubscriptions)
+ * and locked down by Firestore rules, so it cannot be spoofed from the client.
  */
-async function checkAndIncrementDailyQuota(userId) {
+async function requirePremium(userId) {
   const db = admin.firestore();
-  const userRef = db.collection('users').doc(userId);
+  const snap = await db.collection('users').doc(userId).get();
+  const data = snap.exists ? snap.data() : null;
 
-  return db.runTransaction(async (tx) => {
-    const snap = await tx.get(userRef);
-    if (!snap.exists) return; // new user — let it through
+  const expiry = data?.premiumExpiresAt?.toDate?.() ?? null;
+  const active = data?.isPremium === true && (!expiry || expiry > new Date());
 
-    const data = snap.data();
-    if (data.isPremium === true) return; // no limit for premium users
-
-    const now = new Date();
-    const resetDate = data.aiUsageResetDate?.toDate?.() ?? new Date(0);
-
-    // Reset date has passed — allow and set next reset to +24h
-    if (now >= resetDate) {
-      const nextReset = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-      tx.update(userRef, {aiUsageThisMonth: 1, aiUsageResetDate: nextReset});
-      return;
-    }
-
-    const usage = data.aiUsageThisMonth ?? 0;
-    if (usage >= AI_FREE_DAILY_LIMIT) {
-      const hoursLeft = Math.ceil((resetDate - now) / (1000 * 60 * 60));
-      throw new HttpsError(
-        'resource-exhausted',
-        `Wykorzystałeś dzienny limit AI. Wróć za ${hoursLeft}h lub kup Premium.`,
-      );
-    }
-
-    tx.update(userRef, {aiUsageThisMonth: admin.firestore.FieldValue.increment(1)});
-  });
+  if (!active) {
+    throw new HttpsError(
+      'permission-denied',
+      'AI jest dostępne tylko w Zing Premium. Kup subskrypcję, aby korzystać z rozpoznawania produktów.',
+    );
+  }
 }
 
 /**
@@ -285,8 +267,8 @@ exports.parseItemsWithAI = onCall({secrets: [geminiApiKey]}, async (request) => 
     throw new HttpsError('resource-exhausted', 'Za dużo żądań. Spróbuj za chwilę.');
   }
 
-  // 3. Daily quota check + increment (free users only)
-  await checkAndIncrementDailyQuota(userId);
+  // 3. AI is Premium-only — reject free users
+  await requirePremium(userId);
 
   // 4. Validate input
   const {input, customCategories: rawCustomCategories} = request.data;

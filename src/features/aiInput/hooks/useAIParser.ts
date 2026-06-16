@@ -56,8 +56,9 @@ export function useAIParser(): UseAIParserReturn {
     } catch (err) {
       if (!mountedRef.current) return;
       const aiError = err as AIParseError;
-      // Cloud Function returns resource-exhausted when monthly limit hit
-      if (aiError.message?.includes('limit') || aiError.message?.includes('miesiąc')) {
+      // Cloud Function returns permission-denied for non-premium callers
+      // (edge case: subscription expired server-side mid-session) — show the paywall
+      if (aiError.message?.includes('Premium') || aiError.message?.includes('limit')) {
         setLimitReached(true);
       } else {
         setError(aiError.message || 'Nieznany błąd.');
