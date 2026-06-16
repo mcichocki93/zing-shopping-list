@@ -43,8 +43,28 @@ service cloud.firestore {
 
     match /users/{userId} {
 
-      allow read, write: if isAuthenticated()
-        && request.auth.uid == userId;
+      // Server-only fields — granted/managed exclusively by Cloud Functions
+      // (Admin SDK bypasses rules). The client must never be able to set these,
+      // otherwise anyone could grant themselves Premium or reset their AI quota.
+      function touchesServerFields() {
+        return request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['isPremium', 'premiumExpiresAt', 'subscriptionToken',
+                   'aiUsageThisMonth', 'aiUsageResetDate']);
+      }
+
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+
+      // On create, Premium must start false (profile is bootstrapped by the client)
+      allow create: if isAuthenticated()
+        && request.auth.uid == userId
+        && request.resource.data.isPremium == false;
+
+      // On update, the client may change profile fields but never the server-only ones
+      allow update: if isAuthenticated()
+        && request.auth.uid == userId
+        && !touchesServerFields();
+
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
 
       match /templates/{templateId} {
         allow read, delete: if isAuthenticated()

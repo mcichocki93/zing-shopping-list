@@ -1,7 +1,3 @@
-import { useEffect } from 'react';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '../../../services/firebase/config';
-import { COLLECTIONS } from '../../../constants';
 import { AI_FREE_DAILY_LIMIT } from '../../../types/user';
 import { useAuth } from '../../auth/hooks/useAuth';
 
@@ -13,24 +9,11 @@ export interface PremiumStatus {
   hoursUntilReset: number | null; // null = no limit (premium) or already reset
 }
 
-// TODO: remove before release — forces premium for testing
-const FORCE_PREMIUM_FOR_TESTING = true;
-
 export function usePremium(): PremiumStatus {
   const { user } = useAuth();
 
-  useEffect(() => {
-    if (FORCE_PREMIUM_FOR_TESTING && user && !user.isPremium) {
-      grantPremium(user.id);
-    }
-  }, [user?.id]);
-
   if (!user) {
     return { isPremium: false, aiUsageThisMonth: 0, aiCallsRemaining: 0, hasAIAccess: false, hoursUntilReset: null };
-  }
-
-  if (FORCE_PREMIUM_FOR_TESTING) {
-    return { isPremium: true, aiUsageThisMonth: 0, aiCallsRemaining: Infinity, hasAIAccess: true, hoursUntilReset: null };
   }
 
   // Defensive client-side expiry check — Cloud Function scheduler is authoritative
@@ -59,10 +42,4 @@ export function usePremium(): PremiumStatus {
     : null;
 
   return { isPremium, aiUsageThisMonth, aiCallsRemaining, hasAIAccess, hoursUntilReset };
-}
-
-export async function grantPremium(userId: string): Promise<void> {
-  await updateDoc(doc(db, COLLECTIONS.USERS, userId), {
-    isPremium: true,
-  });
 }
