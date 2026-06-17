@@ -1,6 +1,6 @@
 # Polityka Prywatności aplikacji Zing
 
-**Data ostatniej aktualizacji:** 2 marca 2026 r.
+**Data ostatniej aktualizacji:** 15 czerwca 2026 r.
 
 ---
 
@@ -36,6 +36,16 @@ Podczas rejestracji i korzystania z Aplikacji zbieramy:
 - Firebase Authentication ID (unikalny identyfikator użytkownika)
 - Logi błędów (w przypadku awarii Aplikacji)
 
+### 2.6 Dane związane z reklamami
+W bezpłatnej wersji Aplikacji wyświetlane są reklamy dostarczane przez **Google AdMob**. W związku z tym mogą być zbierane i przetwarzane:
+- **Identyfikator reklamowy** (Advertising ID) urządzenia
+- Dane o urządzeniu i przybliżonej lokalizacji (na podstawie adresu IP)
+- Informacje o interakcjach z reklamami (wyświetlenia, kliknięcia)
+
+Reklamy **nie są wyświetlane** użytkownikom posiadającym aktywną subskrypcję Premium.
+
+W Europejskim Obszarze Gospodarczym (EOG) przed wyświetleniem spersonalizowanych reklam Aplikacja prosi o **zgodę** za pośrednictwem mechanizmu Google User Messaging Platform (UMP). Użytkownik może odmówić zgody lub ją później zmienić — w takim przypadku wyświetlane będą wyłącznie reklamy niespersonalizowane.
+
 ---
 
 ## 3. Cel i podstawa prawna przetwarzania danych
@@ -47,6 +57,7 @@ Podczas rejestracji i korzystania z Aplikacji zbieramy:
 | Egzekwowanie limitów użytkowania | Art. 6 ust. 1 lit. b — wykonanie umowy |
 | Obsługa zakupów Premium | Art. 6 ust. 1 lit. b — wykonanie umowy |
 | Bezpieczeństwo i zapobieganie nadużyciom | Art. 6 ust. 1 lit. f — prawnie uzasadniony interes |
+| Wyświetlanie reklam (wersja bezpłatna) | Art. 6 ust. 1 lit. a — zgoda (reklamy spersonalizowane); lit. f — prawnie uzasadniony interes (reklamy niespersonalizowane) |
 
 ---
 
@@ -66,6 +77,9 @@ Tekst wprowadzony przez użytkownika do funkcji AI jest przesyłany do usługi G
 
 ### Google Play Billing
 W przypadku zakupu wersji Premium, transakcja jest obsługiwana przez Google Play. Administrator nie przechowuje danych płatniczych.
+
+### Google AdMob (Alphabet Inc.)
+W bezpłatnej wersji Aplikacji reklamy dostarcza usługa Google AdMob. AdMob może zbierać identyfikator reklamowy oraz dane techniczne urządzenia w celu wyświetlania reklam i pomiaru ich skuteczności. Sposób przetwarzania danych przez Google opisany jest w [Polityce Prywatności Google](https://policies.google.com/privacy) oraz na stronie [jak Google wykorzystuje dane](https://policies.google.com/technologies/partner-sites). Użytkownik może zarządzać personalizacją reklam w ustawieniach swojego urządzenia (Reklamy Google) oraz poprzez mechanizm zgody UMP w Aplikacji.
 
 Administrator **nie sprzedaje** danych osobowych użytkowników żadnym podmiotom trzecim.
 
