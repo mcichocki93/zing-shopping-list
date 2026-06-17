@@ -7,8 +7,8 @@ import { Platform } from 'react-native';
 // Google test units: https://developers.google.com/admob/android/test-ads
 const TEST_BANNER = 'ca-app-pub-3940256099942544/9214589741'; // adaptive banner (test)
 
-// TODO: ZAMIEŃ na prawdziwy banner unit z AdMob (Ad units → Banner) przed produkcją
-const PROD_BANNER_ANDROID = 'ca-app-pub-0000000000000000/0000000000';
+// Prawdziwy banner unit z AdMob (serwowany tylko w buildzie produkcyjnym)
+const PROD_BANNER_ANDROID = 'ca-app-pub-7437857814279855/5655522059';
 
 export const BANNER_UNIT_ID = __DEV__
   ? TEST_BANNER

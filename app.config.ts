@@ -40,8 +40,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       '@react-native-google-signin/google-signin',
       'expo-iap',
       ['react-native-google-mobile-ads', {
-        // TEST App ID — ZAMIEŃ na prawdziwy z AdMob (Apps → App settings) przed produkcją
-        androidAppId: 'ca-app-pub-3940256099942544~3347511713',
+        androidAppId: 'ca-app-pub-7437857814279855~6257027985',
       }],
       ['@sentry/react-native', {
         organization: 'marcin-cichocki',
