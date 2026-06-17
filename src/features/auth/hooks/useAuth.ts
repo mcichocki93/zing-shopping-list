@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { Alert } from 'react-native';
 import type { User, AuthState, CustomCategory } from '../../../types/user';
-import { signUp, signIn, signInWithGoogle, signInWithApple, signOut, onAuthChanged, resetPassword, deleteAccount, saveCustomCategories, saveListOrder } from '../services';
+import { signUp, signIn, signInWithGoogle, signInWithApple, signOut, onAuthChanged, resetPassword, deleteAccount, saveCustomCategories, saveListOrder, subscribeToUserProfile } from '../services';
 
 interface AuthContextValue extends AuthState {
   handleSignUp: (email: string, password: string, displayName: string) => Promise<void>;
@@ -56,6 +56,18 @@ export function useAuthProvider(): AuthContextValue {
       unsubscribe();
     };
   }, []);
+
+  // Keep the user profile live (e.g. isPremium after a purchase, or premium
+  // revoked by the expiry scheduler) so the UI reflects changes without a restart.
+  useEffect(() => {
+    const uid = state.user?.id;
+    if (!uid) return;
+    const unsubscribe = subscribeToUserProfile(uid, (fresh) => {
+      if (!mountedRef.current) return;
+      setState((prev) => (prev.user && prev.user.id === fresh.id ? { ...prev, user: fresh } : prev));
+    });
+    return unsubscribe;
+  }, [state.user?.id]);
 
   const handleSignUp = useCallback(
     async (email: string, password: string, displayName: string) => {

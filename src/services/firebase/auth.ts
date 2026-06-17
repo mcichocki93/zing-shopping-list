@@ -12,7 +12,7 @@ import {
   type Unsubscribe,
 } from 'firebase/auth';
 import { httpsCallable } from 'firebase/functions';
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 // Defensive import — native module may not be registered in older dev builds
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let GoogleSignin: any = null;
@@ -35,6 +35,22 @@ async function fetchUserProfile(uid: string): Promise<User | null> {
   const snapshot = await getDoc(doc(db, COLLECTIONS.USERS, uid));
   if (!snapshot.exists()) return null;
   return { id: snapshot.id, ...snapshot.data() } as User;
+}
+
+/**
+ * Real-time subscription to the user profile document. Keeps client-side state
+ * (e.g. isPremium after a purchase, or revoked premium from the scheduler) in
+ * sync without an app restart. Fires only when the document exists.
+ */
+export function subscribeToUserProfile(
+  uid: string,
+  callback: (user: User) => void,
+): Unsubscribe {
+  return onSnapshot(doc(db, COLLECTIONS.USERS, uid), (snapshot) => {
+    if (snapshot.exists()) {
+      callback({ id: snapshot.id, ...snapshot.data() } as User);
+    }
+  });
 }
 
 async function createUserProfile(firebaseUser: FirebaseUser, displayName: string): Promise<User> {
