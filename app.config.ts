@@ -39,6 +39,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       }],
       '@react-native-google-signin/google-signin',
       'expo-iap',
+      ['react-native-google-mobile-ads', {
+        androidAppId: 'ca-app-pub-7437857814279855~6257027985',
+      }],
       ['@sentry/react-native', {
         organization: 'marcin-cichocki',
         project: 'zing',

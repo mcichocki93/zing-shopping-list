@@ -12,6 +12,7 @@ import type { AIParsedItem } from '../../../types/ai';
 import { PremiumGateModal } from '../../premium/components/PremiumGateModal';
 import { PixelButton } from '../../../components/ui';
 import { OfflineBanner } from '../../../components/OfflineBanner';
+import { AdBanner } from '../../ads';
 import { ThemePickerModal } from '../../../components/ThemePickerModal';
 import { CategorySection } from '../components/CategorySection';
 import { EditItemModal } from '../components/EditItemModal';
@@ -801,6 +802,11 @@ function PixelPopDetailView({
           {groups.map((g) => renderCategoryCard(g))}
         </ScrollView>
       )}
+
+      {/* Banner reklamowy nad tab barem — ukryty dla Premium */}
+      <View style={{ marginBottom: tabBarHeight }}>
+        <AdBanner />
+      </View>
 
       <PreviewModal
         visible={showPreview}
