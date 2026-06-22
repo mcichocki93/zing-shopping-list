@@ -7,6 +7,7 @@ import {
   Pressable,
   StyleSheet,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PixelButton, PixelCard } from '../../../components/ui';
 import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
 import type { AIParsedItem } from '../../../types/ai';
@@ -26,6 +27,7 @@ export function PreviewModal({
   onCancel,
   onRemoveItem,
 }: PreviewModalProps) {
+  const insets = useSafeAreaInsets();
   return (
     <Modal
       visible={visible}
@@ -34,7 +36,7 @@ export function PreviewModal({
       onRequestClose={onCancel}
     >
       <View style={styles.overlay}>
-        <View style={styles.modal}>
+        <View style={[styles.modal, { paddingBottom: insets.bottom + SPACING.md }]}>
           <Text style={styles.title}>Podgląd produktów</Text>
           <Text style={styles.subtitle}>
             Rozpoznano {items.length} {items.length === 1 ? 'produkt' : items.length < 5 ? 'produkty' : 'produktów'}

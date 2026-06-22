@@ -110,6 +110,7 @@ export function AIInputBar({ onParse, onAddManual, isParsing, disabled = false, 
         onMicPress={async () => { if (isListening) { stopListening(); } else { sessionBaseRef.current = aiText; clearTranscript(); await startListening(); } }}
         isListening={isListening}
         micDisabled={!isSpeechSupported}
+        isParsing={isParsing}
         accent={pixelPopAccent}
         placeholder={isListening ? 'Słucham...' : '2x mleko, chleb, jabłka…'}
       />

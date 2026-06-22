@@ -746,6 +746,7 @@ function PixelPopDetailView({
           onMicPress={handleMicPress}
           isListening={isListening}
           micDisabled={!isSpeechSupported}
+          isParsing={isParsing}
           accent={accent}
           placeholder={mode === 0 ? (isListening ? 'Słucham...' : '2x mleko, chleb, jabłka…') : 'Nazwa produktu'}
           floating={false}
@@ -785,7 +786,8 @@ function PixelPopDetailView({
         <DraggableFlatList
           data={groups}
           keyExtractor={(g: CategoryGroup) => g.category}
-          contentContainerStyle={{ paddingBottom: tabBarHeight + 16 }}
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: tabBarHeight + (isPremium ? 16 : 72) }}
           ListHeaderComponent={listHeaderContent}
           onDragEnd={({ data }: { data: CategoryGroup[] }) => {
             onSetCategoryOrder(data.map((g: CategoryGroup) => g.category));
@@ -797,14 +799,14 @@ function PixelPopDetailView({
           )}
         />
       ) : (
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: tabBarHeight + 16 }}>
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: tabBarHeight + (isPremium ? 16 : 72) }}>
           {listHeaderContent}
           {groups.map((g) => renderCategoryCard(g))}
         </ScrollView>
       )}
 
-      {/* Banner reklamowy nad tab barem — ukryty dla Premium */}
-      <View style={{ marginBottom: tabBarHeight }}>
+      {/* Banner reklamowy zakotwiczony nad pływającym tab barem — ukryty dla Premium */}
+      <View style={{ position: 'absolute', left: 0, right: 0, bottom: tabBarHeight }} pointerEvents="box-none">
         <AdBanner />
       </View>
 

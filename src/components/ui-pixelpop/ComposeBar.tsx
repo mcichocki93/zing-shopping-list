@@ -8,7 +8,7 @@
 // Dla zwięzłości pole tekstowe jest tu kontrolowane przez propsy.
 
 import React from 'react';
-import { View, TextInput, Pressable, Text, StyleSheet, ViewStyle } from 'react-native';
+import { View, TextInput, Pressable, Text, StyleSheet, ViewStyle, ActivityIndicator } from 'react-native';
 import { PP, PP_BORDER, PP_FONT } from '../../constants/pixelPopTheme';
 import { GlassBar } from './GlassBar';
 import { SegmentedControl } from './SegmentedControl';
@@ -23,6 +23,7 @@ interface ComposeBarProps {
   onMicPress?: () => void;
   isListening?: boolean;
   micDisabled?: boolean;
+  isParsing?: boolean;
   accent?: string;
   placeholder?: string;
   style?: ViewStyle;
@@ -31,7 +32,7 @@ interface ComposeBarProps {
 
 export function ComposeBar({
   mode, onModeChange, value, onChangeText, onSend,
-  onMicPress, isListening = false, micDisabled = false, accent = PP.pink,
+  onMicPress, isListening = false, micDisabled = false, isParsing = false, accent = PP.pink,
   placeholder = '2x mleko, chleb, jabłka…', style, floating = true,
 }: ComposeBarProps) {
   return (
@@ -44,26 +45,34 @@ export function ComposeBar({
           placeholder={placeholder}
           placeholderTextColor={PP.muted}
           style={styles.input}
+          editable={!isParsing}
           accessibilityLabel="Dodaj produkt"
         />
         {onMicPress && mode === 0 && (
           <Pressable
-            onPress={micDisabled ? undefined : onMicPress}
+            onPress={micDisabled || isParsing ? undefined : onMicPress}
             accessibilityLabel={isListening ? 'Zatrzymaj dyktowanie' : 'Dyktuj'}
-            style={[styles.btn, { backgroundColor: isListening ? '#FF3B30' : PP.yellow, opacity: micDisabled ? 0.35 : 1 }]}
+            style={[styles.btn, { backgroundColor: isListening ? '#FF3B30' : PP.yellow, opacity: micDisabled || isParsing ? 0.35 : 1 }]}
           >
             <PixelIcon name="mic" size={16} color={PP.ink} />
           </Pressable>
         )}
-        <Pressable onPress={onSend} accessibilityLabel="Dodaj" style={[styles.btn, { backgroundColor: accent }]}>
-          <PixelIcon name="chevron" size={16} color={PP.ink} />
+        <Pressable
+          onPress={isParsing ? undefined : onSend}
+          disabled={isParsing}
+          accessibilityLabel={isParsing ? 'Przetwarzanie' : 'Dodaj'}
+          style={[styles.btn, { backgroundColor: accent, opacity: isParsing ? 0.6 : 1 }]}
+        >
+          {isParsing ? <ActivityIndicator size="small" color={PP.ink} /> : <PixelIcon name="chevron" size={16} color={PP.ink} />}
         </Pressable>
       </View>
-      {onMicPress && !micDisabled && mode === 0 && (
+      {isParsing && mode === 0 ? (
+        <Text style={styles.hint}>✦ AI rozpoznaje produkty...</Text>
+      ) : onMicPress && !micDisabled && mode === 0 ? (
         <Text style={[styles.hint, isListening && styles.hintActive]}>
           {isListening ? '🎙 Mów... naciśnij ponownie by zatrzymać' : '🎙 Naciśnij żółty przycisk by dyktować'}
         </Text>
-      )}
+      ) : null}
     </GlassBar>
   );
 }
