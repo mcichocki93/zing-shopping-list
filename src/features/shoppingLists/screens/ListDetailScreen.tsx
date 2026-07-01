@@ -3,7 +3,6 @@ import { View, Text, ScrollView, ActivityIndicator, Share, Alert, StyleSheet, Pr
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { AIInputBar, type ManualItemData } from '../../aiInput/components/AIInputBar';
 import { PreviewModal } from '../../aiInput/components/PreviewModal';
 import { useAIParser } from '../../aiInput/hooks/useAIParser';
@@ -12,7 +11,7 @@ import type { AIParsedItem } from '../../../types/ai';
 import { PremiumGateModal } from '../../premium/components/PremiumGateModal';
 import { PixelButton } from '../../../components/ui';
 import { OfflineBanner } from '../../../components/OfflineBanner';
-import { AdBanner } from '../../ads';
+import { AnchoredAdBanner, adContentPad } from '../../ads';
 import { ThemePickerModal } from '../../../components/ThemePickerModal';
 import { CategorySection } from '../components/CategorySection';
 import { EditItemModal } from '../components/EditItemModal';
@@ -587,7 +586,6 @@ function PixelPopDetailView({
   aiCallsRemaining, hoursUntilReset, isPremium, onOpenPremium,
   children,
 }: PixelPopDetailViewProps) {
-  const tabBarHeight = useBottomTabBarHeight();
   const { user: currentUser } = useAuth();
   const { allCategories } = useCategories();
   const [mode, setMode] = useState(0); // 0=AI, 1=manual
@@ -787,7 +785,7 @@ function PixelPopDetailView({
           <DraggableFlatList
             data={groups}
             keyExtractor={(g: CategoryGroup) => g.category}
-            contentContainerStyle={{ paddingBottom: tabBarHeight + (isPremium ? 16 : 72) }}
+            contentContainerStyle={{ paddingBottom: insets.bottom + adContentPad(isPremium) }}
             ListHeaderComponent={listHeaderContent}
             onDragEnd={({ data }: { data: CategoryGroup[] }) => {
               onSetCategoryOrder(data.map((g: CategoryGroup) => g.category));
@@ -800,16 +798,14 @@ function PixelPopDetailView({
           />
         </View>
       ) : (
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: tabBarHeight + (isPremium ? 16 : 72) }}>
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: insets.bottom + adContentPad(isPremium) }}>
           {listHeaderContent}
           {groups.map((g) => renderCategoryCard(g))}
         </ScrollView>
       )}
 
-      {/* Banner reklamowy zakotwiczony nad pływającym tab barem — ukryty dla Premium */}
-      <View style={{ position: 'absolute', left: 0, right: 0, bottom: tabBarHeight }} pointerEvents="box-none">
-        <AdBanner />
-      </View>
+      {/* Baner zakotwiczony nad pływającym tab barem — ukryty dla Premium */}
+      <AnchoredAdBanner />
 
       <PreviewModal
         visible={showPreview}
