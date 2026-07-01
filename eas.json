@@ -35,7 +35,8 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "GOOGLE_WEB_CLIENT_ID": "345202642275-vm1fd3t3fjvr3hu2t3sjl5oo6919128q.apps.googleusercontent.com"
+        "GOOGLE_WEB_CLIENT_ID": "345202642275-vm1fd3t3fjvr3hu2t3sjl5oo6919128q.apps.googleusercontent.com",
+        "EXPO_PUBLIC_ADS_REAL": "1"
       }
     }
   },

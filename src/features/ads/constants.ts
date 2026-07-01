@@ -10,6 +10,11 @@ const TEST_BANNER = 'ca-app-pub-3940256099942544/9214589741'; // adaptive banner
 // Prawdziwy banner unit z AdMob (serwowany tylko w buildzie produkcyjnym)
 const PROD_BANNER_ANDROID = 'ca-app-pub-7437857814279855/5655522059';
 
-export const BANNER_UNIT_ID = __DEV__
-  ? TEST_BANNER
-  : Platform.select({ android: PROD_BANNER_ANDROID, default: TEST_BANNER }) ?? TEST_BANNER;
+// Prawdziwe reklamy TYLKO w buildzie produkcyjnym (profil production ustawia
+// EXPO_PUBLIC_ADS_REAL=1). Wszędzie indziej (dev, preview/testy) — reklamy TESTOWE:
+// zawsze się wyświetlają (potwierdzają działanie) i są bezpieczne do klikania.
+const USE_REAL_ADS = process.env.EXPO_PUBLIC_ADS_REAL === '1';
+
+export const BANNER_UNIT_ID = USE_REAL_ADS
+  ? (Platform.select({ android: PROD_BANNER_ANDROID, default: TEST_BANNER }) ?? TEST_BANNER)
+  : TEST_BANNER;
