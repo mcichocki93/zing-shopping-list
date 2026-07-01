@@ -783,21 +783,22 @@ function PixelPopDetailView({
 
       {/* ── Scrollable list content ── */}
       {!isExpoGo && DraggableFlatList && ScaleDecorator ? (
-        <DraggableFlatList
-          data={groups}
-          keyExtractor={(g: CategoryGroup) => g.category}
-          style={{ flex: 1 }}
-          contentContainerStyle={{ paddingBottom: tabBarHeight + (isPremium ? 16 : 72) }}
-          ListHeaderComponent={listHeaderContent}
-          onDragEnd={({ data }: { data: CategoryGroup[] }) => {
-            onSetCategoryOrder(data.map((g: CategoryGroup) => g.category));
-          }}
-          renderItem={({ item, drag }: { item: CategoryGroup; drag: () => void; isActive: boolean }) => (
-            <ScaleDecorator>
-              {renderCategoryCard(item, drag)}
-            </ScaleDecorator>
-          )}
-        />
+        <View style={{ flex: 1 }}>
+          <DraggableFlatList
+            data={groups}
+            keyExtractor={(g: CategoryGroup) => g.category}
+            contentContainerStyle={{ paddingBottom: tabBarHeight + (isPremium ? 16 : 72) }}
+            ListHeaderComponent={listHeaderContent}
+            onDragEnd={({ data }: { data: CategoryGroup[] }) => {
+              onSetCategoryOrder(data.map((g: CategoryGroup) => g.category));
+            }}
+            renderItem={({ item, drag }: { item: CategoryGroup; drag: () => void; isActive: boolean }) => (
+              <ScaleDecorator>
+                {renderCategoryCard(item, drag)}
+              </ScaleDecorator>
+            )}
+          />
+        </View>
       ) : (
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: tabBarHeight + (isPremium ? 16 : 72) }}>
           {listHeaderContent}
