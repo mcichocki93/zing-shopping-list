@@ -20,7 +20,7 @@ import { CategoryManagerModal } from '../../categories';
 import { PremiumGateModal } from '../../premium/components/PremiumGateModal';
 import { usePremium } from '../../premium/hooks/usePremium';
 import { OfflineBanner } from '../../../components/OfflineBanner';
-import { AdBanner } from '../../ads';
+import { AnchoredAdBanner, adContentPad } from '../../ads';
 import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useShoppingLists } from '../hooks';
@@ -669,7 +669,7 @@ function PixelPopDashboardView({
 
   return (
     <View style={{ flex: 1, backgroundColor: PP.paper }}>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: tabBarHeight + 70 }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: insets.bottom + adContentPad(isPremium) + 8 }}>
         {/* Header */}
         <View style={ppStyles.header}>
           <View style={ppStyles.brandRow}>
@@ -750,12 +750,10 @@ function PixelPopDashboardView({
         </View>
       </ScrollView>
 
-      {/* Banner reklamowy nad tab barem — ukryty dla Premium (logika w AdBanner) */}
-      <View style={{ marginBottom: tabBarHeight }}>
-        <AdBanner />
-      </View>
+      {/* Baner zakotwiczony nad pływającym tab barem — ukryty dla Premium */}
+      <AnchoredAdBanner />
 
-      <Fab onPress={onCreate} accent={accent} bottomOffset={tabBarHeight + insets.bottom + 26} accessibilityLabel="Nowa lista" />
+      <Fab onPress={onCreate} accent={accent} bottomOffset={tabBarHeight + insets.bottom + 26 + (isPremium ? 0 : 66)} accessibilityLabel="Nowa lista" />
     </View>
   );
 }
