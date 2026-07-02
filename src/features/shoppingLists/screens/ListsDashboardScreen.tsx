@@ -639,6 +639,7 @@ function PixelPopDashboardView({
   onOpenList, onCreate, onOpenSettings, onShare, onDeleteList, onLeaveList, insets,
 }: PixelPopDashboardViewProps) {
   const tabBarHeight = useBottomTabBarHeight();
+  const { isPremium } = usePremium();
   const [search, setSearch] = useState('');
   const filtered = search
     ? lists.filter((l) => l.title.toLowerCase().includes(search.toLowerCase()))
