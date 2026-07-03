@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, Alert, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { PP, PP_BORDER, PP_FONT, ppText } from '../../../constants/pixelPopTheme';
 import { HardShadow, PixelIcon, PPModal, ColorWheelPicker } from '../../../components/ui-pixelpop';
 import { useAuth } from '../hooks/useAuth';
@@ -9,8 +10,9 @@ import { CategoryManagerModal } from '../../categories';
 
 export function PixelPopProfileScreen() {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const { user, handleSignOut, handleDeleteAccount, isLoading } = useAuth();
-  const { pixelPopAccent, setPixelPopAccent } = useTheme();
+  const { pixelPopAccent, setPixelPopAccent, language, setLanguage } = useTheme();
   const [showCategories, setShowCategories] = React.useState(false);
   const [showColorPicker, setShowColorPicker] = React.useState(false);
 
@@ -57,6 +59,28 @@ export function PixelPopProfileScreen() {
               <View style={[styles.colorPreview, { backgroundColor: pixelPopAccent }]} />
               <PixelIcon name="chevron" size={12} color={PP.muted} />
             </Pressable>
+            <View style={styles.divider} />
+            {/* Language switcher */}
+            <View style={styles.accentRow}>
+              <PixelIcon name="menu" size={16} color={PP.ink} />
+              <Text style={[ppText.rowBody, { flex: 1 }]}>{t('settings.language')}</Text>
+              <View style={styles.langToggle}>
+                <Pressable
+                  onPress={() => setLanguage('pl')}
+                  style={[styles.langOpt, language === 'pl' && { backgroundColor: pixelPopAccent }]}
+                  accessibilityLabel="Polski"
+                >
+                  <Text style={styles.langOptText}>PL</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => setLanguage('en')}
+                  style={[styles.langOpt, language === 'en' && { backgroundColor: pixelPopAccent }]}
+                  accessibilityLabel="English"
+                >
+                  <Text style={styles.langOptText}>EN</Text>
+                </Pressable>
+              </View>
+            </View>
             <View style={styles.divider} />
             <SettingsRow
               icon="share"
@@ -132,4 +156,7 @@ const styles = StyleSheet.create({
   },
   accentRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 14, minHeight: 48 },
   colorPreview: { width: 24, height: 24, borderWidth: PP_BORDER.thick, borderColor: PP.ink },
+  langToggle: { flexDirection: 'row', borderWidth: PP_BORDER.base, borderColor: PP.ink },
+  langOpt: { paddingHorizontal: 12, paddingVertical: 4, minWidth: 36, alignItems: 'center' },
+  langOptText: { fontFamily: PP_FONT.display, fontSize: 11, color: PP.ink },
 });

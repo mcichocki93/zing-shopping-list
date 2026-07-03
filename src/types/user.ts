@@ -20,6 +20,7 @@ export interface User {
   customCategories?: CustomCategory[];
   listOrder?: string[];
   pixelPopAccent?: string;
+  language?: 'pl' | 'en';
 }
 
 export interface AuthState {

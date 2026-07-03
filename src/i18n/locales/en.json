@@ -1,0 +1,16 @@
+{
+  "common": {
+    "add": "Add",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "close": "Close",
+    "edit": "Edit",
+    "back": "Back"
+  },
+  "settings": {
+    "language": "Language",
+    "polish": "Polski",
+    "english": "English"
+  }
+}

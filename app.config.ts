@@ -33,6 +33,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     plugins: [
       'expo-font',
+      'expo-localization',
       ['expo-speech-recognition', {
         microphonePermission: 'Zing potrzebuje dostępu do mikrofonu, aby rozpoznawać produkty głosem.',
         speechRecognitionPermission: 'Zing potrzebuje dostępu do rozpoznawania mowy.',
