@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import DraggableFlatList, { RenderItemParams, ScaleDecorator } from 'react-native-draggable-flatlist';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
@@ -41,6 +42,7 @@ function pluralize(n: number, one: string, few: string, many: string): string {
 
 export function ListsDashboardScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const { theme, pixelPopEnabled, pixelPopAccent } = useTheme();
   const { user, handleSignOut, handleDeleteAccount, isLoading: isAuthLoading } = useAuth();
   const { lists, isLoading, error, handleCreate, handleDelete, handleLeave, handleReorder } = useShoppingLists();
@@ -74,13 +76,13 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
       const invite = await lookupInvite(trimmed);
 
       if (!invite) {
-        Alert.alert('Błąd', 'Nieprawidłowy kod zaproszenia.');
+        Alert.alert(t('common.error'), t('dashboard.invalidCode'));
         setIsJoining(false);
         return;
       }
 
       if (lists.some((l) => l.id === invite.listId)) {
-        Alert.alert('Info', 'Jesteś już członkiem tej listy.');
+        Alert.alert(t('common.info'), t('dashboard.alreadyMember'));
         setJoinCode('');
         setIsJoining(false);
         setShowJoinModal(false);
@@ -88,19 +90,19 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
       }
 
       Alert.alert(
-        'Dołącz do listy',
-        `Dołączyć do "${invite.listTitle}" (od ${invite.ownerName})?`,
+        t('dashboard.joinList'),
+        t('dashboard.joinConfirm', { title: invite.listTitle, owner: invite.ownerName }),
         [
-          { text: 'Anuluj', style: 'cancel', onPress: () => setIsJoining(false) },
+          { text: t('common.cancel'), style: 'cancel', onPress: () => setIsJoining(false) },
           {
-            text: 'Dołącz',
+            text: t('dashboard.join'),
             onPress: async () => {
               try {
                 await joinList(invite.listId, user.id, user.displayName ?? user.email ?? '');
                 setJoinCode('');
                 setShowJoinModal(false);
               } catch {
-                Alert.alert('Błąd', 'Nie udało się dołączyć do listy.');
+                Alert.alert(t('common.error'), t('dashboard.joinFailed'));
               }
               setIsJoining(false);
             },
@@ -108,7 +110,7 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
         ],
       );
     } catch {
-      Alert.alert('Błąd', 'Nie udało się sprawdzić kodu.');
+      Alert.alert(t('common.error'), t('dashboard.checkCodeFailed'));
       setIsJoining(false);
     }
   };
@@ -128,12 +130,12 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
 
   const onDeleteAccount = () => {
     Alert.alert(
-      'Usuń konto',
-      'Spowoduje to trwałe usunięcie Twojego konta i wszystkich danych. Tej operacji nie można cofnąć.',
+      t('settings.deleteAccount'),
+      t('settings.deleteAccountConfirm'),
       [
-        { text: 'Anuluj', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Usuń konto',
+          text: t('settings.deleteAccount'),
           style: 'destructive',
           onPress: async () => {
             setShowSettings(false);
@@ -147,12 +149,12 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
   const onDeleteList = (list: ShoppingList) => {
     if (list.ownerId !== user?.id) return;
     Alert.alert(
-      'Usuń listę',
-      `Usunąć "${list.title}"?`,
+      t('dashboard.deleteListTitle'),
+      t('dashboard.deleteListConfirm', { title: list.title }),
       [
-        { text: 'Anuluj', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Usuń',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: () => handleDelete(list.id),
         },
@@ -163,12 +165,12 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
   const onLeaveList = (list: ShoppingList) => {
     if (!user || list.ownerId === user.id) return;
     Alert.alert(
-      'Opuść listę',
-      `Odpiąć się od "${list.title}"? Lista pozostanie aktywna dla właściciela.`,
+      t('dashboard.leaveListTitle'),
+      t('dashboard.leaveListConfirm', { title: list.title }),
       [
-        { text: 'Anuluj', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Odepnij się',
+          text: t('dashboard.unpin'),
           style: 'destructive',
           onPress: () => handleLeave(list.id),
         },
@@ -248,46 +250,46 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
           onLeaveList={onLeaveList}
           insets={insets}
         />
-        <PixelModal visible={showCreateModal} onClose={() => setShowCreateModal(false)} title="Nowa lista">
+        <PixelModal visible={showCreateModal} onClose={() => setShowCreateModal(false)} title={t('dashboard.newList')}>
           <PixelInput
-            placeholder="Nazwa listy"
+            placeholder={t('dashboard.listNamePlaceholder')}
             value={newTitle}
             onChangeText={setNewTitle}
             onSubmitEditing={onCreateList}
             returnKeyType="done"
-            accessibilityLabel="Nazwa nowej listy"
+            accessibilityLabel={t('dashboard.listNameA11y')}
           />
           <View style={styles.modalButtons}>
-            <PixelButton title="Utwórz" onPress={onCreateList} disabled={isCreating || !newTitle.trim()} style={styles.modalBtn} />
+            <PixelButton title={t('common.create')} onPress={onCreateList} disabled={isCreating || !newTitle.trim()} style={styles.modalBtn} />
             <PixelButton title="Anuluj" onPress={() => { setShowCreateModal(false); setNewTitle(''); }} variant="accentMuted" style={styles.modalBtn} />
           </View>
         </PixelModal>
-        <PixelModal visible={showJoinModal} onClose={() => setShowJoinModal(false)} title="Dołącz do listy">
+        <PixelModal visible={showJoinModal} onClose={() => setShowJoinModal(false)} title={t('dashboard.joinList')}>
           <PixelInput
-            placeholder="Wpisz kod"
+            placeholder={t('dashboard.enterCode')}
             value={joinCode}
             onChangeText={setJoinCode}
             onSubmitEditing={onJoinByCode}
             returnKeyType="done"
             maxLength={6}
             autoCapitalize="characters"
-            accessibilityLabel="Kod zaproszenia do listy"
+            accessibilityLabel={t('dashboard.codeA11y')}
           />
           <View style={styles.modalButtons}>
-            <PixelButton title="Dołącz" onPress={onJoinByCode} disabled={isJoining || joinCode.trim().length !== 6} style={styles.modalBtn} />
+            <PixelButton title={t('dashboard.join')} onPress={onJoinByCode} disabled={isJoining || joinCode.trim().length !== 6} style={styles.modalBtn} />
             <PixelButton title="Anuluj" onPress={() => { setShowJoinModal(false); setJoinCode(''); }} variant="accentMuted" style={styles.modalBtn} />
           </View>
         </PixelModal>
         <PixelModal visible={showSettings} onClose={() => setShowSettings(false)} title="Ustawienia">
-          <Pressable onPress={() => { setShowSettings(false); setShowCategoryManager(true); }} style={styles.settingsRow} accessibilityRole="button" accessibilityLabel="Zarządzaj kategoriami">
+          <Pressable onPress={() => { setShowSettings(false); setShowCategoryManager(true); }} style={styles.settingsRow} accessibilityRole="button" accessibilityLabel={t('settings.manageCategories')}>
             <MaterialCommunityIcons name="tag-multiple-outline" size={20} color={COLORS.primary} />
-            <Text style={styles.settingsRowText}>Zarządzaj kategoriami</Text>
+            <Text style={styles.settingsRowText}>{t('settings.manageCategories')}</Text>
             <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.disabled} />
           </Pressable>
           <View style={styles.settingsDivider} />
-          <Pressable onPress={() => Linking.openURL('https://mcichocki93.github.io/zing-shopping-list/privacy-policy')} style={styles.settingsRow} accessibilityRole="link" accessibilityLabel="Polityka prywatności">
+          <Pressable onPress={() => Linking.openURL('https://mcichocki93.github.io/zing-shopping-list/privacy-policy')} style={styles.settingsRow} accessibilityRole="link" accessibilityLabel={t('settings.privacyPolicy')}>
             <MaterialCommunityIcons name="shield-account-outline" size={20} color={COLORS.primary} />
-            <Text style={styles.settingsRowText}>Polityka prywatności</Text>
+            <Text style={styles.settingsRowText}>{t('settings.privacyPolicy')}</Text>
             <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.disabled} />
           </Pressable>
           <PixelButton title="Zamknij" onPress={() => setShowSettings(false)} variant="accentMuted" style={styles.settingsClose} />
@@ -320,7 +322,7 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
             onPress={() => setShowSettings(true)}
             style={styles.iconBtn}
             accessibilityRole="button"
-            accessibilityLabel="Ustawienia"
+            accessibilityLabel={t('settings.title')}
           >
             <MaterialCommunityIcons name="cog-outline" size={24} color={COLORS.white} />
           </Pressable>
@@ -339,7 +341,7 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
           onPress={() => setShowCreateModal(true)}
           style={[styles.actionCard, { backgroundColor: theme.accent }]}
           accessibilityRole="button"
-          accessibilityLabel="Nowa lista"
+          accessibilityLabel={t('dashboard.newList')}
         >
           <MaterialCommunityIcons name="plus" size={32} color={COLORS.white} />
           <Text style={styles.actionText}>Nowa lista</Text>
@@ -348,7 +350,7 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
           onPress={() => setShowJoinModal(true)}
           style={[styles.actionCard, { backgroundColor: theme.accent }]}
           accessibilityRole="button"
-          accessibilityLabel="Dołącz do listy"
+          accessibilityLabel={t('dashboard.joinList')}
         >
           <MaterialCommunityIcons name="account-plus-outline" size={32} color={COLORS.white} />
           <Text style={styles.actionText}>Dołącz do listy</Text>
@@ -375,34 +377,34 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
         />
       )}
 
-      <PixelModal visible={showCreateModal} onClose={() => setShowCreateModal(false)} title="Nowa lista">
+      <PixelModal visible={showCreateModal} onClose={() => setShowCreateModal(false)} title={t('dashboard.newList')}>
         <PixelInput
           placeholder="Nazwa listy"
           value={newTitle}
           onChangeText={setNewTitle}
           onSubmitEditing={onCreateList}
           returnKeyType="done"
-          accessibilityLabel="Nazwa nowej listy"
+          accessibilityLabel={t('dashboard.listNameA11y')}
         />
         <View style={styles.modalButtons}>
-          <PixelButton title="Utwórz" onPress={onCreateList} disabled={isCreating || !newTitle.trim()} style={styles.modalBtn} />
+          <PixelButton title={t('common.create')} onPress={onCreateList} disabled={isCreating || !newTitle.trim()} style={styles.modalBtn} />
           <PixelButton title="Anuluj" onPress={() => { setShowCreateModal(false); setNewTitle(''); }} variant="accentMuted" style={styles.modalBtn} />
         </View>
       </PixelModal>
 
-      <PixelModal visible={showJoinModal} onClose={() => setShowJoinModal(false)} title="Dołącz do listy">
+      <PixelModal visible={showJoinModal} onClose={() => setShowJoinModal(false)} title={t('dashboard.joinList')}>
         <PixelInput
-          placeholder="Wpisz kod"
+          placeholder={t('dashboard.enterCode')}
           value={joinCode}
           onChangeText={setJoinCode}
           onSubmitEditing={onJoinByCode}
           returnKeyType="done"
           maxLength={6}
           autoCapitalize="characters"
-          accessibilityLabel="Kod zaproszenia do listy"
+          accessibilityLabel={t('dashboard.codeA11y')}
         />
         <View style={styles.modalButtons}>
-          <PixelButton title="Dołącz" onPress={onJoinByCode} disabled={isJoining || joinCode.trim().length !== 6} style={styles.modalBtn} />
+          <PixelButton title={t('dashboard.join')} onPress={onJoinByCode} disabled={isJoining || joinCode.trim().length !== 6} style={styles.modalBtn} />
           <PixelButton title="Anuluj" onPress={() => { setShowJoinModal(false); setJoinCode(''); }} variant="accentMuted" style={styles.modalBtn} />
         </View>
       </PixelModal>
@@ -419,10 +421,10 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
           onPress={() => { setShowSettings(false); setShowCategoryManager(true); }}
           style={styles.settingsRow}
           accessibilityRole="button"
-          accessibilityLabel="Zarządzaj kategoriami"
+          accessibilityLabel={t('settings.manageCategories')}
         >
           <MaterialCommunityIcons name="tag-multiple-outline" size={20} color={COLORS.primary} />
-          <Text style={styles.settingsRowText}>Zarządzaj kategoriami</Text>
+          <Text style={styles.settingsRowText}>{t('settings.manageCategories')}</Text>
           <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.disabled} />
         </Pressable>
         <View style={styles.settingsDivider} />
@@ -430,10 +432,10 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
           onPress={() => Linking.openURL('https://mcichocki93.github.io/zing-shopping-list/privacy-policy')}
           style={styles.settingsRow}
           accessibilityRole="link"
-          accessibilityLabel="Polityka prywatności"
+          accessibilityLabel={t('settings.privacyPolicy')}
         >
           <MaterialCommunityIcons name="shield-account-outline" size={20} color={COLORS.primary} />
-          <Text style={styles.settingsRowText}>Polityka prywatności</Text>
+          <Text style={styles.settingsRowText}>{t('settings.privacyPolicy')}</Text>
           <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.disabled} />
         </Pressable>
         <Pressable
@@ -638,6 +640,7 @@ function PixelPopDashboardView({
   lists, isLoading, doneItems, totalItems, displayName, userId, accent,
   onOpenList, onCreate, onOpenSettings, onShare, onDeleteList, onLeaveList, insets,
 }: PixelPopDashboardViewProps) {
+  const { t } = useTranslation();
   const tabBarHeight = useBottomTabBarHeight();
   const { isPremium } = usePremium();
   const [search, setSearch] = useState('');
@@ -681,14 +684,14 @@ function PixelPopDashboardView({
             </HardShadow>
             <View style={{ marginLeft: 10 }}>
               <Text style={ppText.brand}>ZING</Text>
-              {displayName ? <Text style={[ppText.meta, { marginTop: 2 }]}>cześć, {displayName} ✦</Text> : null}
+              {displayName ? <Text style={[ppText.meta, { marginTop: 2 }]}>{t('dashboard.greeting', { name: displayName })}</Text> : null}
             </View>
           </View>
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <Pressable onPress={onShare} style={ppStyles.iconBtn} accessibilityLabel="Dołącz do listy">
+            <Pressable onPress={onShare} style={ppStyles.iconBtn} accessibilityLabel={t('dashboard.joinList')}>
               <PixelIcon name="share" size={14} color={PP.ink} />
             </Pressable>
-            <Pressable onPress={onOpenSettings} style={ppStyles.iconBtn} accessibilityLabel="Ustawienia">
+            <Pressable onPress={onOpenSettings} style={ppStyles.iconBtn} accessibilityLabel={t('settings.title')}>
               <PixelIcon name="gear" size={14} color={PP.ink} />
             </Pressable>
           </View>
@@ -696,7 +699,7 @@ function PixelPopDashboardView({
 
         {/* Title + search */}
         <View style={{ paddingHorizontal: 16, paddingTop: 6 }}>
-          <Text style={ppText.title}>Twoje listy</Text>
+          <Text style={ppText.title}>{t('dashboard.yourLists')}</Text>
           <View style={{ marginTop: 12 }}>
             <SearchField value={search} onChangeText={setSearch} />
           </View>
@@ -709,8 +712,8 @@ function PixelPopDashboardView({
 
         {/* Section header */}
         <View style={ppStyles.sectionHead}>
-          <Text style={ppText.catLabel}>PRZYPIĘTE</Text>
-          <Text style={ppText.meta}>WSZYSTKIE · {filtered.length}</Text>
+          <Text style={ppText.catLabel}>{t('dashboard.pinned')}</Text>
+          <Text style={ppText.meta}>{t('dashboard.all')} · {filtered.length}</Text>
         </View>
 
         {/* Lists block */}
@@ -719,7 +722,7 @@ function PixelPopDashboardView({
             <ActivityIndicator color={accent} style={{ marginTop: 24 }} />
           ) : filtered.length === 0 ? (
             <Text style={[ppText.meta, { textAlign: 'center', marginTop: 24 }]}>
-              {lists.length === 0 ? 'Brak list. Utwórz pierwszą!' : 'Brak wyników'}
+              {lists.length === 0 ? t('dashboard.empty') : t('dashboard.noResults')}
             </Text>
           ) : (
             <HardShadow offset={4}>
@@ -754,7 +757,7 @@ function PixelPopDashboardView({
       {/* Baner zakotwiczony nad pływającym tab barem — ukryty dla Premium */}
       <AnchoredAdBanner />
 
-      <Fab onPress={onCreate} accent={accent} bottomOffset={tabBarHeight + insets.bottom + 26 + (isPremium ? 0 : 66)} accessibilityLabel="Nowa lista" />
+      <Fab onPress={onCreate} accent={accent} bottomOffset={tabBarHeight + insets.bottom + 26 + (isPremium ? 0 : 66)} accessibilityLabel={t('dashboard.newList')} />
     </View>
   );
 }
