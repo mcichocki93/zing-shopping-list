@@ -59,5 +59,34 @@
     "deleteListA11y": "Usuń {{title}}",
     "personOne": "osoba",
     "personFew": "osoby"
+  },
+  "listDetail": {
+    "loading": "Ładowanie listy",
+    "notExist": "Lista nie istnieje.",
+    "back": "Wróć",
+    "share": "Udostępnij listę",
+    "shareShort": "Udostępnij",
+    "code": "KOD",
+    "progress": "POSTĘP",
+    "completedBanner": "✓ LISTA ZREALIZOWANA!",
+    "resetList": "Resetuj listę",
+    "empty": "Lista jest pusta. Dodaj produkty powyżej.",
+    "retry": "Ponów",
+    "retryA11y": "Ponów zapytanie AI",
+    "shareMessage": "Dołącz do mojej listy zakupów \"{{title}}\" w Zing!\nLink: zing://join/{{code}}\nLub wpisz kod: {{code}}",
+    "shareFailed": "Nie udało się udostępnić listy.",
+    "members_one": "{{count}} osoba",
+    "members_few": "{{count}} osoby",
+    "members_many": "{{count}} osób",
+    "composeAiPlaceholder": "2x mleko, chleb, jabłka…",
+    "composeManualPlaceholder": "Nazwa produktu",
+    "listening": "Słucham..."
+  },
+  "compose": {
+    "ai": "✦ AI",
+    "manual": "+ RĘCZNIE",
+    "parsing": "✦ AI rozpoznaje produkty...",
+    "micActive": "🎙 Mów... naciśnij ponownie by zatrzymać",
+    "micHint": "🎙 Naciśnij żółty przycisk by dyktować"
   }
 }

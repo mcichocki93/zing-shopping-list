@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, Share, Alert, StyleSheet, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AIInputBar, type ManualItemData } from '../../aiInput/components/AIInputBar';
@@ -36,6 +37,7 @@ type Props = NativeStackScreenProps<ShoppingListsStackParamList, 'ListDetail'>;
 
 export function ListDetailScreen({ route, navigation }: Props) {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const { theme, pixelPopEnabled, pixelPopAccent } = useTheme();
   const { listId } = route.params;
   const { user } = useAuth();
@@ -114,12 +116,10 @@ export function ListDetailScreen({ route, navigation }: Props) {
         code = await createInvite(list.id, list.title, user.displayName, user.id);
       }
       await Share.share({
-        message: `Dołącz do mojej listy zakupów "${list.title}" w Zing!
-Link: zing://join/${code}
-Lub wpisz kod: ${code}`,
+        message: t('listDetail.shareMessage', { title: list.title, code }),
       });
     } catch {
-      Alert.alert('Błąd', 'Nie udało się udostępnić listy.');
+      Alert.alert(t('common.error'), t('listDetail.shareFailed'));
     }
   }, [list, user]);
 
@@ -151,7 +151,7 @@ Lub wpisz kod: ${code}`,
   if (isLoading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color={theme.accent} accessibilityLabel="Ładowanie listy" />
+        <ActivityIndicator size="large" color={theme.accent} accessibilityLabel={t('listDetail.loading')} />
       </View>
     );
   }
@@ -159,7 +159,7 @@ Lub wpisz kod: ${code}`,
   if (!list) {
     return (
       <View style={styles.center}>
-        <Text style={styles.emptyText}>Lista nie istnieje.</Text>
+        <Text style={styles.emptyText}>{t('listDetail.notExist')}</Text>
       </View>
     );
   }
@@ -330,9 +330,9 @@ Lub wpisz kod: ${code}`,
               onPress={handleResetAll}
               style={styles.resetBtn}
               accessibilityRole="button"
-              accessibilityLabel="Resetuj listę"
+              accessibilityLabel={t('listDetail.resetList')}
             >
-              <Text style={[styles.resetBtnText, { color: theme.accent }]}>Resetuj listę</Text>
+              <Text style={[styles.resetBtnText, { color: theme.accent }]}>{t('listDetail.resetList')}</Text>
             </Pressable>
           </View>
         )}
@@ -586,6 +586,7 @@ function PixelPopDetailView({
   aiCallsRemaining, hoursUntilReset, isPremium, onOpenPremium,
   children,
 }: PixelPopDetailViewProps) {
+  const { t } = useTranslation();
   const { user: currentUser } = useAuth();
   const { allCategories } = useCategories();
   const [mode, setMode] = useState(0); // 0=AI, 1=manual
@@ -674,15 +675,15 @@ function PixelPopDetailView({
       <View style={{ paddingHorizontal: 18 }}>
         <Text style={ppText.title}>{list.title}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
-          {list.inviteCode ? <Text style={ppDetailStyles.code}>KOD · {list.inviteCode}</Text> : null}
+          {list.inviteCode ? <Text style={ppDetailStyles.code}>{t('listDetail.code')} · {list.inviteCode}</Text> : null}
           <Pressable
             onPress={() => setShowMembers(true)}
             style={ppDetailStyles.membersChip}
-            accessibilityLabel={`Uczestnicy: ${list.memberIds.length}`}
+            accessibilityLabel={t('listDetail.members', { count: list.memberIds.length })}
           >
             <PixelIcon name="user" size={10} color={PP.ink} />
             <Text style={ppDetailStyles.membersChipText}>
-              {list.memberIds.length} {list.memberIds.length === 1 ? 'osoba' : 'osoby'}
+              {t('listDetail.members', { count: list.memberIds.length })}
             </Text>
           </Pressable>
           <Text style={ppText.meta}>{done}/{total}</Text>
@@ -692,7 +693,7 @@ function PixelPopDetailView({
         <HardShadow offset={4}>
           <View style={ppDetailStyles.progressCard}>
             <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
-              <Text style={ppText.catLabel}>POSTĘP</Text>
+              <Text style={ppText.catLabel}>{t('listDetail.progress')}</Text>
               <Text style={{ fontFamily: PP_FONT.display, fontSize: 16, color: PP.ink }}>
                 {done}<Text style={{ fontSize: 10, color: PP.muted }}>/{total}</Text>
               </Text>
@@ -703,9 +704,9 @@ function PixelPopDetailView({
       </View>
       {allCompleted && (
         <View style={[ppDetailStyles.completedBanner, { backgroundColor: accent }]}>
-          <Text style={{ fontFamily: PP_FONT.display, fontSize: 12, color: PP.ink }}>✓ LISTA ZREALIZOWANA!</Text>
-          <Pressable onPress={onResetAll} style={ppDetailStyles.resetBtn} accessibilityLabel="Resetuj listę">
-            <Text style={{ fontFamily: PP_FONT.uiSemi, fontSize: 12, color: PP.ink }}>Resetuj listę</Text>
+          <Text style={{ fontFamily: PP_FONT.display, fontSize: 12, color: PP.ink }}>{t('listDetail.completedBanner')}</Text>
+          <Pressable onPress={onResetAll} style={ppDetailStyles.resetBtn} accessibilityLabel={t('listDetail.resetList')}>
+            <Text style={{ fontFamily: PP_FONT.uiSemi, fontSize: 12, color: PP.ink }}>{t('listDetail.resetList')}</Text>
           </Pressable>
         </View>
       )}
@@ -715,7 +716,7 @@ function PixelPopDetailView({
         </View>
       ) : null}
       {groups.length === 0 && (
-        <Text style={[ppText.meta, { textAlign: 'center', marginTop: 24 }]}>Lista jest pusta. Dodaj produkty powyżej.</Text>
+        <Text style={[ppText.meta, { textAlign: 'center', marginTop: 24 }]}>{t('listDetail.empty')}</Text>
       )}
     </View>
   );
@@ -725,11 +726,11 @@ function PixelPopDetailView({
       {/* ── Fixed header: nav + compose bar ── */}
       <View style={[ppDetailStyles.header, { paddingTop: insets.top + 8 }]}>
         <View style={ppDetailStyles.nav}>
-          <Pressable onPress={onBack} style={ppDetailStyles.iconBtn} accessibilityLabel="Wróć">
+          <Pressable onPress={onBack} style={ppDetailStyles.iconBtn} accessibilityLabel={t('listDetail.back')}>
             <PixelIcon name="chevronL" size={16} color={PP.ink} />
           </Pressable>
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <Pressable onPress={onShare} style={ppDetailStyles.iconBtn} accessibilityLabel="Udostępnij">
+            <Pressable onPress={onShare} style={ppDetailStyles.iconBtn} accessibilityLabel={t('listDetail.shareShort')}>
               <PixelIcon name="share" size={14} color={PP.ink} />
             </Pressable>
           </View>
@@ -746,7 +747,7 @@ function PixelPopDetailView({
           micDisabled={!isSpeechSupported}
           isParsing={isParsing}
           accent={accent}
-          placeholder={mode === 0 ? (isListening ? 'Słucham...' : '2x mleko, chleb, jabłka…') : 'Nazwa produktu'}
+          placeholder={mode === 0 ? (isListening ? t('listDetail.listening') : t('listDetail.composeAiPlaceholder')) : t('listDetail.composeManualPlaceholder')}
           floating={false}
           style={{ position: 'relative' }}
         />

@@ -58,5 +58,33 @@
     "deleteListA11y": "Delete {{title}}",
     "personOne": "person",
     "personFew": "people"
+  },
+  "listDetail": {
+    "loading": "Loading list",
+    "notExist": "The list doesn't exist.",
+    "back": "Back",
+    "share": "Share list",
+    "shareShort": "Share",
+    "code": "CODE",
+    "progress": "PROGRESS",
+    "completedBanner": "✓ LIST COMPLETED!",
+    "resetList": "Reset list",
+    "empty": "The list is empty. Add products above.",
+    "retry": "Retry",
+    "retryA11y": "Retry AI request",
+    "shareMessage": "Join my shopping list \"{{title}}\" in Zing!\nLink: zing://join/{{code}}\nOr enter code: {{code}}",
+    "shareFailed": "Could not share the list.",
+    "members_one": "{{count}} person",
+    "members_other": "{{count}} people",
+    "composeAiPlaceholder": "2x milk, bread, apples…",
+    "composeManualPlaceholder": "Product name",
+    "listening": "Listening..."
+  },
+  "compose": {
+    "ai": "✦ AI",
+    "manual": "+ MANUAL",
+    "parsing": "✦ AI is recognizing products...",
+    "micActive": "🎙 Speak... tap again to stop",
+    "micHint": "🎙 Tap the yellow button to dictate"
   }
 }

@@ -9,6 +9,7 @@
 
 import React from 'react';
 import { View, TextInput, Pressable, Text, StyleSheet, ViewStyle, ActivityIndicator } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { PP, PP_BORDER, PP_FONT } from '../../constants/pixelPopTheme';
 import { GlassBar } from './GlassBar';
 import { SegmentedControl } from './SegmentedControl';
@@ -35,9 +36,10 @@ export function ComposeBar({
   onMicPress, isListening = false, micDisabled = false, isParsing = false, accent = PP.pink,
   placeholder = '2x mleko, chleb, jabłka…', style, floating = true,
 }: ComposeBarProps) {
+  const { t } = useTranslation();
   return (
     <GlassBar floating={floating} contentStyle={styles.content} style={style}>
-      <SegmentedControl options={['✦ AI', '+ RĘCZNIE']} value={mode} onChange={onModeChange} accent={accent} />
+      <SegmentedControl options={[t('compose.ai'), t('compose.manual')]} value={mode} onChange={onModeChange} accent={accent} />
       <View style={styles.row}>
         <TextInput
           value={value}
@@ -67,10 +69,10 @@ export function ComposeBar({
         </Pressable>
       </View>
       {isParsing && mode === 0 ? (
-        <Text style={styles.hint}>✦ AI rozpoznaje produkty...</Text>
+        <Text style={styles.hint}>{t('compose.parsing')}</Text>
       ) : onMicPress && !micDisabled && mode === 0 ? (
         <Text style={[styles.hint, isListening && styles.hintActive]}>
-          {isListening ? '🎙 Mów... naciśnij ponownie by zatrzymać' : '🎙 Naciśnij żółty przycisk by dyktować'}
+          {isListening ? t('compose.micActive') : t('compose.micHint')}
         </Text>
       ) : null}
     </GlassBar>
