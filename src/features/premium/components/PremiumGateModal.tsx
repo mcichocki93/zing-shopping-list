@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { PixelModal } from '../../../components/ui/PixelModal';
 import { PixelButton } from '../../../components/ui/PixelButton';
 import { COLORS, SPACING, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
@@ -13,6 +14,7 @@ interface PremiumGateModalProps {
 }
 
 export function PremiumGateModal({ visible, onClose, limitReached = false }: PremiumGateModalProps) {
+  const { t } = useTranslation();
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,10 +30,10 @@ export function PremiumGateModal({ visible, onClose, limitReached = false }: Pre
       } else if (result === 'cancelled') {
         // user backed out — do nothing
       } else {
-        setError('Zakup nie powiódł się. Spróbuj ponownie.');
+        setError(t('premium.purchaseFailed'));
       }
     } catch {
-      setError('Błąd podczas zakupu. Sprawdź połączenie.');
+      setError(t('premium.purchaseError'));
     } finally {
       setIsPurchasing(false);
     }
@@ -45,10 +47,10 @@ export function PremiumGateModal({ visible, onClose, limitReached = false }: Pre
       if (restored) {
         onClose();
       } else {
-        Alert.alert('Brak zakupu', 'Nie znaleziono aktywnej subskrypcji dla tego konta.');
+        Alert.alert(t('premium.noPurchaseTitle'), t('premium.noPurchaseBody'));
       }
     } catch {
-      setError('Nie udało się przywrócić zakupu.');
+      setError(t('premium.restoreFailed'));
     } finally {
       setIsRestoring(false);
     }
@@ -60,23 +62,23 @@ export function PremiumGateModal({ visible, onClose, limitReached = false }: Pre
     <PixelModal
       visible={visible}
       onClose={onClose}
-      title={limitReached ? 'Funkcja Premium' : 'Zing Premium'}
+      title={limitReached ? t('premium.titleGate') : t('premium.title')}
     >
       <View style={styles.container}>
         {limitReached ? (
           <Text style={styles.body}>
-            Rozpoznawanie AI jest dostępne tylko w Zing Premium. Kup subskrypcję, aby dodawać produkty tekstem i głosem.
+            {t('premium.bodyGate')}
           </Text>
         ) : (
-          <Text style={styles.body}>Odblokuj pełne możliwości Zing!</Text>
+          <Text style={styles.body}>{t('premium.bodyDefault')}</Text>
         )}
 
         <View style={styles.featureList}>
-          <FeatureRow label="Rozpoznawanie AI (tekst i głos)" free={false} />
-          <FeatureRow label="Szablony list" free={false} />
-          <FeatureRow label="Niestandardowe kategorie" free={false} />
-          <FeatureRow label="Nieograniczona liczba list" free={true} />
-          <FeatureRow label="Pełna lista zakupów" free={true} />
+          <FeatureRow label={t('premium.featureAi')} free={false} />
+          <FeatureRow label={t('premium.featureTemplates')} free={false} />
+          <FeatureRow label={t('premium.featureCategories')} free={false} />
+          <FeatureRow label={t('premium.featureUnlimitedLists')} free={true} />
+          <FeatureRow label={t('premium.featureFullList')} free={true} />
         </View>
 
         {error && <Text style={styles.error}>{error}</Text>}
@@ -86,17 +88,17 @@ export function PremiumGateModal({ visible, onClose, limitReached = false }: Pre
         ) : (
           <View style={styles.buttons}>
             <PixelButton
-              title="Kup Premium"
+              title={t('premium.buy')}
               onPress={handlePurchase}
               variant="primary"
             />
             <PixelButton
-              title="Przywróć zakup"
+              title={t('premium.restore')}
               onPress={handleRestore}
               variant="accentMuted"
             />
             <PixelButton
-              title="Może później"
+              title={t('premium.later')}
               onPress={onClose}
               variant="accentMuted"
             />
@@ -108,6 +110,7 @@ export function PremiumGateModal({ visible, onClose, limitReached = false }: Pre
 }
 
 function FeatureRow({ label, free }: { label: string; free: boolean }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.featureRow}>
       <Text style={[styles.featureDot, free ? styles.freeColor : styles.premiumColor]}>
@@ -115,7 +118,7 @@ function FeatureRow({ label, free }: { label: string; free: boolean }) {
       </Text>
       <Text style={styles.featureLabel}>{label}</Text>
       <Text style={[styles.featureBadge, free ? styles.freeColor : styles.premiumColor]}>
-        {free ? 'Darmowe' : 'Premium'}
+        {free ? t('premium.badgeFree') : t('premium.badgePremium')}
       </Text>
     </View>
   );

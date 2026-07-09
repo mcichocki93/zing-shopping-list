@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet, Modal } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { PixelModal, PixelInput, PixelButton, QuantityStepper } from '../../../components/ui';
 import { UNITS, DECIMAL_UNITS, COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
@@ -16,6 +17,7 @@ interface EditItemModalProps {
 }
 
 export function EditItemModal({ visible, item, onSave, onClose }: EditItemModalProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const [name, setName] = useState('');
   const [quantity, setQuantity] = useState(1);
@@ -46,36 +48,36 @@ export function EditItemModal({ visible, item, onSave, onClose }: EditItemModalP
   };
 
   return (
-    <PixelModal visible={visible} onClose={onClose} title="Edytuj produkt">
+    <PixelModal visible={visible} onClose={onClose} title={t('editItem.title')}>
       <View style={styles.field}>
-        <Text style={styles.label}>NAZWA:</Text>
+        <Text style={styles.label}>{t('editItem.name')}</Text>
         <PixelInput
           value={name}
           onChangeText={setName}
-          placeholder="Nazwa produktu"
-          accessibilityLabel="Nazwa produktu"
+          placeholder={t('editItem.namePlaceholder')}
+          accessibilityLabel={t('editItem.namePlaceholder')}
         />
       </View>
 
       <View style={styles.row}>
         <View style={styles.rowHalf}>
-          <Text style={styles.label}>ILOŚĆ:</Text>
+          <Text style={styles.label}>{t('editItem.quantity')}</Text>
           <QuantityStepper
             value={quantity}
             onChange={setQuantity}
             min={DECIMAL_UNITS.has(selectedUnit) ? 0.1 : 1}
             max={999}
             step={DECIMAL_UNITS.has(selectedUnit) ? 0.5 : 1}
-            accessibilityLabel="Ilość"
+            accessibilityLabel={t('editItem.quantityA11y')}
           />
         </View>
         <View style={styles.rowHalf}>
-          <Text style={styles.label}>JEDNOSTKA:</Text>
+          <Text style={styles.label}>{t('editItem.unit')}</Text>
           <Pressable
             onPress={() => setShowUnitPicker(true)}
             style={styles.categoryTrigger}
             accessibilityRole="button"
-            accessibilityLabel={`Jednostka: ${selectedUnit}`}
+            accessibilityLabel={t('editItem.unitA11y', { unit: selectedUnit })}
           >
             <Text style={styles.categoryValue}>{selectedUnit}</Text>
             <MaterialCommunityIcons name="chevron-down" size={20} color={COLORS.disabled} />
@@ -84,12 +86,12 @@ export function EditItemModal({ visible, item, onSave, onClose }: EditItemModalP
       </View>
 
       <View style={styles.field}>
-        <Text style={styles.label}>KATEGORIA:</Text>
+        <Text style={styles.label}>{t('editItem.category')}</Text>
         <Pressable
           onPress={() => setShowCategoryPicker(true)}
           style={styles.categoryTrigger}
           accessibilityRole="button"
-          accessibilityLabel={`Kategoria: ${selectedCategory}`}
+          accessibilityLabel={t('editItem.categoryA11y', { category: selectedCategory })}
         >
           <Text style={styles.categoryValue}>{selectedCategory}</Text>
           <MaterialCommunityIcons name="chevron-down" size={20} color={COLORS.disabled} />
@@ -97,8 +99,8 @@ export function EditItemModal({ visible, item, onSave, onClose }: EditItemModalP
       </View>
 
       <View style={styles.buttons}>
-        <PixelButton title="Zapisz" onPress={handleSave} disabled={!name.trim()} style={styles.btn} />
-        <PixelButton title="Anuluj" onPress={onClose} variant="accentMuted" style={styles.btn} />
+        <PixelButton title={t('editItem.save')} onPress={handleSave} disabled={!name.trim()} style={styles.btn} />
+        <PixelButton title={t('common.cancel')} onPress={onClose} variant="accentMuted" style={styles.btn} />
       </View>
 
       <Modal
@@ -109,7 +111,7 @@ export function EditItemModal({ visible, item, onSave, onClose }: EditItemModalP
       >
         <Pressable style={styles.pickerOverlay} onPress={() => setShowCategoryPicker(false)}>
           <View style={styles.pickerContent}>
-            <Text style={styles.pickerTitle}>Wybierz kategorię</Text>
+            <Text style={styles.pickerTitle}>{t('editItem.chooseCategory')}</Text>
             {allCategories.map((cat) => {
               const isSelected = cat === selectedCategory;
               return (
@@ -139,7 +141,7 @@ export function EditItemModal({ visible, item, onSave, onClose }: EditItemModalP
       >
         <Pressable style={styles.pickerOverlay} onPress={() => setShowUnitPicker(false)}>
           <View style={styles.pickerContent}>
-            <Text style={styles.pickerTitle}>Wybierz jednostkę</Text>
+            <Text style={styles.pickerTitle}>{t('editItem.chooseUnit')}</Text>
             {UNITS.map((unit) => {
               const isSelected = unit === selectedUnit;
               return (

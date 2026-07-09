@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { PP, PP_BORDER, PP_FONT, ppText } from '../../constants/pixelPopTheme';
 import { PPModal } from './PPModal';
 import { PixelIcon } from './PixelIcon';
@@ -22,6 +23,7 @@ interface MembersModalProps {
 }
 
 export function MembersModal({ visible, onClose, memberIds, memberNames, ownerId, currentUserId }: MembersModalProps) {
+  const { t } = useTranslation();
   const profiles = [...memberIds]
     .sort((a, b) => {
       if (a === ownerId) return -1;
@@ -33,7 +35,7 @@ export function MembersModal({ visible, onClose, memberIds, memberNames, ownerId
     .map((id) => ({ id, displayName: memberNames?.[id] ?? id }));
 
   return (
-    <PPModal visible={visible} onClose={onClose} title="UCZESTNICY">
+    <PPModal visible={visible} onClose={onClose} title={t('members.title')}>
       <View style={styles.list}>
         {profiles.map((p) => {
           const isOwner = p.id === ownerId;
@@ -47,7 +49,7 @@ export function MembersModal({ visible, onClose, memberIds, memberNames, ownerId
               <Text style={[ppText.rowBody, styles.name]} numberOfLines={1}>
                 {p.displayName}
               </Text>
-              {isMe && <Text style={styles.badge}>TY</Text>}
+              {isMe && <Text style={styles.badge}>{t('members.you')}</Text>}
               {isOwner && (
                 <View style={styles.ownerBadge}>
                   <PixelIcon name="star" size={10} color={PP.ink} />
@@ -57,7 +59,7 @@ export function MembersModal({ visible, onClose, memberIds, memberNames, ownerId
           );
         })}
         {profiles.length === 0 && (
-          <Text style={[ppText.meta, { textAlign: 'center', paddingVertical: 12 }]}>Brak uczestników</Text>
+          <Text style={[ppText.meta, { textAlign: 'center', paddingVertical: 12 }]}>{t('members.empty')}</Text>
         )}
       </View>
     </PPModal>

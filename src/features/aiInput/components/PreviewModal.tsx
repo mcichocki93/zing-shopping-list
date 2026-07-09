@@ -8,6 +8,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { PixelButton, PixelCard } from '../../../components/ui';
 import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
 import type { AIParsedItem } from '../../../types/ai';
@@ -28,6 +29,7 @@ export function PreviewModal({
   onRemoveItem,
 }: PreviewModalProps) {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   return (
     <Modal
       visible={visible}
@@ -37,9 +39,9 @@ export function PreviewModal({
     >
       <View style={styles.overlay}>
         <View style={[styles.modal, { paddingBottom: insets.bottom + SPACING.md }]}>
-          <Text style={styles.title}>Podgląd produktów</Text>
+          <Text style={styles.title}>{t('preview.title')}</Text>
           <Text style={styles.subtitle}>
-            Rozpoznano {items.length} {items.length === 1 ? 'produkt' : items.length < 5 ? 'produkty' : 'produktów'}
+            {t('preview.recognized', { count: items.length })}
           </Text>
 
           <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
@@ -67,13 +69,13 @@ export function PreviewModal({
 
           <View style={styles.actions}>
             <PixelButton
-              title="Anuluj"
+              title={t('common.cancel')}
               onPress={onCancel}
               variant="primary"
               style={styles.actionBtn}
             />
             <PixelButton
-              title={`Dodaj (${items.length})`}
+              title={t('preview.addCount', { count: items.length })}
               onPress={onConfirm}
               disabled={items.length === 0}
               style={styles.actionBtn}

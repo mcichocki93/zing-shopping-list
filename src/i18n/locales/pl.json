@@ -88,5 +88,52 @@
     "parsing": "✦ AI rozpoznaje produkty...",
     "micActive": "🎙 Mów... naciśnij ponownie by zatrzymać",
     "micHint": "🎙 Naciśnij żółty przycisk by dyktować"
+  },
+  "preview": {
+    "title": "Podgląd produktów",
+    "recognized_one": "Rozpoznano {{count}} produkt",
+    "recognized_few": "Rozpoznano {{count}} produkty",
+    "recognized_many": "Rozpoznano {{count}} produktów",
+    "addCount": "Dodaj ({{count}})"
+  },
+  "members": {
+    "title": "UCZESTNICY",
+    "empty": "Brak uczestników",
+    "you": "TY"
+  },
+  "premium": {
+    "title": "Zing Premium",
+    "titleGate": "Funkcja Premium",
+    "bodyGate": "Rozpoznawanie AI jest dostępne tylko w Zing Premium. Kup subskrypcję, aby dodawać produkty tekstem i głosem.",
+    "bodyDefault": "Odblokuj pełne możliwości Zing!",
+    "featureAi": "Rozpoznawanie AI (tekst i głos)",
+    "featureTemplates": "Szablony list",
+    "featureCategories": "Niestandardowe kategorie",
+    "featureUnlimitedLists": "Nieograniczona liczba list",
+    "featureFullList": "Pełna lista zakupów",
+    "badgeFree": "Darmowe",
+    "badgePremium": "Premium",
+    "buy": "Kup Premium",
+    "restore": "Przywróć zakup",
+    "later": "Może później",
+    "purchaseFailed": "Zakup nie powiódł się. Spróbuj ponownie.",
+    "purchaseError": "Błąd podczas zakupu. Sprawdź połączenie.",
+    "restoreFailed": "Nie udało się przywrócić zakupu.",
+    "noPurchaseTitle": "Brak zakupu",
+    "noPurchaseBody": "Nie znaleziono aktywnej subskrypcji dla tego konta."
+  },
+  "editItem": {
+    "title": "Edytuj produkt",
+    "name": "NAZWA:",
+    "namePlaceholder": "Nazwa produktu",
+    "quantity": "ILOŚĆ:",
+    "quantityA11y": "Ilość",
+    "unit": "JEDNOSTKA:",
+    "category": "KATEGORIA:",
+    "chooseCategory": "Wybierz kategorię",
+    "chooseUnit": "Wybierz jednostkę",
+    "save": "Zapisz",
+    "unitA11y": "Jednostka: {{unit}}",
+    "categoryA11y": "Kategoria: {{category}}"
   }
 }

@@ -86,5 +86,51 @@
     "parsing": "✦ AI is recognizing products...",
     "micActive": "🎙 Speak... tap again to stop",
     "micHint": "🎙 Tap the yellow button to dictate"
+  },
+  "preview": {
+    "title": "Product preview",
+    "recognized_one": "Recognized {{count}} product",
+    "recognized_other": "Recognized {{count}} products",
+    "addCount": "Add ({{count}})"
+  },
+  "members": {
+    "title": "MEMBERS",
+    "empty": "No members",
+    "you": "YOU"
+  },
+  "premium": {
+    "title": "Zing Premium",
+    "titleGate": "Premium feature",
+    "bodyGate": "AI recognition is available only in Zing Premium. Subscribe to add products by text and voice.",
+    "bodyDefault": "Unlock the full power of Zing!",
+    "featureAi": "AI recognition (text & voice)",
+    "featureTemplates": "List templates",
+    "featureCategories": "Custom categories",
+    "featureUnlimitedLists": "Unlimited lists",
+    "featureFullList": "Full shopping list",
+    "badgeFree": "Free",
+    "badgePremium": "Premium",
+    "buy": "Buy Premium",
+    "restore": "Restore purchase",
+    "later": "Maybe later",
+    "purchaseFailed": "Purchase failed. Please try again.",
+    "purchaseError": "Purchase error. Check your connection.",
+    "restoreFailed": "Could not restore purchase.",
+    "noPurchaseTitle": "No purchase",
+    "noPurchaseBody": "No active subscription found for this account."
+  },
+  "editItem": {
+    "title": "Edit product",
+    "name": "NAME:",
+    "namePlaceholder": "Product name",
+    "quantity": "QUANTITY:",
+    "quantityA11y": "Quantity",
+    "unit": "UNIT:",
+    "category": "CATEGORY:",
+    "chooseCategory": "Choose category",
+    "chooseUnit": "Choose unit",
+    "save": "Save",
+    "unitA11y": "Unit: {{unit}}",
+    "categoryA11y": "Category: {{category}}"
   }
 }
