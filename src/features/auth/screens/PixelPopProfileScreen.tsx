@@ -18,12 +18,12 @@ export function PixelPopProfileScreen() {
 
   const onDeleteAccount = () => {
     Alert.alert(
-      'Usuń konto',
-      'Spowoduje to trwałe usunięcie Twojego konta i wszystkich danych. Tej operacji nie można cofnąć.',
+      t('settings.deleteAccount'),
+      t('settings.deleteAccountConfirm'),
       [
-        { text: 'Anuluj', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Usuń konto',
+          text: t('settings.deleteAccount'),
           style: 'destructive',
           onPress: handleDeleteAccount,
         },
@@ -34,7 +34,7 @@ export function PixelPopProfileScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top + 24 }]}>
       <View style={{ paddingHorizontal: 16, marginBottom: 24 }}>
-        <Text style={ppText.title}>Profil</Text>
+        <Text style={ppText.title}>{t('profile.title')}</Text>
         {user?.displayName ? (
           <Text style={[ppText.meta, { marginTop: 4 }]}>{user.displayName}</Text>
         ) : null}
@@ -46,16 +46,16 @@ export function PixelPopProfileScreen() {
       <View style={{ paddingHorizontal: 16, gap: 12 }}>
         <HardShadow offset={4}>
           <View style={styles.block}>
-            <SettingsRow icon="gear" label="Zarządzaj kategoriami" onPress={() => setShowCategories(true)} />
+            <SettingsRow icon="gear" label={t('settings.manageCategories')} onPress={() => setShowCategories(true)} />
             <View style={styles.divider} />
             {/* Pixel Pop accent color picker */}
             <Pressable
               onPress={() => setShowColorPicker(true)}
               style={styles.accentRow}
-              accessibilityLabel="Wybierz kolor akcentu"
+              accessibilityLabel={t('settings.accentColorA11y')}
             >
               <PixelIcon name="template" size={16} color={PP.ink} />
-              <Text style={[ppText.rowBody, { flex: 1 }]}>Kolor akcentu</Text>
+              <Text style={[ppText.rowBody, { flex: 1 }]}>{t('settings.accentColor')}</Text>
               <View style={[styles.colorPreview, { backgroundColor: pixelPopAccent }]} />
               <PixelIcon name="chevron" size={12} color={PP.muted} />
             </Pressable>
@@ -84,13 +84,13 @@ export function PixelPopProfileScreen() {
             <View style={styles.divider} />
             <SettingsRow
               icon="share"
-              label="Polityka prywatności"
+              label={t('settings.privacyPolicy')}
               onPress={() => Linking.openURL('https://mcichocki93.github.io/zing-shopping-list/privacy-policy')}
             />
             <View style={styles.divider} />
             <SettingsRow
               icon="trash"
-              label="Usuń konto (przez stronę)"
+              label={t('settings.deleteAccountWeb')}
               onPress={() => Linking.openURL('https://mcichocki93.github.io/zing-shopping-list/delete-account')}
             />
           </View>
@@ -100,9 +100,9 @@ export function PixelPopProfileScreen() {
           <Pressable
             onPress={handleSignOut}
             style={[styles.btn, { backgroundColor: PP.ink }]}
-            accessibilityLabel="Wyloguj się"
+            accessibilityLabel={t('settings.logoutA11y')}
           >
-            <Text style={{ fontFamily: PP_FONT.display, fontSize: 12, color: PP.paper }}>WYLOGUJ</Text>
+            <Text style={{ fontFamily: PP_FONT.display, fontSize: 12, color: PP.paper }}>{t('settings.logoutUpper')}</Text>
           </Pressable>
         </HardShadow>
 
@@ -110,11 +110,11 @@ export function PixelPopProfileScreen() {
           <Pressable
             onPress={onDeleteAccount}
             style={[styles.btn, { backgroundColor: '#FF3B30' }]}
-            accessibilityLabel="Usuń konto"
+            accessibilityLabel={t('settings.deleteAccount')}
             disabled={isLoading}
           >
             <Text style={{ fontFamily: PP_FONT.display, fontSize: 12, color: PP.paper }}>
-              {isLoading ? 'USUWANIE...' : 'USUŃ KONTO'}
+              {isLoading ? t('settings.deletingUpper') : t('settings.deleteAccountUpper')}
             </Text>
           </Pressable>
         </HardShadow>
@@ -122,7 +122,7 @@ export function PixelPopProfileScreen() {
 
       <CategoryManagerModal visible={showCategories} onClose={() => setShowCategories(false)} />
 
-      <PPModal visible={showColorPicker} onClose={() => setShowColorPicker(false)} title="KOLOR AKCENTU">
+      <PPModal visible={showColorPicker} onClose={() => setShowColorPicker(false)} title={t('settings.accentColorTitle')}>
         <ColorWheelPicker
           value={pixelPopAccent}
           onChange={(color) => {

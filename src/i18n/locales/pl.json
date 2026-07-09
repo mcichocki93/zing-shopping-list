@@ -24,7 +24,16 @@
     "deleteAccountWeb": "Usuń konto (przez stronę)",
     "deleteAccountConfirm": "Spowoduje to trwałe usunięcie Twojego konta i wszystkich danych. Tej operacji nie można cofnąć.",
     "deleting": "Usuwanie...",
-    "logout": "Wyloguj"
+    "logout": "Wyloguj",
+    "accentColorA11y": "Wybierz kolor akcentu",
+    "accentColorTitle": "KOLOR AKCENTU",
+    "logoutA11y": "Wyloguj się",
+    "logoutUpper": "WYLOGUJ",
+    "deleteAccountUpper": "USUŃ KONTO",
+    "deletingUpper": "USUWANIE..."
+  },
+  "profile": {
+    "title": "Profil"
   },
   "dashboard": {
     "yourLists": "Twoje listy",

@@ -24,7 +24,16 @@
     "deleteAccountWeb": "Delete account (via website)",
     "deleteAccountConfirm": "This will permanently delete your account and all data. This action cannot be undone.",
     "deleting": "Deleting...",
-    "logout": "Log out"
+    "logout": "Log out",
+    "accentColorA11y": "Choose accent color",
+    "accentColorTitle": "ACCENT COLOR",
+    "logoutA11y": "Log out",
+    "logoutUpper": "LOG OUT",
+    "deleteAccountUpper": "DELETE ACCOUNT",
+    "deletingUpper": "DELETING..."
+  },
+  "profile": {
+    "title": "Profile"
   },
   "dashboard": {
     "yourLists": "Your lists",
