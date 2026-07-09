@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Text, ScrollView, Pressable, View, StyleSheet, KeyboardAvoidingView, Platform, Alert, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -15,6 +16,7 @@ import type { AuthStackParamList } from '../../../types/navigation';
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
 export function LoginScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const { theme, pixelPopEnabled, pixelPopAccent } = useTheme();
   const { handleSignIn, handleSignInWithGoogle, handleSignInWithApple, handleResetPassword, isLoading, error } = useAuth();
   const [email, setEmail] = useState('');
@@ -28,7 +30,7 @@ export function LoginScreen({ navigation }: Props) {
   const onForgotPassword = () => {
     const trimmed = email.trim();
     if (!trimmed) {
-      Alert.alert('Uwaga', 'Wpisz adres email, a następnie kliknij "Nie pamiętam hasła".');
+      Alert.alert(t('auth.forgotEmailTitle'), t('auth.forgotEmailBody'));
       return;
     }
     handleResetPassword(trimmed);
@@ -53,14 +55,14 @@ export function LoginScreen({ navigation }: Props) {
               <Text style={[ppText.brand, { marginLeft: 12 }]}>ZING</Text>
             </View>
 
-            <Text style={[ppText.title, { textAlign: 'center', marginBottom: 4 }]}>LISTA ZAKUPÓW</Text>
-            <Text style={[ppText.meta, { textAlign: 'center', marginBottom: 28 }]}>Twoja pixelowa lista.</Text>
+            <Text style={[ppText.title, { textAlign: 'center', marginBottom: 4 }]}>{t('auth.title')}</Text>
+            <Text style={[ppText.meta, { textAlign: 'center', marginBottom: 28 }]}>{t('auth.tagline')}</Text>
 
             <HardShadow offset={4}>
               <View style={pp.card}>
                 {error ? <Text style={pp.error}>{error}</Text> : null}
 
-                <Text style={ppText.catLabel}>EMAIL</Text>
+                <Text style={ppText.catLabel}>{t('auth.email')}</Text>
                 <TextInput
                   value={email}
                   onChangeText={setEmail}
@@ -72,7 +74,7 @@ export function LoginScreen({ navigation }: Props) {
                   style={pp.input}
                 />
 
-                <Text style={[ppText.catLabel, { marginTop: 12 }]}>HASŁO</Text>
+                <Text style={[ppText.catLabel, { marginTop: 12 }]}>{t('auth.password')}</Text>
                 <TextInput
                   value={password}
                   onChangeText={setPassword}
@@ -83,8 +85,8 @@ export function LoginScreen({ navigation }: Props) {
                   style={pp.input}
                 />
 
-                <Pressable onPress={onForgotPassword} style={pp.forgotRow} accessibilityLabel="Nie pamiętam hasła">
-                  <Text style={[ppText.meta, { color: pixelPopAccent }]}>Nie pamiętam hasła</Text>
+                <Pressable onPress={onForgotPassword} style={pp.forgotRow} accessibilityLabel={t('auth.forgotPassword')}>
+                  <Text style={[ppText.meta, { color: pixelPopAccent }]}>{t('auth.forgotPassword')}</Text>
                 </Pressable>
 
                 <HardShadow offset={3}>
@@ -92,15 +94,15 @@ export function LoginScreen({ navigation }: Props) {
                     onPress={onSubmit}
                     disabled={isLoading}
                     style={[pp.btn, { backgroundColor: pixelPopAccent, opacity: isLoading ? 0.6 : 1 }]}
-                    accessibilityLabel="Zaloguj się"
+                    accessibilityLabel={t('auth.loginA11y')}
                   >
-                    <Text style={pp.btnText}>{isLoading ? 'LOGOWANIE...' : 'ZALOGUJ SIĘ'}</Text>
+                    <Text style={pp.btnText}>{isLoading ? t('auth.loggingIn') : t('auth.login')}</Text>
                   </Pressable>
                 </HardShadow>
 
                 <View style={pp.divRow}>
                   <View style={pp.divLine} />
-                  <Text style={[ppText.meta, { marginHorizontal: 10 }]}>lub</Text>
+                  <Text style={[ppText.meta, { marginHorizontal: 10 }]}>{t('auth.or')}</Text>
                   <View style={pp.divLine} />
                 </View>
 
@@ -112,7 +114,7 @@ export function LoginScreen({ navigation }: Props) {
                     accessibilityLabel="Kontynuuj z Google"
                   >
                     <MaterialCommunityIcons name="google" size={14} color="#DB4437" />
-                    <Text style={[pp.btnText, { marginLeft: 6 }]}>KONTYNUUJ Z GOOGLE</Text>
+                    <Text style={[pp.btnText, { marginLeft: 6 }]}>{t('auth.continueGoogle')}</Text>
                   </Pressable>
                 </HardShadow>
 
@@ -131,11 +133,11 @@ export function LoginScreen({ navigation }: Props) {
             <Pressable
               onPress={() => navigation.navigate('Register')}
               style={pp.linkRow}
-              accessibilityLabel="Nie masz konta? Zarejestruj się"
+              accessibilityLabel={t('auth.noAccountA11y')}
             >
               <Text style={ppText.meta}>
-                Nie masz konta?{' '}
-                <Text style={{ color: pixelPopAccent, fontFamily: PP_FONT.uiBold }}>Zarejestruj się</Text>
+                {t('auth.noAccount')}{' '}
+                <Text style={{ color: pixelPopAccent, fontFamily: PP_FONT.uiBold }}>{t('auth.register')}</Text>
               </Text>
             </Pressable>
           </ScrollView>

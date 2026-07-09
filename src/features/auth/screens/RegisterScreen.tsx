@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Text, ScrollView, Pressable, StyleSheet, KeyboardAvoidingView, Platform, View, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { PixelButton, PixelInput, PixelCard } from '../../../components/ui';
@@ -14,6 +15,7 @@ import type { AuthStackParamList } from '../../../types/navigation';
 type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 
 export function RegisterScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const { theme, pixelPopEnabled, pixelPopAccent } = useTheme();
   const { handleSignUp, isLoading, error } = useAuth();
   const [displayName, setDisplayName] = useState('');
@@ -24,10 +26,10 @@ export function RegisterScreen({ navigation }: Props) {
 
   const onSubmit = () => {
     setLocalError(null);
-    if (!displayName.trim()) { setLocalError('Podaj nazwę użytkownika.'); return; }
-    if (!email.trim()) { setLocalError('Podaj adres email.'); return; }
-    if (password.length < 6) { setLocalError('Hasło musi mieć min. 6 znaków.'); return; }
-    if (password !== confirmPassword) { setLocalError('Hasła nie są identyczne.'); return; }
+    if (!displayName.trim()) { setLocalError(t('auth.errUsername')); return; }
+    if (!email.trim()) { setLocalError(t('auth.errEmail')); return; }
+    if (password.length < 6) { setLocalError(t('auth.errPasswordShort')); return; }
+    if (password !== confirmPassword) { setLocalError(t('auth.errPasswordMismatch')); return; }
     handleSignUp(email.trim(), password, displayName.trim());
   };
 
@@ -52,14 +54,14 @@ export function RegisterScreen({ navigation }: Props) {
               <Text style={[ppText.brand, { marginLeft: 12 }]}>ZING</Text>
             </View>
 
-            <Text style={[ppText.title, { textAlign: 'center', marginBottom: 4 }]}>REJESTRACJA</Text>
-            <Text style={[ppText.meta, { textAlign: 'center', marginBottom: 28 }]}>Utwórz swoje konto Zing.</Text>
+            <Text style={[ppText.title, { textAlign: 'center', marginBottom: 4 }]}>{t('auth.registerTitle')}</Text>
+            <Text style={[ppText.meta, { textAlign: 'center', marginBottom: 28 }]}>{t('auth.registerTagline')}</Text>
 
             <HardShadow offset={4}>
               <View style={pp.card}>
                 {displayedError ? <Text style={pp.error}>{displayedError}</Text> : null}
 
-                <Text style={ppText.catLabel}>NAZWA UŻYTKOWNIKA</Text>
+                <Text style={ppText.catLabel}>{t('auth.username')}</Text>
                 <TextInput
                   value={displayName}
                   onChangeText={setDisplayName}
@@ -70,7 +72,7 @@ export function RegisterScreen({ navigation }: Props) {
                   style={pp.input}
                 />
 
-                <Text style={[ppText.catLabel, { marginTop: 12 }]}>EMAIL</Text>
+                <Text style={[ppText.catLabel, { marginTop: 12 }]}>{t('auth.email')}</Text>
                 <TextInput
                   value={email}
                   onChangeText={setEmail}
@@ -82,7 +84,7 @@ export function RegisterScreen({ navigation }: Props) {
                   style={pp.input}
                 />
 
-                <Text style={[ppText.catLabel, { marginTop: 12 }]}>HASŁO</Text>
+                <Text style={[ppText.catLabel, { marginTop: 12 }]}>{t('auth.password')}</Text>
                 <TextInput
                   value={password}
                   onChangeText={setPassword}
@@ -93,7 +95,7 @@ export function RegisterScreen({ navigation }: Props) {
                   style={pp.input}
                 />
 
-                <Text style={[ppText.catLabel, { marginTop: 12 }]}>POWTÓRZ HASŁO</Text>
+                <Text style={[ppText.catLabel, { marginTop: 12 }]}>{t('auth.confirmPassword')}</Text>
                 <TextInput
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
@@ -109,9 +111,9 @@ export function RegisterScreen({ navigation }: Props) {
                     onPress={onSubmit}
                     disabled={isLoading}
                     style={[pp.btn, { backgroundColor: pixelPopAccent, opacity: isLoading ? 0.6 : 1, marginTop: 16 }]}
-                    accessibilityLabel="Zarejestruj się"
+                    accessibilityLabel={t('auth.registerA11y')}
                   >
-                    <Text style={pp.btnText}>{isLoading ? 'REJESTRACJA...' : 'ZAREJESTRUJ SIĘ'}</Text>
+                    <Text style={pp.btnText}>{isLoading ? t('auth.registering') : t('auth.registerBtn')}</Text>
                   </Pressable>
                 </HardShadow>
               </View>
@@ -120,11 +122,11 @@ export function RegisterScreen({ navigation }: Props) {
             <Pressable
               onPress={() => navigation.navigate('Login')}
               style={pp.linkRow}
-              accessibilityLabel="Masz już konto? Zaloguj się"
+              accessibilityLabel={t('auth.haveAccountA11y')}
             >
               <Text style={ppText.meta}>
-                Masz już konto?{' '}
-                <Text style={{ color: pixelPopAccent, fontFamily: PP_FONT.uiBold }}>Zaloguj się</Text>
+                {t('auth.haveAccount')}{' '}
+                <Text style={{ color: pixelPopAccent, fontFamily: PP_FONT.uiBold }}>{t('auth.loginLink')}</Text>
               </Text>
             </Pressable>
           </ScrollView>
