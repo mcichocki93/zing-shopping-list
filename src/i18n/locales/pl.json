@@ -9,7 +9,9 @@
     "edit": "Edytuj",
     "back": "Wróć",
     "error": "Błąd",
-    "info": "Info"
+    "info": "Info",
+    "search": "Szukaj",
+    "offline": "Offline – zmiany zsynchronizują się po powrocie"
   },
   "settings": {
     "title": "Ustawienia",
@@ -66,6 +68,56 @@
     "errEmail": "Podaj adres email.",
     "errPasswordShort": "Hasło musi mieć min. 6 znaków.",
     "errPasswordMismatch": "Hasła nie są identyczne."
+  },
+  "authError": {
+    "emailInUse": "Ten email jest już zajęty.",
+    "invalidEmail": "Nieprawidłowy adres email.",
+    "weakPassword": "Hasło musi mieć min. 6 znaków.",
+    "invalidCredentials": "Nieprawidłowy email lub hasło.",
+    "tooManyRequests": "Za dużo prób. Spróbuj później.",
+    "unknown": "Wystąpił nieoczekiwany błąd.",
+    "resetSuccessTitle": "Sukces",
+    "resetSuccessBody": "Link do resetowania hasła został wysłany na podany adres email."
+  },
+  "categories": {
+    "title": "KATEGORIE",
+    "builtin": "WBUDOWANE",
+    "custom": "WŁASNE",
+    "add": "+ DODAJ",
+    "addA11y": "Dodaj kategorię",
+    "premiumOnly": "Własne kategorie — tylko dla Premium",
+    "empty": "Brak własnych kategorii. Dodaj pierwszą!",
+    "newCategory": "NOWA KATEGORIA",
+    "editCategory": "EDYTUJ KATEGORIĘ",
+    "namePlaceholder": "Nazwa kategorii",
+    "color": "KOLOR",
+    "saving": "ZAPISUJĘ...",
+    "save": "ZAPISZ",
+    "cancel": "ANULUJ",
+    "close": "ZAMKNIJ",
+    "errEmpty": "Nazwa kategorii nie może być pusta.",
+    "errTooLong": "Nazwa może mieć max. 30 znaków.",
+    "errExists": "Kategoria o tej nazwie już istnieje.",
+    "deleteTitle": "Usuń kategorię",
+    "deleteConfirm": "Usunąć \"{{name}}\"? Produkty już przypisane do tej kategorii nie zostaną zmienione.",
+    "editA11y": "Edytuj {{name}}",
+    "deleteA11y": "Usuń {{name}}",
+    "colorA11y": "Kolor {{color}}"
+  },
+  "templates": {
+    "title": "Szablony",
+    "manage": "Zarządzaj szablonami",
+    "manageDesc": "Edytuj i usuń swoje szablony list",
+    "modalTitle": "SZABLONY LIST",
+    "premiumOnly": "Szablony list — tylko dla Premium",
+    "empty": "Brak szablonów. Zapisz listę jako szablon z ekranu listy.",
+    "close": "ZAMKNIJ",
+    "deleteTitle": "Usuń szablon",
+    "deleteConfirm": "Usunąć \"{{name}}\"?",
+    "deleteA11y": "Usuń szablon {{name}}",
+    "items_one": "{{count}} produkt",
+    "items_few": "{{count}} produkty",
+    "items_many": "{{count}} produktów"
   },
   "dashboard": {
     "yourLists": "Twoje listy",
@@ -128,7 +180,12 @@
     "manual": "+ RĘCZNIE",
     "parsing": "✦ AI rozpoznaje produkty...",
     "micActive": "🎙 Mów... naciśnij ponownie by zatrzymać",
-    "micHint": "🎙 Naciśnij żółty przycisk by dyktować"
+    "micHint": "🎙 Naciśnij żółty przycisk by dyktować",
+    "addProduct": "Dodaj produkt",
+    "stopDictating": "Zatrzymaj dyktowanie",
+    "dictate": "Dyktuj",
+    "processing": "Przetwarzanie",
+    "add": "Dodaj"
   },
   "preview": {
     "title": "Podgląd produktów",

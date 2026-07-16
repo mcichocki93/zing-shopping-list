@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { PixelModal, PixelButton } from '../../../components/ui';
 import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export function TemplateManagerModal({ visible, onClose }: Props) {
+  const { t } = useTranslation();
   const { isPremium } = usePremium();
   const { templates, isLoading, handleDelete, reload } = useTemplates();
   const { pixelPopEnabled, pixelPopAccent } = useTheme();
@@ -25,22 +27,22 @@ export function TemplateManagerModal({ visible, onClose }: Props) {
 
   const onDelete = (id: string, name: string) => {
     Alert.alert(
-      'Usuń szablon',
-      `Usunąć "${name}"?`,
+      t('templates.deleteTitle'),
+      t('templates.deleteConfirm', { name }),
       [
-        { text: 'Anuluj', style: 'cancel' },
-        { text: 'Usuń', style: 'destructive', onPress: () => handleDelete(id) },
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('common.delete'), style: 'destructive', onPress: () => handleDelete(id) },
       ],
     );
   };
 
   if (pixelPopEnabled) {
     return (
-      <PPModal visible={visible} onClose={onClose} title="SZABLONY LIST">
+      <PPModal visible={visible} onClose={onClose} title={t('templates.modalTitle')}>
         {!isPremium && (
           <View style={pp.premiumBanner}>
             <PixelIcon name="star" size={14} color={PP.muted} />
-            <Text style={pp.premiumText}>Szablony list — tylko dla Premium</Text>
+            <Text style={pp.premiumText}>{t('templates.premiumOnly')}</Text>
           </View>
         )}
 
@@ -49,20 +51,20 @@ export function TemplateManagerModal({ visible, onClose }: Props) {
             {isLoading ? (
               <ActivityIndicator size="small" color={pixelPopAccent} style={pp.loader} />
             ) : templates.length === 0 ? (
-              <Text style={pp.emptyText}>Brak szablonów. Zapisz listę jako szablon z ekranu listy.</Text>
+              <Text style={pp.emptyText}>{t('templates.empty')}</Text>
             ) : (
               <ScrollView style={pp.scroll} showsVerticalScrollIndicator={false}>
-                {templates.map((t) => (
-                  <View key={t.id} style={pp.row}>
+                {templates.map((tpl) => (
+                  <View key={tpl.id} style={pp.row}>
                     <PixelIcon name="template" size={16} color={PP.ink} />
                     <View style={pp.rowInfo}>
-                      <Text style={ppText.rowBody}>{t.name}</Text>
-                      <Text style={ppText.meta}>{t.items.length} produktów</Text>
+                      <Text style={ppText.rowBody}>{tpl.name}</Text>
+                      <Text style={ppText.meta}>{t('templates.items', { count: tpl.items.length })}</Text>
                     </View>
                     <Pressable
-                      onPress={() => onDelete(t.id, t.name)}
+                      onPress={() => onDelete(tpl.id, tpl.name)}
                       style={pp.deleteBtn}
-                      accessibilityLabel={`Usuń szablon ${t.name}`}
+                      accessibilityLabel={t('templates.deleteA11y', { name: tpl.name })}
                       hitSlop={8}
                     >
                       <PixelIcon name="trash" size={14} color={PP.panel} />
@@ -74,8 +76,8 @@ export function TemplateManagerModal({ visible, onClose }: Props) {
           </>
         )}
 
-        <Pressable onPress={onClose} style={pp.closeBtn} accessibilityLabel="Zamknij">
-          <Text style={pp.closeBtnText}>ZAMKNIJ</Text>
+        <Pressable onPress={onClose} style={pp.closeBtn} accessibilityLabel={t('common.close')}>
+          <Text style={pp.closeBtnText}>{t('templates.close')}</Text>
         </Pressable>
       </PPModal>
     );

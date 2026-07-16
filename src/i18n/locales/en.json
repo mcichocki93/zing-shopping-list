@@ -9,7 +9,9 @@
     "edit": "Edit",
     "back": "Back",
     "error": "Error",
-    "info": "Info"
+    "info": "Info",
+    "search": "Search",
+    "offline": "Offline – changes will sync when you're back online"
   },
   "settings": {
     "title": "Settings",
@@ -66,6 +68,55 @@
     "errEmail": "Enter an email address.",
     "errPasswordShort": "Password must be at least 6 characters.",
     "errPasswordMismatch": "Passwords don't match."
+  },
+  "authError": {
+    "emailInUse": "This email is already in use.",
+    "invalidEmail": "Invalid email address.",
+    "weakPassword": "Password must be at least 6 characters.",
+    "invalidCredentials": "Invalid email or password.",
+    "tooManyRequests": "Too many attempts. Try again later.",
+    "unknown": "An unexpected error occurred.",
+    "resetSuccessTitle": "Success",
+    "resetSuccessBody": "A password reset link has been sent to the provided email address."
+  },
+  "categories": {
+    "title": "CATEGORIES",
+    "builtin": "BUILT-IN",
+    "custom": "CUSTOM",
+    "add": "+ ADD",
+    "addA11y": "Add category",
+    "premiumOnly": "Custom categories — Premium only",
+    "empty": "No custom categories. Add your first!",
+    "newCategory": "NEW CATEGORY",
+    "editCategory": "EDIT CATEGORY",
+    "namePlaceholder": "Category name",
+    "color": "COLOR",
+    "saving": "SAVING...",
+    "save": "SAVE",
+    "cancel": "CANCEL",
+    "close": "CLOSE",
+    "errEmpty": "Category name cannot be empty.",
+    "errTooLong": "Name can be at most 30 characters.",
+    "errExists": "A category with this name already exists.",
+    "deleteTitle": "Delete category",
+    "deleteConfirm": "Delete \"{{name}}\"? Products already assigned to this category won't be changed.",
+    "editA11y": "Edit {{name}}",
+    "deleteA11y": "Delete {{name}}",
+    "colorA11y": "Color {{color}}"
+  },
+  "templates": {
+    "title": "Templates",
+    "manage": "Manage templates",
+    "manageDesc": "Edit and delete your list templates",
+    "modalTitle": "LIST TEMPLATES",
+    "premiumOnly": "List templates — Premium only",
+    "empty": "No templates. Save a list as a template from the list screen.",
+    "close": "CLOSE",
+    "deleteTitle": "Delete template",
+    "deleteConfirm": "Delete \"{{name}}\"?",
+    "deleteA11y": "Delete template {{name}}",
+    "items_one": "{{count}} item",
+    "items_other": "{{count}} items"
   },
   "dashboard": {
     "yourLists": "Your lists",
@@ -126,7 +177,12 @@
     "manual": "+ MANUAL",
     "parsing": "✦ AI is recognizing products...",
     "micActive": "🎙 Speak... tap again to stop",
-    "micHint": "🎙 Tap the yellow button to dictate"
+    "micHint": "🎙 Tap the yellow button to dictate",
+    "addProduct": "Add product",
+    "stopDictating": "Stop dictating",
+    "dictate": "Dictate",
+    "processing": "Processing",
+    "add": "Add"
   },
   "preview": {
     "title": "Product preview",

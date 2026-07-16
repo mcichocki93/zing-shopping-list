@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { View, TextInput, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { PP, PP_BORDER, PP_FONT } from '../../constants/pixelPopTheme';
 import { PixelIcon } from './PixelIcon';
 
@@ -11,17 +12,18 @@ interface SearchFieldProps {
   placeholder?: string;
 }
 
-export function SearchField({ value, onChangeText, placeholder = 'Szukaj listy…' }: SearchFieldProps) {
+export function SearchField({ value, onChangeText, placeholder }: SearchFieldProps) {
+  const { t } = useTranslation();
   return (
     <View style={styles.wrap}>
       <PixelIcon name="search" size={14} color={PP.muted} />
       <TextInput
         value={value}
         onChangeText={onChangeText}
-        placeholder={placeholder}
+        placeholder={placeholder ?? t('dashboard.search')}
         placeholderTextColor={PP.muted}
         style={styles.input}
-        accessibilityLabel="Szukaj"
+        accessibilityLabel={t('common.search')}
       />
     </View>
   );

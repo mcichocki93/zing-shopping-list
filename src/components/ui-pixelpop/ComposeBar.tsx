@@ -34,7 +34,7 @@ interface ComposeBarProps {
 export function ComposeBar({
   mode, onModeChange, value, onChangeText, onSend,
   onMicPress, isListening = false, micDisabled = false, isParsing = false, accent = PP.pink,
-  placeholder = '2x mleko, chleb, jabłka…', style, floating = true,
+  placeholder, style, floating = true,
 }: ComposeBarProps) {
   const { t } = useTranslation();
   return (
@@ -44,16 +44,16 @@ export function ComposeBar({
         <TextInput
           value={value}
           onChangeText={onChangeText}
-          placeholder={placeholder}
+          placeholder={placeholder ?? t('listDetail.composeAiPlaceholder')}
           placeholderTextColor={PP.muted}
           style={styles.input}
           editable={!isParsing}
-          accessibilityLabel="Dodaj produkt"
+          accessibilityLabel={t('compose.addProduct')}
         />
         {onMicPress && mode === 0 && (
           <Pressable
             onPress={micDisabled || isParsing ? undefined : onMicPress}
-            accessibilityLabel={isListening ? 'Zatrzymaj dyktowanie' : 'Dyktuj'}
+            accessibilityLabel={isListening ? t('compose.stopDictating') : t('compose.dictate')}
             style={[styles.btn, { backgroundColor: isListening ? '#FF3B30' : PP.yellow, opacity: micDisabled || isParsing ? 0.35 : 1 }]}
           >
             <PixelIcon name="mic" size={16} color={PP.ink} />
@@ -62,7 +62,7 @@ export function ComposeBar({
         <Pressable
           onPress={isParsing ? undefined : onSend}
           disabled={isParsing}
-          accessibilityLabel={isParsing ? 'Przetwarzanie' : 'Dodaj'}
+          accessibilityLabel={isParsing ? t('compose.processing') : t('compose.add')}
           style={[styles.btn, { backgroundColor: accent, opacity: isParsing ? 0.6 : 1 }]}
         >
           {isParsing ? <ActivityIndicator size="small" color={PP.ink} /> : <PixelIcon name="chevron" size={16} color={PP.ink} />}

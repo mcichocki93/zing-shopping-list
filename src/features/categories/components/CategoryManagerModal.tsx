@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, Pressable, TextInput, StyleSheet, Alert } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { PixelModal, PixelButton } from '../../../components/ui';
 import { CATEGORIES, COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
@@ -29,6 +30,7 @@ interface CategoryManagerModalProps {
 }
 
 export function CategoryManagerModal({ visible, onClose }: CategoryManagerModalProps) {
+  const { t } = useTranslation();
   const { customCategories, isPremium, addCategory, updateCategory, deleteCategory } = useCategories();
   const { pixelPopEnabled, pixelPopAccent } = useTheme();
   const [editor, setEditor] = useState<EditorState | null>(null);
@@ -48,11 +50,11 @@ export function CategoryManagerModal({ visible, onClose }: CategoryManagerModalP
     if (!editor) return;
     const trimmed = editor.name.trim();
     if (!trimmed) {
-      Alert.alert('Błąd', 'Nazwa kategorii nie może być pusta.');
+      Alert.alert(t('common.error'), t('categories.errEmpty'));
       return;
     }
     if (trimmed.length > 30) {
-      Alert.alert('Błąd', 'Nazwa może mieć max. 30 znaków.');
+      Alert.alert(t('common.error'), t('categories.errTooLong'));
       return;
     }
     const allNames = [...CATEGORIES as readonly string[], ...customCategories.map((c) => c.name)];
@@ -60,7 +62,7 @@ export function CategoryManagerModal({ visible, onClose }: CategoryManagerModalP
       (n) => n.toLowerCase() === trimmed.toLowerCase() && n !== editor.originalName,
     );
     if (isDuplicate) {
-      Alert.alert('Błąd', 'Kategoria o tej nazwie już istnieje.');
+      Alert.alert(t('common.error'), t('categories.errExists'));
       return;
     }
     setSaving(true);
@@ -78,12 +80,12 @@ export function CategoryManagerModal({ visible, onClose }: CategoryManagerModalP
 
   const onDelete = (name: string) => {
     Alert.alert(
-      'Usuń kategorię',
-      `Usunąć "${name}"? Produkty już przypisane do tej kategorii nie zostaną zmienione.`,
+      t('categories.deleteTitle'),
+      t('categories.deleteConfirm', { name }),
       [
-        { text: 'Anuluj', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Usuń',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             setSaving(true);
@@ -96,10 +98,10 @@ export function CategoryManagerModal({ visible, onClose }: CategoryManagerModalP
 
   if (pixelPopEnabled) {
     return (
-      <PPModal visible={visible} onClose={onClose} title="KATEGORIE">
+      <PPModal visible={visible} onClose={onClose} title={t('categories.title')}>
         <ScrollView style={pp.scroll} showsVerticalScrollIndicator={false}>
           {/* Built-in */}
-          <Text style={pp.sectionLabel}>WBUDOWANE</Text>
+          <Text style={pp.sectionLabel}>{t('categories.builtin')}</Text>
           {CATEGORIES.map((cat) => (
             <View key={cat} style={pp.row}>
               <View style={[pp.colorSquare, { backgroundColor: getCategoryColor(cat) }]} />
@@ -109,10 +111,10 @@ export function CategoryManagerModal({ visible, onClose }: CategoryManagerModalP
 
           {/* Custom */}
           <View style={pp.sectionHead}>
-            <Text style={pp.sectionLabel}>WŁASNE</Text>
+            <Text style={pp.sectionLabel}>{t('categories.custom')}</Text>
             {isPremium && customCategories.length < 20 && !editor && (
-              <Pressable onPress={openAdd} style={[pp.addBtn, { backgroundColor: pixelPopAccent }]} accessibilityLabel="Dodaj kategorię">
-                <Text style={pp.addBtnText}>+ DODAJ</Text>
+              <Pressable onPress={openAdd} style={[pp.addBtn, { backgroundColor: pixelPopAccent }]} accessibilityLabel={t('categories.addA11y')}>
+                <Text style={pp.addBtnText}>{t('categories.add')}</Text>
               </Pressable>
             )}
           </View>
@@ -120,12 +122,12 @@ export function CategoryManagerModal({ visible, onClose }: CategoryManagerModalP
           {!isPremium && (
             <View style={pp.premiumBanner}>
               <PixelIcon name="star" size={14} color={PP.muted} />
-              <Text style={pp.premiumText}>Własne kategorie — tylko dla Premium</Text>
+              <Text style={pp.premiumText}>{t('categories.premiumOnly')}</Text>
             </View>
           )}
 
           {customCategories.length === 0 && isPremium && !editor && (
-            <Text style={pp.emptyText}>Brak własnych kategorii. Dodaj pierwszą!</Text>
+            <Text style={pp.emptyText}>{t('categories.empty')}</Text>
           )}
 
           {customCategories.map((cat) => (
@@ -134,10 +136,10 @@ export function CategoryManagerModal({ visible, onClose }: CategoryManagerModalP
               <Text style={[ppText.rowBody, { flex: 1 }]}>{cat.name}</Text>
               {isPremium && (
                 <View style={pp.actions}>
-                  <Pressable onPress={() => openEdit(cat.name, cat.color)} style={pp.iconBtn} accessibilityLabel={`Edytuj ${cat.name}`}>
+                  <Pressable onPress={() => openEdit(cat.name, cat.color)} style={pp.iconBtn} accessibilityLabel={t('categories.editA11y', { name: cat.name })}>
                     <PixelIcon name="edit" size={14} color={PP.ink} />
                   </Pressable>
-                  <Pressable onPress={() => onDelete(cat.name)} style={[pp.iconBtn, { backgroundColor: '#FF3B30' }]} accessibilityLabel={`Usuń ${cat.name}`}>
+                  <Pressable onPress={() => onDelete(cat.name)} style={[pp.iconBtn, { backgroundColor: '#FF3B30' }]} accessibilityLabel={t('categories.deleteA11y', { name: cat.name })}>
                     <PixelIcon name="trash" size={14} color={PP.panel} />
                   </Pressable>
                 </View>
@@ -149,18 +151,18 @@ export function CategoryManagerModal({ visible, onClose }: CategoryManagerModalP
           {editor && (
             <View style={pp.editor}>
               <Text style={pp.editorTitle}>
-                {editor.mode === 'add' ? 'NOWA KATEGORIA' : 'EDYTUJ KATEGORIĘ'}
+                {editor.mode === 'add' ? t('categories.newCategory') : t('categories.editCategory')}
               </Text>
               <TextInput
                 style={pp.input}
                 value={editor.name}
-                onChangeText={(t) => setEditor((prev) => prev ? { ...prev, name: t } : null)}
-                placeholder="Nazwa kategorii"
+                onChangeText={(val) => setEditor((prev) => prev ? { ...prev, name: val } : null)}
+                placeholder={t('categories.namePlaceholder')}
                 placeholderTextColor={PP.muted}
                 maxLength={30}
                 autoFocus
               />
-              <Text style={[pp.sectionLabel, { marginTop: 12, marginBottom: 8 }]}>KOLOR</Text>
+              <Text style={[pp.sectionLabel, { marginTop: 12, marginBottom: 8 }]}>{t('categories.color')}</Text>
               <View style={pp.colorGrid}>
                 {PICKER_COLORS.map((color) => (
                   <Pressable
@@ -171,7 +173,7 @@ export function CategoryManagerModal({ visible, onClose }: CategoryManagerModalP
                       { backgroundColor: color },
                       editor.color === color && pp.colorSwatchSelected,
                     ]}
-                    accessibilityLabel={`Kolor ${color}`}
+                    accessibilityLabel={t('categories.colorA11y', { color })}
                   >
                     {editor.color === color && <Text style={pp.swatchCheck}>✓</Text>}
                   </Pressable>
@@ -183,18 +185,18 @@ export function CategoryManagerModal({ visible, onClose }: CategoryManagerModalP
                   disabled={saving}
                   style={[pp.editorBtn, { backgroundColor: pixelPopAccent, opacity: saving ? 0.6 : 1 }]}
                 >
-                  <Text style={pp.editorBtnText}>{saving ? 'ZAPISUJĘ...' : 'ZAPISZ'}</Text>
+                  <Text style={pp.editorBtnText}>{saving ? t('categories.saving') : t('categories.save')}</Text>
                 </Pressable>
                 <Pressable onPress={closeEditor} style={[pp.editorBtn, { backgroundColor: PP.paper }]}>
-                  <Text style={pp.editorBtnText}>ANULUJ</Text>
+                  <Text style={pp.editorBtnText}>{t('categories.cancel')}</Text>
                 </Pressable>
               </View>
             </View>
           )}
         </ScrollView>
 
-        <Pressable onPress={onClose} style={[pp.closeBtn, { backgroundColor: PP.ink }]} accessibilityLabel="Zamknij">
-          <Text style={[pp.editorBtnText, { color: PP.paper }]}>ZAMKNIJ</Text>
+        <Pressable onPress={onClose} style={[pp.closeBtn, { backgroundColor: PP.ink }]} accessibilityLabel={t('common.close')}>
+          <Text style={[pp.editorBtnText, { color: PP.paper }]}>{t('categories.close')}</Text>
         </Pressable>
       </PPModal>
     );

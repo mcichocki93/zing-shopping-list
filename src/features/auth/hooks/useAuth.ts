@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { Alert } from 'react-native';
 import type { User, AuthState, CustomCategory } from '../../../types/user';
+import i18n from '../../../i18n';
 import { signUp, signIn, signInWithGoogle, signInWithApple, signOut, onAuthChanged, resetPassword, deleteAccount, saveCustomCategories, saveListOrder, subscribeToUserProfile } from '../services';
 
 interface AuthContextValue extends AuthState {
@@ -146,9 +147,9 @@ export function useAuthProvider(): AuthContextValue {
   const handleResetPassword = useCallback(async (email: string) => {
     try {
       await resetPassword(email);
-      Alert.alert('Sukces', 'Link do resetowania hasła został wysłany na podany adres email.');
+      Alert.alert(i18n.t('authError.resetSuccessTitle'), i18n.t('authError.resetSuccessBody'));
     } catch (err) {
-      Alert.alert('Błąd', getErrorMessage(err));
+      Alert.alert(i18n.t('common.error'), getErrorMessage(err));
     }
   }, []);
 
@@ -209,20 +210,20 @@ function getErrorMessage(err: unknown): string {
     const code = (err as { code?: string }).code;
     switch (code) {
       case 'auth/email-already-in-use':
-        return 'Ten email jest już zajęty.';
+        return i18n.t('authError.emailInUse');
       case 'auth/invalid-email':
-        return 'Nieprawidłowy adres email.';
+        return i18n.t('authError.invalidEmail');
       case 'auth/weak-password':
-        return 'Hasło musi mieć min. 6 znaków.';
+        return i18n.t('authError.weakPassword');
       case 'auth/user-not-found':
       case 'auth/wrong-password':
       case 'auth/invalid-credential':
-        return 'Nieprawidłowy email lub hasło.';
+        return i18n.t('authError.invalidCredentials');
       case 'auth/too-many-requests':
-        return 'Za dużo prób. Spróbuj później.';
+        return i18n.t('authError.tooManyRequests');
       default:
         return err.message;
     }
   }
-  return 'Wystąpił nieoczekiwany błąd.';
+  return i18n.t('authError.unknown');
 }
