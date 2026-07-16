@@ -5,6 +5,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { PixelModal, PixelInput, PixelButton, QuantityStepper } from '../../../components/ui';
 import { UNITS, DECIMAL_UNITS, COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
 import { useTheme } from '../../../contexts/ThemeContext';
+import { categoryLabel, unitLabel } from '../../../constants/categoryLabels';
 import { useCategories } from '../../categories';
 import type { Unit } from '../../../constants';
 import type { ShoppingItem } from '../../../types/shoppingList';
@@ -77,9 +78,9 @@ export function EditItemModal({ visible, item, onSave, onClose }: EditItemModalP
             onPress={() => setShowUnitPicker(true)}
             style={styles.categoryTrigger}
             accessibilityRole="button"
-            accessibilityLabel={t('editItem.unitA11y', { unit: selectedUnit })}
+            accessibilityLabel={t('editItem.unitA11y', { unit: unitLabel(selectedUnit) })}
           >
-            <Text style={styles.categoryValue}>{selectedUnit}</Text>
+            <Text style={styles.categoryValue}>{unitLabel(selectedUnit)}</Text>
             <MaterialCommunityIcons name="chevron-down" size={20} color={COLORS.disabled} />
           </Pressable>
         </View>
@@ -91,9 +92,9 @@ export function EditItemModal({ visible, item, onSave, onClose }: EditItemModalP
           onPress={() => setShowCategoryPicker(true)}
           style={styles.categoryTrigger}
           accessibilityRole="button"
-          accessibilityLabel={t('editItem.categoryA11y', { category: selectedCategory })}
+          accessibilityLabel={t('editItem.categoryA11y', { category: categoryLabel(selectedCategory) })}
         >
-          <Text style={styles.categoryValue}>{selectedCategory}</Text>
+          <Text style={styles.categoryValue}>{categoryLabel(selectedCategory)}</Text>
           <MaterialCommunityIcons name="chevron-down" size={20} color={COLORS.disabled} />
         </Pressable>
       </View>
@@ -123,7 +124,7 @@ export function EditItemModal({ visible, item, onSave, onClose }: EditItemModalP
                   style={[styles.pickerOption, isSelected && { backgroundColor: theme.accent }]}
                 >
                   <Text style={[styles.pickerOptionText, isSelected && styles.pickerOptionTextSelected]}>
-                    {cat}
+                    {categoryLabel(cat)}
                   </Text>
                   {isSelected && <Text style={styles.pickerCheck}>{'✓'}</Text>}
                 </Pressable>
@@ -159,7 +160,7 @@ export function EditItemModal({ visible, item, onSave, onClose }: EditItemModalP
                   style={[styles.pickerOption, isSelected && { backgroundColor: theme.accent }]}
                 >
                   <Text style={[styles.pickerOptionText, isSelected && styles.pickerOptionTextSelected]}>
-                    {unit}
+                    {unitLabel(unit)}
                   </Text>
                   {isSelected && <Text style={styles.pickerCheck}>{'✓'}</Text>}
                 </Pressable>

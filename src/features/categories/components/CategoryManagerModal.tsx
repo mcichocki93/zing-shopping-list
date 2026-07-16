@@ -5,6 +5,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { PixelModal, PixelButton } from '../../../components/ui';
 import { CATEGORIES, COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
 import { getCategoryColor } from '../../../constants';
+import { categoryLabel } from '../../../constants/categoryLabels';
 import { useCategories } from '../hooks/useCategories';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { PP, PP_BORDER, PP_FONT, ppText } from '../../../constants/pixelPopTheme';
@@ -105,7 +106,7 @@ export function CategoryManagerModal({ visible, onClose }: CategoryManagerModalP
           {CATEGORIES.map((cat) => (
             <View key={cat} style={pp.row}>
               <View style={[pp.colorSquare, { backgroundColor: getCategoryColor(cat) }]} />
-              <Text style={ppText.rowBody}>{cat}</Text>
+              <Text style={ppText.rowBody}>{categoryLabel(cat)}</Text>
             </View>
           ))}
 

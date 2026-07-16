@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { categoryLabel, unitLabel } from '../../../constants/categoryLabels';
 import { PixelButton, PixelCard } from '../../../components/ui';
 import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
 import type { AIParsedItem } from '../../../types/ai';
@@ -51,7 +52,7 @@ export function PreviewModal({
                   <View style={styles.itemInfo}>
                     <Text style={styles.itemName}>{item.name}</Text>
                     <Text style={styles.itemMeta}>
-                      {item.quantity}{item.unit ? ` ${item.unit}` : ' szt'} · {item.category}
+                      {item.quantity} {unitLabel(item.unit ?? 'szt')} · {categoryLabel(item.category)}
                     </Text>
                   </View>
                   <Pressable

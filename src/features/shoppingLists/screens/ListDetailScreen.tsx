@@ -21,6 +21,7 @@ import { useTheme } from '../../../contexts/ThemeContext';
 import { useShoppingList } from '../hooks';
 import { useCategories } from '../../categories';
 import { PP, PP_BORDER, PP_FONT, ppText } from '../../../constants/pixelPopTheme';
+import { categoryLabel } from '../../../constants/categoryLabels';
 import { HardShadow, SegmentProgress, CategoryCard, ComposeBar, PixelIcon, MembersModal } from '../../../components/ui-pixelpop';
 import type { CategoryGroup } from '../hooks/useShoppingList';
 import { useAuth } from '../../auth/hooks';
@@ -767,7 +768,7 @@ function PixelPopDetailView({
                 style={[ppDetailStyles.catChip, manualCategory === cat && { backgroundColor: accent }]}
                 accessibilityLabel={`Kategoria ${cat}`}
               >
-                <Text style={[ppDetailStyles.catChipText, manualCategory === cat && { color: PP.ink }]}>{cat}</Text>
+                <Text style={[ppDetailStyles.catChipText, manualCategory === cat && { color: PP.ink }]}>{categoryLabel(cat)}</Text>
               </Pressable>
             ))}
           </ScrollView>

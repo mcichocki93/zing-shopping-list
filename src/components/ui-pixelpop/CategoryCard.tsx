@@ -3,6 +3,7 @@ import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Swipeable } from 'react-native-gesture-handler';
 import { PP, PP_BORDER, PP_FONT, ppText, ppCategoryColor } from '../../constants/pixelPopTheme';
+import { categoryLabel, unitLabel } from '../../constants/categoryLabels';
 import { HardShadow } from './HardShadow';
 import { PixelCheckbox2 } from './PixelCheckbox2';
 import { PixelIcon } from './PixelIcon';
@@ -83,7 +84,7 @@ function SwipeableRow({
         />
         <View style={{ flex: 1 }}>
           <Text style={[ppText.rowBody, it.isCompleted && styles.done]}>{it.name}</Text>
-          <Text style={styles.qty}>{it.quantity} {it.unit ?? 'szt'}</Text>
+          <Text style={styles.qty}>{it.quantity} {unitLabel(it.unit ?? 'szt')}</Text>
         </View>
         {onEdit && (
           <Pressable onPress={() => onEdit(it.id)} hitSlop={8} accessibilityLabel={t('categories.editA11y', { name: it.name })} style={styles.editBtn}>
@@ -106,7 +107,7 @@ export function CategoryCard({ category, icon = 'apple', items, onToggle, onEdit
           <View style={styles.headerTile}>
             <PixelIcon name={icon} size={12} color={PP.ink} />
           </View>
-          <Text style={[ppText.catLabel, styles.headerLabel]} numberOfLines={1}>{category.toUpperCase()}</Text>
+          <Text style={[ppText.catLabel, styles.headerLabel]} numberOfLines={1}>{categoryLabel(category).toUpperCase()}</Text>
           <Text style={[ppText.meta, { color: PP.ink }]}>{remaining}/{items.length}</Text>
           {drag && (
             <Pressable onLongPress={drag} hitSlop={6} accessibilityLabel={t('listDetail.dragCategory')} style={styles.dragBtn}>
