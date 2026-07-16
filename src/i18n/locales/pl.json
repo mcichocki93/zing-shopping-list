@@ -11,7 +11,8 @@
     "error": "Błąd",
     "info": "Info",
     "search": "Szukaj",
-    "offline": "Offline – zmiany zsynchronizują się po powrocie"
+    "offline": "Offline – zmiany zsynchronizują się po powrocie",
+    "deleteUpper": "USUŃ"
   },
   "settings": {
     "title": "Ustawienia",
@@ -36,6 +37,12 @@
   },
   "profile": {
     "title": "Profil"
+  },
+  "errorBoundary": {
+    "title": "Coś poszło nie tak",
+    "message": "Spróbuj ponownie uruchomić aplikację.",
+    "retry": "Spróbuj ponownie",
+    "retryUpper": "SPRÓBUJ PONOWNIE"
   },
   "auth": {
     "title": "LISTA ZAKUPÓW",
@@ -151,7 +158,14 @@
     "unpin": "Odepnij się",
     "deleteListA11y": "Usuń {{title}}",
     "personOne": "osoba",
-    "personFew": "osoby"
+    "personFew": "osoby",
+    "listRowUnpinUpper": "ODEPNIJ",
+    "listRowUnpinA11y": "Odepnij się od {{title}}",
+    "listRowCompletedA11y": "{{title}}, zrealizowana",
+    "listRowProgressA11y": "{{title}}, {{done}} z {{total}} kupionych",
+    "listRowComplete": "✓ KOMPLET",
+    "heroThisWeek": "TEN TYDZIEŃ",
+    "heroCaption": "produktów kupionych"
   },
   "listDetail": {
     "loading": "Ładowanie listy",
@@ -173,7 +187,11 @@
     "members_many": "{{count}} osób",
     "composeAiPlaceholder": "2x mleko, chleb, jabłka…",
     "composeManualPlaceholder": "Nazwa produktu",
-    "listening": "Słucham..."
+    "listening": "Słucham...",
+    "dragCategory": "Przeciągnij kategorię",
+    "itemBought": "kupione",
+    "itemToBuy": "do kupienia",
+    "itemStateA11y": "{{name}}, {{state}}"
   },
   "compose": {
     "ai": "✦ AI",

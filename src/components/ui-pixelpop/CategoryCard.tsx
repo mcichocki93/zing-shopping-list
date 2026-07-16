@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Swipeable } from 'react-native-gesture-handler';
 import { PP, PP_BORDER, PP_FONT, ppText, ppCategoryColor } from '../../constants/pixelPopTheme';
 import { HardShadow } from './HardShadow';
@@ -39,6 +40,7 @@ function SwipeableRow({
   onEdit?: (id: string) => void;
   onRemove?: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   const swipeRef = useRef<Swipeable>(null);
 
   const renderRightActions = (_: Animated.AnimatedInterpolation<number>, dragX: Animated.AnimatedInterpolation<number>) => {
@@ -47,11 +49,11 @@ function SwipeableRow({
       <Pressable
         onPress={() => { swipeRef.current?.close(); onRemove?.(it.id); }}
         style={styles.deleteAction}
-        accessibilityLabel={`Usuń ${it.name}`}
+        accessibilityLabel={t('categories.deleteA11y', { name: it.name })}
       >
         <Animated.View style={{ transform: [{ scale }], alignItems: 'center', gap: 3 }}>
           <PixelIcon name="trash" size={16} color={PP.panel} />
-          <Text style={styles.deleteLabel}>USUŃ</Text>
+          <Text style={styles.deleteLabel}>{t('common.deleteUpper')}</Text>
         </Animated.View>
       </Pressable>
     );
@@ -77,14 +79,14 @@ function SwipeableRow({
         <PixelCheckbox2
           checked={!!it.isCompleted}
           onToggle={() => onToggle(it.id)}
-          accessibilityLabel={`${it.name}, ${it.isCompleted ? 'kupione' : 'do kupienia'}`}
+          accessibilityLabel={t('listDetail.itemStateA11y', { name: it.name, state: it.isCompleted ? t('listDetail.itemBought') : t('listDetail.itemToBuy') })}
         />
         <View style={{ flex: 1 }}>
           <Text style={[ppText.rowBody, it.isCompleted && styles.done]}>{it.name}</Text>
           <Text style={styles.qty}>{it.quantity} {it.unit ?? 'szt'}</Text>
         </View>
         {onEdit && (
-          <Pressable onPress={() => onEdit(it.id)} hitSlop={8} accessibilityLabel={`Edytuj ${it.name}`} style={styles.editBtn}>
+          <Pressable onPress={() => onEdit(it.id)} hitSlop={8} accessibilityLabel={t('categories.editA11y', { name: it.name })} style={styles.editBtn}>
             <PixelIcon name="edit" size={13} color={PP.ink} />
           </Pressable>
         )}
@@ -94,6 +96,7 @@ function SwipeableRow({
 }
 
 export function CategoryCard({ category, icon = 'apple', items, onToggle, onEdit, onRemove, drag }: CategoryCardProps) {
+  const { t } = useTranslation();
   const remaining = items.filter((i) => !i.isCompleted).length;
   return (
     <HardShadow offset={3}>
@@ -106,7 +109,7 @@ export function CategoryCard({ category, icon = 'apple', items, onToggle, onEdit
           <Text style={[ppText.catLabel, styles.headerLabel]} numberOfLines={1}>{category.toUpperCase()}</Text>
           <Text style={[ppText.meta, { color: PP.ink }]}>{remaining}/{items.length}</Text>
           {drag && (
-            <Pressable onLongPress={drag} hitSlop={6} accessibilityLabel="Przeciągnij kategorię" style={styles.dragBtn}>
+            <Pressable onLongPress={drag} hitSlop={6} accessibilityLabel={t('listDetail.dragCategory')} style={styles.dragBtn}>
               <PixelIcon name="drag" size={12} color={PP.ink} />
             </Pressable>
           )}

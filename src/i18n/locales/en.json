@@ -11,7 +11,8 @@
     "error": "Error",
     "info": "Info",
     "search": "Search",
-    "offline": "Offline – changes will sync when you're back online"
+    "offline": "Offline – changes will sync when you're back online",
+    "deleteUpper": "DELETE"
   },
   "settings": {
     "title": "Settings",
@@ -36,6 +37,12 @@
   },
   "profile": {
     "title": "Profile"
+  },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "message": "Please try restarting the app.",
+    "retry": "Try again",
+    "retryUpper": "TRY AGAIN"
   },
   "auth": {
     "title": "SHOPPING LIST",
@@ -149,7 +156,14 @@
     "unpin": "Unpin",
     "deleteListA11y": "Delete {{title}}",
     "personOne": "person",
-    "personFew": "people"
+    "personFew": "people",
+    "listRowUnpinUpper": "UNPIN",
+    "listRowUnpinA11y": "Unpin from {{title}}",
+    "listRowCompletedA11y": "{{title}}, completed",
+    "listRowProgressA11y": "{{title}}, {{done}} of {{total}} bought",
+    "listRowComplete": "✓ COMPLETE",
+    "heroThisWeek": "THIS WEEK",
+    "heroCaption": "products bought"
   },
   "listDetail": {
     "loading": "Loading list",
@@ -170,7 +184,11 @@
     "members_other": "{{count}} people",
     "composeAiPlaceholder": "2x milk, bread, apples…",
     "composeManualPlaceholder": "Product name",
-    "listening": "Listening..."
+    "listening": "Listening...",
+    "dragCategory": "Drag category",
+    "itemBought": "bought",
+    "itemToBuy": "to buy",
+    "itemStateA11y": "{{name}}, {{state}}"
   },
   "compose": {
     "ai": "✦ AI",

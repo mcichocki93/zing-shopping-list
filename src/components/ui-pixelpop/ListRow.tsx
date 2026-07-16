@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Swipeable } from 'react-native-gesture-handler';
 import { PP, PP_BORDER, PP_FONT, ppText } from '../../constants/pixelPopTheme';
 import { PixelIcon } from './PixelIcon';
@@ -21,6 +22,7 @@ interface ListRowProps {
 }
 
 export function ListRow({ title, done, total, completed, code, tint = PP.cyan, icon = 'cart', isLast, accent = PP.pink, onPress, onDelete, onLeave }: ListRowProps) {
+  const { t } = useTranslation();
   const swipeRef = useRef<Swipeable>(null);
 
   const swipeAction = onDelete ?? onLeave;
@@ -32,11 +34,11 @@ export function ListRow({ title, done, total, completed, code, tint = PP.cyan, i
       <Pressable
         onPress={() => { swipeRef.current?.close(); swipeAction?.(); }}
         style={[styles.swipeAction, { backgroundColor: isLeave ? '#E67E00' : '#FF3B30' }]}
-        accessibilityLabel={isLeave ? `Odepnij się od ${title}` : `Usuń ${title}`}
+        accessibilityLabel={isLeave ? t('dashboard.listRowUnpinA11y', { title }) : t('dashboard.deleteListA11y', { title })}
       >
         <Animated.View style={{ transform: [{ scale }], alignItems: 'center', gap: 4 }}>
           <PixelIcon name={isLeave ? 'share' : 'trash'} size={18} color={PP.panel} />
-          <Text style={styles.swipeLabel}>{isLeave ? 'ODEPNIJ' : 'USUŃ'}</Text>
+          <Text style={styles.swipeLabel}>{isLeave ? t('dashboard.listRowUnpinUpper') : t('common.deleteUpper')}</Text>
         </Animated.View>
       </Pressable>
     );
@@ -55,7 +57,7 @@ export function ListRow({ title, done, total, completed, code, tint = PP.cyan, i
       <Pressable
         onPress={onPress}
         accessibilityRole="button"
-        accessibilityLabel={`${title}, ${completed ? 'zrealizowana' : `${done} z ${total} kupionych`}`}
+        accessibilityLabel={completed ? t('dashboard.listRowCompletedA11y', { title }) : t('dashboard.listRowProgressA11y', { title, done, total })}
         style={[styles.row, !isLast && styles.rowDivider]}
       >
         <View style={[styles.rowContent, completed && { opacity: 0.6 }]}>
@@ -68,7 +70,7 @@ export function ListRow({ title, done, total, completed, code, tint = PP.cyan, i
               {code ? <Text style={styles.code}>{code}</Text> : null}
             </View>
             {completed ? (
-              <Text style={[ppText.meta, { color: PP.ink }]}>✓ KOMPLET</Text>
+              <Text style={[ppText.meta, { color: PP.ink }]}>{t('dashboard.listRowComplete')}</Text>
             ) : (
               <View style={styles.progressRow}>
                 <View style={{ width: 54 }}>

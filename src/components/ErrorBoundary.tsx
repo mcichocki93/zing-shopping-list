@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
+import i18n from '../i18n';
 import { COLORS, SPACING, FONT_SIZE, FONT_WEIGHT } from '../constants';
 
 interface State {
@@ -22,16 +23,16 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
     if (this.state.hasError) {
       return (
         <View style={styles.container}>
-          <Text style={styles.title}>Coś poszło nie tak</Text>
-          <Text style={styles.message}>Spróbuj ponownie uruchomić aplikację.</Text>
+          <Text style={styles.title}>{i18n.t('errorBoundary.title')}</Text>
+          <Text style={styles.message}>{i18n.t('errorBoundary.message')}</Text>
           <Text style={styles.errorDetail} selectable>{this.state.errorMessage}</Text>
           <Pressable
             onPress={() => this.setState({ hasError: false, errorMessage: '' })}
             style={styles.button}
             accessibilityRole="button"
-            accessibilityLabel="Spróbuj ponownie"
+            accessibilityLabel={i18n.t('errorBoundary.retry')}
           >
-            <Text style={styles.buttonText}>SPRÓBUJ PONOWNIE</Text>
+            <Text style={styles.buttonText}>{i18n.t('errorBoundary.retryUpper')}</Text>
           </Pressable>
         </View>
       );
