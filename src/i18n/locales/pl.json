@@ -38,6 +38,18 @@
   "profile": {
     "title": "Profil"
   },
+  "aiError": {
+    "emptyInput": "Podaj produkty do dodania.",
+    "tooLong": "Tekst jest za długi (max {{max}} znaków).",
+    "parseFailed": "Nie udało się rozpoznać produktów. Spróbuj inaczej.",
+    "unauthenticated": "Musisz być zalogowany, aby użyć AI.",
+    "tooManyRequests": "Za dużo żądań. Spróbuj za godzinę.",
+    "invalidInput": "Nieprawidłowe dane wejściowe.",
+    "serverError": "Błąd AI. Spróbuj ponownie.",
+    "serverConnection": "Błąd połączenia z serwerem.",
+    "generic": "Błąd AI: {{message}}",
+    "unknown": "Nieznany błąd"
+  },
   "errorBoundary": {
     "title": "Coś poszło nie tak",
     "message": "Spróbuj ponownie uruchomić aplikację.",

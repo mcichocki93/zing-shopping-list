@@ -11,28 +11,66 @@ admin.initializeApp();
 const geminiApiKey = defineSecret('GEMINI_API_KEY');
 const googlePlayServiceAccountKey = defineSecret('GOOGLE_PLAY_SERVICE_ACCOUNT_KEY');
 
-const CATEGORIES = [
-  'Owoce i warzywa',
-  'Nabiał',
-  'Pieczywo',
-  'Mięso i wędliny',
-  'Ryby',
-  'Mrożonki',
-  'Napoje',
-  'Słodycze i przekąski',
-  'Chemia domowa',
-  'Higiena osobista',
-  'Inne',
+// Canonical category keys are Polish strings (stored in item data — Option A).
+// English labels are used only when the client sends language 'en'; the AI then
+// returns an English label which we map back to the canonical Polish key.
+const CATEGORY_DEFS = [
+  {key: 'Owoce i warzywa', en: 'Fruits & veg'},
+  {key: 'Nabiał', en: 'Dairy'},
+  {key: 'Pieczywo', en: 'Bakery'},
+  {key: 'Mięso i wędliny', en: 'Meat & deli'},
+  {key: 'Ryby', en: 'Fish'},
+  {key: 'Mrożonki', en: 'Frozen'},
+  {key: 'Napoje', en: 'Drinks'},
+  {key: 'Słodycze i przekąski', en: 'Sweets & snacks'},
+  {key: 'Chemia domowa', en: 'Household'},
+  {key: 'Higiena osobista', en: 'Personal care'},
+  {key: 'Inne', en: 'Other'},
 ];
 
-const SYSTEM_PROMPT = `Jesteś asystentem listy zakupów. Otrzymujesz tekst od użytkownika z produktami do kupienia.
+const CATEGORIES = CATEGORY_DEFS.map((d) => d.key);
+
+// Map a category returned by the AI (Polish key OR English label OR a custom
+// name) back to the canonical stored key. Falls back to 'Inne'.
+function toCategoryKey(raw, userCategories) {
+  if (!raw) return 'Inne';
+  const lower = raw.toLowerCase();
+  const def = CATEGORY_DEFS.find(
+    (d) => d.key.toLowerCase() === lower || d.en.toLowerCase() === lower,
+  );
+  if (def) return def.key;
+  const custom = userCategories.find((c) => c.toLowerCase() === lower);
+  if (custom) return custom;
+  return 'Inne';
+}
+
+// Localized system prompt. `categories` = comma-joined labels the AI chooses from.
+function buildSystemPrompt(language, categories) {
+  if (language === 'en') {
+    return `You are a shopping list assistant. You receive text from the user with products to buy.
+Return a JSON array of objects, where each object is one product.
+
+Each object must have:
+- "name": string — product name (in English, singular, without quantity)
+- "quantity": number — quantity (default 1)
+- "unit": string | null — unit (e.g. "kg", "l", "pcs", "pack") or null
+- "category": string — one of: ${categories}
+
+Rules:
+- Split products by commas, "and", new lines
+- If the user writes "2 kg apples" → name: "Apples", quantity: 2, unit: "kg"
+- If they write "milk" → name: "Milk", quantity: 1, unit: null
+- Capitalize the first letter of the name
+- Reply with ONLY a valid JSON array, no markdown, no comments`;
+  }
+  return `Jesteś asystentem listy zakupów. Otrzymujesz tekst od użytkownika z produktami do kupienia.
 Zwróć JSON array z obiektami, gdzie każdy obiekt to jeden produkt.
 
 Każdy obiekt musi mieć:
 - "name": string — nazwa produktu (po polsku, w mianowniku, bez ilości)
 - "quantity": number — ilość (domyślnie 1)
 - "unit": string | null — jednostka (np. "kg", "l", "szt", "opak") lub null
-- "category": string — jedna z: ${CATEGORIES.join(', ')}
+- "category": string — jedna z: ${categories}
 
 Zasady:
 - Rozdzielaj produkty po przecinkach, "i", nowych liniach
@@ -40,6 +78,7 @@ Zasady:
 - Jeśli napisze "mleko" → name: "Mleko", quantity: 1, unit: null
 - Używaj wielkich liter na początku nazwy
 - Odpowiedz TYLKO poprawnym JSON array, bez markdown, bez komentarzy`;
+}
 
 // Server-side rate limit (abuse protection). AI is Premium-only, so this is a
 // light guard against a single premium account hammering the endpoint.
@@ -276,13 +315,18 @@ exports.parseItemsWithAI = onCall({secrets: [geminiApiKey]}, async (request) => 
     throw new HttpsError('invalid-argument', 'Podaj produkty do dodania.');
   }
 
+  // Language — backward compatible: old clients don't send it → Polish.
+  const language = request.data.language === 'en' ? 'en' : 'pl';
+
   // Build merged category list (built-in + user custom)
   const userCategories = Array.isArray(rawCustomCategories)
     ? rawCustomCategories
         .filter((c) => c && typeof c.name === 'string' && c.name.trim())
         .map((c) => c.name.trim().slice(0, 30))
     : [];
-  const allCategories = [...CATEGORIES, ...userCategories];
+  // Labels shown to the AI in the requested language (custom categories as-is).
+  const builtinLabels = language === 'en' ? CATEGORY_DEFS.map((d) => d.en) : CATEGORIES;
+  const promptCategories = [...builtinLabels, ...userCategories];
 
   const sanitized = input.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').trim();
 
@@ -299,14 +343,12 @@ exports.parseItemsWithAI = onCall({secrets: [geminiApiKey]}, async (request) => 
     const genAI = new GoogleGenerativeAI(geminiApiKey.value());
     const model = genAI.getGenerativeModel({model: 'gemini-2.5-flash-lite'});
 
-    // 5. Generate content (inject dynamic category list)
-    const dynamicPrompt = SYSTEM_PROMPT.replace(
-      /jedna z: .+/,
-      `jedna z: ${allCategories.join(', ')}`,
-    );
-    const result = await model.generateContent(
-      dynamicPrompt + '\n\nProdukty od użytkownika:\n' + sanitized,
-    );
+    // 5. Generate content with the localized prompt + category list
+    const systemPrompt = buildSystemPrompt(language, promptCategories.join(', '));
+    const userLabel = language === 'en'
+      ? '\n\nProducts from the user:\n'
+      : '\n\nProdukty od użytkownika:\n';
+    const result = await model.generateContent(systemPrompt + userLabel + sanitized);
 
     const response = result.response;
     const text = response.text().trim();
@@ -336,15 +378,16 @@ exports.parseItemsWithAI = onCall({secrets: [geminiApiKey]}, async (request) => 
         const unit =
           typeof raw.unit === 'string' && raw.unit.trim() ? raw.unit.trim() : undefined;
 
-        const rawCategory = typeof raw.category === 'string' ? raw.category.trim() : 'Inne';
-        const category = allCategories.includes(rawCategory) ? rawCategory : 'Inne';
+        const rawCategory = typeof raw.category === 'string' ? raw.category.trim() : '';
+        const category = toCategoryKey(rawCategory, userCategories);
+        const known = category !== 'Inne' || /^(inne|other)$/i.test(rawCategory);
 
         return {
           name: name.slice(0, 100),
           quantity,
           unit: unit?.slice(0, 20),
           category,
-          confidence: allCategories.includes(rawCategory) ? 0.9 : 0.5,
+          confidence: known ? 0.9 : 0.5,
         };
       })
       .filter((item) => item !== null);
@@ -366,7 +409,7 @@ exports.parseItemsWithAI = onCall({secrets: [geminiApiKey]}, async (request) => 
 
     return {
       items,
-      language: 'pl',
+      language,
     };
   } catch (err) {
     if (err instanceof HttpsError) {

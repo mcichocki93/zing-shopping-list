@@ -38,6 +38,18 @@
   "profile": {
     "title": "Profile"
   },
+  "aiError": {
+    "emptyInput": "Enter products to add.",
+    "tooLong": "Text is too long (max {{max}} characters).",
+    "parseFailed": "Could not recognize products. Try differently.",
+    "unauthenticated": "You must be logged in to use AI.",
+    "tooManyRequests": "Too many requests. Try again in an hour.",
+    "invalidInput": "Invalid input.",
+    "serverError": "AI error. Please try again.",
+    "serverConnection": "Server connection error.",
+    "generic": "AI error: {{message}}",
+    "unknown": "Unknown error"
+  },
   "errorBoundary": {
     "title": "Something went wrong",
     "message": "Please try restarting the app.",
