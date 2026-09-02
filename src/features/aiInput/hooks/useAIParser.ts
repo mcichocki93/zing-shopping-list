@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import i18n from '../../../i18n';
 import { parseItemsWithAI } from '../../../services/ai';
 import { usePremium } from '../../premium/hooks/usePremium';
 import { useCategories } from '../../categories';
@@ -61,7 +62,7 @@ export function useAIParser(): UseAIParserReturn {
       if (aiError.message?.includes('Premium') || aiError.message?.includes('limit')) {
         setLimitReached(true);
       } else {
-        setError(aiError.message || 'Nieznany błąd.');
+        setError(aiError.message || i18n.t('errors.unknown'));
       }
     } finally {
       if (mountedRef.current) {

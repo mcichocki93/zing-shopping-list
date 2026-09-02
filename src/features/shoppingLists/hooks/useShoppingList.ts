@@ -10,6 +10,7 @@ import {
   updateCategoryOrder,
   resetAllItems,
 } from '../../../services/firebase/shoppingLists';
+import i18n from '../../../i18n';
 import { CATEGORIES } from '../../../constants';
 import type { ShoppingList, ShoppingItem } from '../../../types/shoppingList';
 
@@ -113,7 +114,7 @@ export function useShoppingList(listId: string | null): UseShoppingListReturn {
     (title: string) =>
       withError(
         () => updateListTitle(listId!, title),
-        'Nie udało się zmienić nazwy.',
+        i18n.t('errors.renameList'),
       ),
     [listId, withError],
   );
@@ -122,7 +123,7 @@ export function useShoppingList(listId: string | null): UseShoppingListReturn {
     (item: Omit<ShoppingItem, 'id' | 'createdAt'>) =>
       withError(
         () => addItem(listId!, item),
-        'Nie udało się dodać produktu.',
+        i18n.t('errors.addItem'),
       ),
     [listId, withError],
   );
@@ -131,7 +132,7 @@ export function useShoppingList(listId: string | null): UseShoppingListReturn {
     (items: Omit<ShoppingItem, 'id' | 'createdAt'>[]) =>
       withError(
         () => addItems(listId!, items),
-        'Nie udało się dodać produktów.',
+        i18n.t('errors.addItems'),
       ),
     [listId, withError],
   );
@@ -140,7 +141,7 @@ export function useShoppingList(listId: string | null): UseShoppingListReturn {
     (itemId: string, updates: Partial<Pick<ShoppingItem, 'name' | 'quantity' | 'unit' | 'category'>>) =>
       withError(
         () => updateItem(listId!, list?.items ?? [], itemId, updates),
-        'Nie udało się zaktualizować produktu.',
+        i18n.t('errors.updateItem'),
       ),
     [listId, list, withError],
   );
@@ -149,7 +150,7 @@ export function useShoppingList(listId: string | null): UseShoppingListReturn {
     (itemId: string) =>
       withError(
         () => toggleItem(listId!, list?.items ?? [], itemId),
-        'Nie udało się zmienić statusu.',
+        i18n.t('errors.toggleItem'),
       ),
     [listId, list, withError],
   );
@@ -158,7 +159,7 @@ export function useShoppingList(listId: string | null): UseShoppingListReturn {
     (itemId: string) =>
       withError(
         () => removeItem(listId!, list?.items ?? [], itemId),
-        'Nie udało się usunąć produktu.',
+        i18n.t('errors.removeItem'),
       ),
     [listId, list, withError],
   );
@@ -176,7 +177,7 @@ export function useShoppingList(listId: string | null): UseShoppingListReturn {
 
       return withError(
         () => updateCategoryOrder(listId!, newOrder),
-        'Nie udało się zmienić kolejności.',
+        i18n.t('errors.reorder'),
       );
     },
     [listId, sortedCategories, withError],
@@ -188,7 +189,7 @@ export function useShoppingList(listId: string | null): UseShoppingListReturn {
       setList((prev) => prev ? { ...prev, categoryOrder: newOrder } : prev);
       return withError(
         () => updateCategoryOrder(listId!, newOrder),
-        'Nie udało się zmienić kolejności.',
+        i18n.t('errors.reorder'),
       );
     },
     [listId, withError],
@@ -200,7 +201,7 @@ export function useShoppingList(listId: string | null): UseShoppingListReturn {
     () =>
       withError(
         () => resetAllItems(listId!, list?.items ?? []),
-        'Nie udało się zresetować listy.',
+        i18n.t('errors.resetList'),
       ),
     [listId, list, withError],
   );

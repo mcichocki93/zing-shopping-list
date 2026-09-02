@@ -8,6 +8,7 @@ import {
   restoreList,
   removeMember,
 } from '../../../services/firebase/shoppingLists';
+import i18n from '../../../i18n';
 import { useAuth } from '../../auth/hooks';
 import type { ShoppingList } from '../../../types/shoppingList';
 
@@ -86,7 +87,7 @@ export function useShoppingLists(): UseShoppingListsReturn {
         return await createList(title, user.id, user.displayName ?? user.email ?? '');
       } catch (err) {
         if (!mountedRef.current) return null;
-        setError(err instanceof Error ? err.message : 'Nie udało się utworzyć listy.');
+        setError(err instanceof Error ? err.message : i18n.t('errors.createList'));
         return null;
       }
     },
@@ -101,7 +102,7 @@ export function useShoppingLists(): UseShoppingListsReturn {
         await deleteList(listId, user.id);
       } catch (err) {
         if (!mountedRef.current) return;
-        setError(err instanceof Error ? err.message : 'Nie udało się usunąć listy.');
+        setError(err instanceof Error ? err.message : i18n.t('errors.deleteList'));
       }
     },
     [user],
@@ -115,7 +116,7 @@ export function useShoppingLists(): UseShoppingListsReturn {
         await removeMember(listId, user.id);
       } catch (err) {
         if (!mountedRef.current) return;
-        setError(err instanceof Error ? err.message : 'Nie udało się opuścić listy.');
+        setError(err instanceof Error ? err.message : i18n.t('errors.leaveList'));
       }
     },
     [user],
@@ -127,7 +128,7 @@ export function useShoppingLists(): UseShoppingListsReturn {
       await archiveList(listId);
     } catch (err) {
       if (!mountedRef.current) return;
-      setError(err instanceof Error ? err.message : 'Nie udało się zarchiwizować listy.');
+      setError(err instanceof Error ? err.message : i18n.t('errors.archiveList'));
     }
   }, []);
 
@@ -137,7 +138,7 @@ export function useShoppingLists(): UseShoppingListsReturn {
       await restoreList(listId);
     } catch (err) {
       if (!mountedRef.current) return;
-      setError(err instanceof Error ? err.message : 'Nie udało się przywrócić listy.');
+      setError(err instanceof Error ? err.message : i18n.t('errors.restoreList'));
     }
   }, []);
 

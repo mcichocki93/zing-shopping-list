@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, type ViewStyle } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../constants';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -19,10 +20,12 @@ export function QuantityStepper({
   min = 0,
   max = 999,
   step = 1,
-  accessibilityLabel = 'Ilość',
+  accessibilityLabel,
   style,
 }: QuantityStepperProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
+  const a11yLabel = accessibilityLabel ?? t('common.quantity');
   const canDecrement = value - step >= min;
   const canIncrement = value + step <= max;
 
@@ -66,7 +69,7 @@ export function QuantityStepper({
         onPress={onDecrement}
         disabled={!canDecrement}
         accessibilityRole="button"
-        accessibilityLabel={`Zmniejsz ${accessibilityLabel}`}
+        accessibilityLabel={`Zmniejsz ${a11yLabel}`}
         accessibilityState={{ disabled: !canDecrement }}
         style={({ pressed }) => [
           styles.button,
@@ -88,14 +91,14 @@ export function QuantityStepper({
         keyboardType="decimal-pad"
         selectTextOnFocus
         style={styles.input}
-        accessibilityLabel={`${accessibilityLabel}: ${text}`}
+        accessibilityLabel={`${a11yLabel}: ${text}`}
       />
 
       <Pressable
         onPress={onIncrement}
         disabled={!canIncrement}
         accessibilityRole="button"
-        accessibilityLabel={`Zwiększ ${accessibilityLabel}`}
+        accessibilityLabel={`Zwiększ ${a11yLabel}`}
         accessibilityState={{ disabled: !canIncrement }}
         style={({ pressed }) => [
           styles.button,

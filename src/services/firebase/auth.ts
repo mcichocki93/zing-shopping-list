@@ -12,6 +12,7 @@ import {
   type Unsubscribe,
 } from 'firebase/auth';
 import { httpsCallable } from 'firebase/functions';
+import i18n from '../../i18n';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 // Defensive import — native module may not be registered in older dev builds
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -76,7 +77,7 @@ async function createUserProfile(firebaseUser: FirebaseUser, displayName: string
 async function getOrCreateProfile(firebaseUser: FirebaseUser, fallbackName: string): Promise<User> {
   const profile = await fetchUserProfile(firebaseUser.uid);
   if (profile) return profile;
-  return createUserProfile(firebaseUser, fallbackName || 'Użytkownik');
+  return createUserProfile(firebaseUser, fallbackName || i18n.t('common.defaultUser'));
 }
 
 export async function signUp(
@@ -102,7 +103,7 @@ export async function signIn(
 }
 
 export async function signInWithGoogle(): Promise<User> {
-  if (!GoogleSignin || !isSuccessResponse) throw new Error('Google Sign-In niedostępny w tej wersji.');
+  if (!GoogleSignin || !isSuccessResponse) throw new Error(i18n.t('errors.googleUnavailable'));
   const webClientId = Constants.expoConfig?.extra?.googleWebClientId as string | undefined;
   GoogleSignin.configure({ webClientId });
   await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
@@ -118,7 +119,7 @@ export async function signInWithGoogle(): Promise<User> {
 }
 
 export async function signInWithApple(): Promise<User> {
-  if (Platform.OS !== 'ios') throw new Error('Apple Sign-In dostępny tylko na iOS');
+  if (Platform.OS !== 'ios') throw new Error(i18n.t('errors.appleIosOnly'));
   const credential = await AppleAuthentication.signInAsync({
     requestedScopes: [
       AppleAuthentication.AppleAuthenticationScope.FULL_NAME,

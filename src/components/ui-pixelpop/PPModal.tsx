@@ -1,5 +1,6 @@
 import React from 'react';
 import { Modal, View, Text, Pressable, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { PP, PP_BORDER, PP_FONT, ppText } from '../../constants/pixelPopTheme';
 
 interface PPModalProps {
@@ -10,6 +11,7 @@ interface PPModalProps {
 }
 
 export function PPModal({ visible, onClose, title, children }: PPModalProps) {
+  const { t } = useTranslation();
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -20,7 +22,7 @@ export function PPModal({ visible, onClose, title, children }: PPModalProps) {
           <View style={s.sheet}>
             <View style={s.header}>
               <Text style={ppText.catLabel}>{title}</Text>
-              <Pressable onPress={onClose} style={s.closeBtn} accessibilityLabel="Zamknij">
+              <Pressable onPress={onClose} style={s.closeBtn} accessibilityLabel={t('common.close')}>
                 <Text style={s.closeMark}>✕</Text>
               </Pressable>
             </View>

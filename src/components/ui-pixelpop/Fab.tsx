@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Pressable, StyleSheet, ViewStyle } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PP, PP_BORDER } from '../../constants/pixelPopTheme';
 import { HardShadow } from './HardShadow';
@@ -15,7 +16,8 @@ interface FabProps {
   accessibilityLabel?: string;
 }
 
-export function Fab({ onPress, accent = PP.pink, icon = 'plus', bottomOffset, accessibilityLabel = 'Dodaj' }: FabProps) {
+export function Fab({ onPress, accent = PP.pink, icon = 'plus', bottomOffset, accessibilityLabel }: FabProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const bottom = bottomOffset ?? insets.bottom + 86;
   return (
@@ -23,7 +25,7 @@ export function Fab({ onPress, accent = PP.pink, icon = 'plus', bottomOffset, ac
       <Pressable
         onPress={onPress}
         accessibilityRole="button"
-        accessibilityLabel={accessibilityLabel}
+        accessibilityLabel={accessibilityLabel ?? t('common.add')}
         style={({ pressed }) => [styles.btn, { backgroundColor: accent }, pressed && { opacity: 0.85 }]}
       >
         <PixelIcon name={icon} size={24} color={PP.ink} />
