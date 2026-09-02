@@ -2,16 +2,20 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { PP, PP_BORDER, PP_FONT } from '../../constants/pixelPopTheme';
 import { PixelIcon } from './PixelIcon';
 import { useTheme } from '../../contexts/ThemeContext';
 
-const ICONS: Record<string, string> = { Listy: 'cart', Profil: 'user' };
+const ICONS: Record<string, string> = { Lists: 'cart', Templates: 'template', Profile: 'user' };
+// Nazwy tras są identyfikatorami — etykieta idzie przez i18n.
+const LABEL_KEYS: Record<string, string> = { Lists: 'nav.lists', Templates: 'nav.templates', Profile: 'nav.profile' };
 const SHADOW = 4;
 
 export function PixelPopTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const { pixelPopAccent } = useTheme();
   const overlayAlpha = Platform.OS === 'android' ? 0.92 : 0.78;
 
@@ -33,6 +37,7 @@ export function PixelPopTabBar({ state, navigation }: BottomTabBarProps) {
         <View style={styles.tabs}>
           {state.routes.map((route, index) => {
             const focused = state.index === index;
+            const label = LABEL_KEYS[route.name] ? t(LABEL_KEYS[route.name]) : route.name;
             const onPress = () => {
               const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
               if (!focused && !event.defaultPrevented) navigation.navigate(route.name);
@@ -43,14 +48,14 @@ export function PixelPopTabBar({ state, navigation }: BottomTabBarProps) {
                 onPress={onPress}
                 accessibilityRole="button"
                 accessibilityState={{ selected: focused }}
-                accessibilityLabel={route.name}
+                accessibilityLabel={label}
                 style={styles.tab}
               >
                 <View style={[styles.tile, focused && { backgroundColor: pixelPopAccent, borderWidth: PP_BORDER.base, borderColor: PP.ink }]}>
                   <PixelIcon name={ICONS[route.name] ?? 'cart'} size={16} color={PP.ink} />
                 </View>
                 <Text style={[styles.label, { color: focused ? PP.ink : PP.muted }]}>
-                  {route.name.toUpperCase()}
+                  {label.toUpperCase()}
                 </Text>
               </Pressable>
             );

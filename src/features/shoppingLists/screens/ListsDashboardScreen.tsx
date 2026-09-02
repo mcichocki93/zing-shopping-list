@@ -18,6 +18,8 @@ import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { PixelButton, PixelInput, PixelCard, PixelModal } from '../../../components/ui';
 import { ThemePickerModal } from '../../../components/ThemePickerModal';
 import { CategoryManagerModal } from '../../categories';
+import { TemplatePickerModal } from '../../templates';
+import type { ListTemplate } from '../../../types/template';
 import { PremiumGateModal } from '../../premium/components/PremiumGateModal';
 import { usePremium } from '../../premium/hooks/usePremium';
 import { OfflineBanner } from '../../../components/OfflineBanner';
@@ -27,6 +29,7 @@ import { useTheme } from '../../../contexts/ThemeContext';
 import { useShoppingLists } from '../hooks';
 import { useAuth } from '../../auth/hooks';
 import { lookupInvite, joinList } from '../../../services/firebase/invites';
+import { addItems } from '../../../services/firebase/shoppingLists';
 import type { ShoppingListsStackParamList } from '../../../types/navigation';
 import type { ShoppingList } from '../../../types/shoppingList';
 import { PP, PP_BORDER, ppText, ppCategoryColor } from '../../../constants/pixelPopTheme';
@@ -55,6 +58,8 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showCategoryManager, setShowCategoryManager] = useState(false);
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
   const { isPremium } = usePremium();
   const deepLinkHandled = useRef<string | null>(null);
 
@@ -126,6 +131,38 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
       setShowCreateModal(false);
       navigation.navigate('ListDetail', { listId });
     }
+  };
+
+  const onOpenTemplates = () => {
+    setShowCreateModal(false);
+    setNewTitle('');
+    if (isPremium) setShowTemplatePicker(true);
+    else setShowPremiumModal(true);
+  };
+
+  const onCreateFromTemplate = async (template: ListTemplate) => {
+    if (isCreating) return;
+    setIsCreating(true);
+    const listId = await handleCreate(template.name);
+    if (listId && template.items.length > 0) {
+      try {
+        await addItems(
+          listId,
+          template.items.map((item) => ({
+            name: item.name,
+            quantity: item.quantity,
+            unit: item.unit,
+            category: item.category,
+            isCompleted: false,
+            createdBy: user?.id ?? '',
+          })),
+        );
+      } catch {
+        Alert.alert(t('common.error'), t('errors.addItems'));
+      }
+    }
+    setIsCreating(false);
+    if (listId) navigation.navigate('ListDetail', { listId });
   };
 
   const onDeleteAccount = () => {
@@ -261,8 +298,17 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
           />
           <View style={styles.modalButtons}>
             <PixelButton title={t('common.create')} onPress={onCreateList} disabled={isCreating || !newTitle.trim()} style={styles.modalBtn} />
-            <PixelButton title="Anuluj" onPress={() => { setShowCreateModal(false); setNewTitle(''); }} variant="accentMuted" style={styles.modalBtn} />
+            <PixelButton title={t('common.cancel')} onPress={() => { setShowCreateModal(false); setNewTitle(''); }} variant="accentMuted" style={styles.modalBtn} />
           </View>
+          <Pressable
+            onPress={onOpenTemplates}
+            style={styles.fromTemplateRow}
+            accessibilityRole="button"
+            accessibilityLabel={t('templates.createFrom')}
+          >
+            <MaterialCommunityIcons name="file-outline" size={18} color={COLORS.primary} />
+            <Text style={styles.fromTemplateText}>{t('templates.createFrom')}</Text>
+          </Pressable>
         </PixelModal>
         <PixelModal visible={showJoinModal} onClose={() => setShowJoinModal(false)} title={t('dashboard.joinList')}>
           <PixelInput
@@ -277,10 +323,10 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
           />
           <View style={styles.modalButtons}>
             <PixelButton title={t('dashboard.join')} onPress={onJoinByCode} disabled={isJoining || joinCode.trim().length !== 6} style={styles.modalBtn} />
-            <PixelButton title="Anuluj" onPress={() => { setShowJoinModal(false); setJoinCode(''); }} variant="accentMuted" style={styles.modalBtn} />
+            <PixelButton title={t('common.cancel')} onPress={() => { setShowJoinModal(false); setJoinCode(''); }} variant="accentMuted" style={styles.modalBtn} />
           </View>
         </PixelModal>
-        <PixelModal visible={showSettings} onClose={() => setShowSettings(false)} title="Ustawienia">
+        <PixelModal visible={showSettings} onClose={() => setShowSettings(false)} title={t('settings.title')}>
           <Pressable onPress={() => { setShowSettings(false); setShowCategoryManager(true); }} style={styles.settingsRow} accessibilityRole="button" accessibilityLabel={t('settings.manageCategories')}>
             <MaterialCommunityIcons name="tag-multiple-outline" size={20} color={COLORS.primary} />
             <Text style={styles.settingsRowText}>{t('settings.manageCategories')}</Text>
@@ -292,10 +338,16 @@ export function ListsDashboardScreen({ navigation, route }: Props) {
             <Text style={styles.settingsRowText}>{t('settings.privacyPolicy')}</Text>
             <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.disabled} />
           </Pressable>
-          <PixelButton title="Zamknij" onPress={() => setShowSettings(false)} variant="accentMuted" style={styles.settingsClose} />
+          <PixelButton title={t('common.close')} onPress={() => setShowSettings(false)} variant="accentMuted" style={styles.settingsClose} />
         </PixelModal>
         <CategoryManagerModal visible={showCategoryManager} onClose={() => setShowCategoryManager(false)} />
         <ThemePickerModal visible={showThemePicker} onClose={() => setShowThemePicker(false)} />
+        <TemplatePickerModal
+          visible={showTemplatePicker}
+          onSelect={onCreateFromTemplate}
+          onClose={() => setShowTemplatePicker(false)}
+        />
+        <PremiumGateModal visible={showPremiumModal} onClose={() => setShowPremiumModal(false)} />
       </>
     );
   }
@@ -611,6 +663,21 @@ const styles = StyleSheet.create({
     height: BORDERS.width,
     backgroundColor: COLORS.border,
     marginVertical: SPACING.sm,
+  },
+  fromTemplateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    marginTop: SPACING.sm,
+    paddingTop: SPACING.sm,
+    minHeight: TOUCH.minTarget,
+    borderTopWidth: BORDERS.width,
+    borderTopColor: COLORS.border,
+  },
+  fromTemplateText: {
+    fontSize: FONT_SIZE.body,
+    fontWeight: FONT_WEIGHT.bold,
+    color: COLORS.primary,
   },
   settingsClose: {
     marginTop: SPACING.sm,

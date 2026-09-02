@@ -14,6 +14,7 @@ import { PixelButton } from '../../../components/ui';
 import { OfflineBanner } from '../../../components/OfflineBanner';
 import { AnchoredAdBanner, adContentPad } from '../../ads';
 import { ThemePickerModal } from '../../../components/ThemePickerModal';
+import { SaveTemplateModal } from '../../templates';
 import { CategorySection } from '../components/CategorySection';
 import { EditItemModal } from '../components/EditItemModal';
 import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
@@ -68,6 +69,7 @@ export function ListDetailScreen({ route, navigation }: Props) {
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
   const [inputCollapsed, setInputCollapsed] = useState(false);
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const showPreview = parsedItems.length > 0;
 
   useEffect(() => {
@@ -177,6 +179,7 @@ export function ListDetailScreen({ route, navigation }: Props) {
         onRemove={handleRemoveItem}
         onEdit={onEditItem}
         onSetCategoryOrder={handleSetCategoryOrder}
+        onSaveTemplate={() => (isPremium ? setShowSaveTemplate(true) : setShowPremiumModal(true))}
         isParsing={isParsing}
         onParse={parse}
         onAddManual={onAddManual}
@@ -209,6 +212,12 @@ export function ListDetailScreen({ route, navigation }: Props) {
           limitReached={limitReached}
         />
         <ThemePickerModal visible={showThemePicker} onClose={() => setShowThemePicker(false)} />
+        <SaveTemplateModal
+          visible={showSaveTemplate}
+          defaultName={list.title}
+          items={list.items.map((i) => ({ name: i.name, quantity: i.quantity, unit: i.unit, category: i.category }))}
+          onClose={() => setShowSaveTemplate(false)}
+        />
       </PixelPopDetailView>
     );
   }
@@ -554,6 +563,7 @@ interface PixelPopDetailViewProps {
   onRemove: (id: string) => void;
   onEdit: (id: string) => void;
   onSetCategoryOrder: (cats: string[]) => void;
+  onSaveTemplate: () => void;
   isParsing: boolean;
   onParse: (text: string) => void;
   onAddManual: (item: ManualItemData) => void;
@@ -579,7 +589,7 @@ interface PixelPopDetailViewProps {
 function PixelPopDetailView({
   list, groups, accent,
   onBack, onShare,
-  onToggle, onRemove, onEdit, onSetCategoryOrder,
+  onToggle, onRemove, onEdit, onSetCategoryOrder, onSaveTemplate,
   isParsing, onParse, onAddManual, onConfirmItems,
   parsedItems, clearPreview, removePreviewItem, inputClearTrigger, setInputClearTrigger,
   insets, allCompleted, onResetAll,
@@ -731,6 +741,9 @@ function PixelPopDetailView({
             <PixelIcon name="chevronL" size={16} color={PP.ink} />
           </Pressable>
           <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Pressable onPress={onSaveTemplate} style={ppDetailStyles.iconBtn} accessibilityLabel={t('templates.saveA11y')}>
+              <PixelIcon name="template" size={14} color={PP.ink} />
+            </Pressable>
             <Pressable onPress={onShare} style={ppDetailStyles.iconBtn} accessibilityLabel={t('listDetail.shareShort')}>
               <PixelIcon name="share" size={14} color={PP.ink} />
             </Pressable>
