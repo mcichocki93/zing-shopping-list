@@ -1,6 +1,6 @@
 import React, { memo, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { ShoppingItemRow } from './ShoppingItemRow';
 import { COLORS, SPACING, BORDERS, FONT_SIZE, FONT_WEIGHT, getCategoryColor } from '../../../constants';
 import type { ShoppingItem } from '../../../types/shoppingList';
