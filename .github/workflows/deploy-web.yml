@@ -154,11 +154,36 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_PORT: ${{ secrets.VPS_PORT }}
         run: |
-          ssh -i ~/.ssh/id_deploy -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" \
-            'for i in $(seq 1 15); do
-               if [ "$(docker inspect -f "{{.State.Health.Status}}" zing-web 2>/dev/null)" = "healthy" ]; then
-                 echo "zing-web: healthy"; exit 0
-               fi
-               sleep 2
-             done
-             echo "kontener nie zgłosił healthy w 30 s"; docker logs --tail 50 zing-web; exit 1'
+          ssh -i ~/.ssh/id_deploy -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" 'bash -se' <<'REMOTE'
+          set -uo pipefail
+
+          # Czekamy do 90 s. Status jest wypisywany, bo "starting" i "unhealthy"
+          # to dwie zupełnie różne diagnozy, a poprzednia wersja tego kroku
+          # pokazywała tylko, że się nie udało.
+          for i in $(seq 1 30); do
+            STATUS=$(docker inspect -f '{{.State.Health.Status}}' zing-web 2>/dev/null || echo "brak-kontenera")
+            if [ "$STATUS" = "healthy" ]; then
+              echo "zing-web: healthy (po ~$((i * 3)) s)"
+              exit 0
+            fi
+            [ $((i % 5)) -eq 1 ] && echo "  ...status: $STATUS"
+            sleep 3
+          done
+
+          echo "zing-web nie zgłosił healthy w 90 s (ostatni status: ${STATUS:-nieznany})" >&2
+          echo
+          # Odpytujemy nginx bezpośrednio w kontenerze. Jeśli to odpowie, problem
+          # jest w samym mechanizmie health checku, a nie w serwowaniu strony —
+          # bez tego rozróżnienia log nie mówi, czego szukać.
+          echo "--- bezpośrednie odpytanie nginxa w kontenerze ---"
+          docker exec zing-web wget -q -O- http://localhost/health \
+            && echo "  nginx ODPOWIADA — problem jest w health checku, nie w aplikacji" \
+            || echo "  nginx NIE odpowiada"
+          echo
+          echo "--- docker ps ---"
+          docker ps -a --filter name=zing-web --format '{{.Status}}'
+          echo
+          echo "--- logi kontenera ---"
+          docker logs --tail 50 zing-web 2>&1
+          exit 1
+          REMOTE

@@ -55,5 +55,9 @@ COPY --from=build /app/dist /usr/share/nginx/html
 
 EXPOSE 80
 
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost/health || exit 1
+# interval=10s, bo Docker odpala PIERWSZĄ próbę dopiero po upływie interwału —
+# przy 30s kontener przez pół minuty raportuje "starting", nie "healthy", co
+# w CI wygląda jak awaria. -O /dev/null zamiast --spider, bo --spider nie jest
+# obecny w każdym buildzie busyboxowego wgeta.
+HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=3 \
+  CMD wget -q -O /dev/null http://localhost/health || exit 1
