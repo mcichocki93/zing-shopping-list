@@ -213,7 +213,9 @@
     "dragCategory": "Przeciągnij kategorię",
     "itemBought": "kupione",
     "itemToBuy": "do kupienia",
-    "itemStateA11y": "{{name}}, {{state}}"
+    "itemStateA11y": "{{name}}, {{state}}",
+    "moveCategoryUp": "Przenieś {{category}} w górę",
+    "moveCategoryDown": "Przenieś {{category}} w dół"
   },
   "compose": {
     "ai": "✦ AI",

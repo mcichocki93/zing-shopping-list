@@ -210,7 +210,9 @@
     "dragCategory": "Drag category",
     "itemBought": "bought",
     "itemToBuy": "to buy",
-    "itemStateA11y": "{{name}}, {{state}}"
+    "itemStateA11y": "{{name}}, {{state}}",
+    "moveCategoryUp": "Move {{category}} up",
+    "moveCategoryDown": "Move {{category}} down"
   },
   "compose": {
     "ai": "✦ AI",
