@@ -1,0 +1,42 @@
+# docker-compose.yml — uruchomienie na VPS.
+#
+# Obraz jest budowany w GitHub Actions i wypychany do GHCR, więc tutaj tylko go
+# ciągniemy. Build lokalny: `docker compose build` zadziała, ale wymaga .env
+# z konfiguracją Firebase (patrz docs/deployment-web.md).
+#
+# TLS kończy się na reverse proxy przed tym kontenerem (Caddy/Traefik/nginx
+# hosta). Kontener mówi czystym HTTP na porcie 80.
+
+services:
+  web:
+    image: ${ZING_IMAGE:-ghcr.io/mcichocki93/zing-web:latest}
+    container_name: zing-web
+    restart: unless-stopped
+    ports:
+      # 8087 to port na hoście — przed nim reverse proxy kończące TLS.
+      # Na VPS z dzielonym IPv4 (przydzielony zakres portów) ustaw ZING_PORT
+      # na port ze swojego zakresu.
+      - "${ZING_PORT:-8087}:80"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    # Build lokalny — w CI nieużywany.
+    build:
+      context: .
+      args:
+        FIREBASE_API_KEY: ${FIREBASE_API_KEY}
+        FIREBASE_AUTH_DOMAIN: ${FIREBASE_AUTH_DOMAIN}
+        FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+        FIREBASE_STORAGE_BUCKET: ${FIREBASE_STORAGE_BUCKET}
+        FIREBASE_MESSAGING_SENDER_ID: ${FIREBASE_MESSAGING_SENDER_ID}
+        FIREBASE_APP_ID: ${FIREBASE_APP_ID}
+        FIREBASE_MEASUREMENT_ID: ${FIREBASE_MEASUREMENT_ID}
