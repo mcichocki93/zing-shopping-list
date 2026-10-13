@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, StyleSheet, Modal } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { PixelInput, PixelButton, PixelTabs, QuantityStepper } from '../../../components/ui';
 import { UNITS, DECIMAL_UNITS, COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
 import { useTheme } from '../../../contexts/ThemeContext';
@@ -29,6 +30,7 @@ interface AIInputBarProps {
 }
 
 export function AIInputBar({ onParse, onAddManual, isParsing, disabled = false, clearTrigger = 0 }: AIInputBarProps) {
+  const { t } = useTranslation();
   const { theme, pixelPopEnabled, pixelPopAccent } = useTheme();
   const [activeTab, setActiveTab] = useState(0);
 
@@ -112,7 +114,7 @@ export function AIInputBar({ onParse, onAddManual, isParsing, disabled = false, 
         micDisabled={!isSpeechSupported}
         isParsing={isParsing}
         accent={pixelPopAccent}
-        placeholder={isListening ? 'Słucham...' : '2x mleko, chleb, jabłka…'}
+        placeholder={isListening ? t('listDetail.listening') : t('listDetail.composeAiPlaceholder')}
       />
     );
   }

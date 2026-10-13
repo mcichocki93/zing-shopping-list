@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { PixelModal } from './ui';
 import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../constants';
 import { THEMES, THEME_NAMES } from '../constants/themes';
@@ -11,10 +12,11 @@ interface ThemePickerModalProps {
 }
 
 export function ThemePickerModal({ visible, onClose }: ThemePickerModalProps) {
+  const { t: translate } = useTranslation();
   const { themeName, setTheme } = useTheme();
 
   return (
-    <PixelModal visible={visible} onClose={onClose} title="Wybierz motyw">
+    <PixelModal visible={visible} onClose={onClose} title={translate('settings.chooseTheme')}>
       {THEME_NAMES.map((name) => {
         const t = THEMES[name];
         const isSelected = name === themeName;

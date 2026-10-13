@@ -4,6 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { ListsDashboardScreen } from '../features/shoppingLists/screens/ListsDashboardScreen';
 import { ListDetailScreen } from '../features/shoppingLists/screens/ListDetailScreen';
 import { PixelPopProfileScreen } from '../features/auth/screens/PixelPopProfileScreen';
+import { PixelPopTemplatesScreen } from '../features/templates/screens/PixelPopTemplatesScreen';
 import { PixelPopTabBar } from '../components/ui-pixelpop';
 import { useIAPInit } from '../features/premium';
 import { useTheme } from '../contexts/ThemeContext';
@@ -27,8 +28,9 @@ function PixelPopTabs() {
       screenOptions={{ headerShown: false }}
       tabBar={(props) => <PixelPopTabBar {...props} />}
     >
-      <Tab.Screen name="Listy" component={ListsStack} />
-      <Tab.Screen name="Profil" component={PixelPopProfileScreen} />
+      <Tab.Screen name="Lists" component={ListsStack} />
+      <Tab.Screen name="Templates" component={PixelPopTemplatesScreen} />
+      <Tab.Screen name="Profile" component={PixelPopProfileScreen} />
     </Tab.Navigator>
   );
 }

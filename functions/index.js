@@ -14,19 +14,35 @@ const googlePlayServiceAccountKey = defineSecret('GOOGLE_PLAY_SERVICE_ACCOUNT_KE
 // Canonical category keys are Polish strings (stored in item data — Option A).
 // English labels are used only when the client sends language 'en'; the AI then
 // returns an English label which we map back to the canonical Polish key.
+// Must stay in sync with the client's CATEGORIES (src/constants/index.ts) —
+// the picker only offers these, so anything else the AI invents ends up as a
+// category the user cannot pick again when editing the item.
 const CATEGORY_DEFS = [
   {key: 'Owoce i warzywa', en: 'Fruits & veg'},
   {key: 'Nabiał', en: 'Dairy'},
+  {key: 'Mięso i ryby', en: 'Meat & fish'},
   {key: 'Pieczywo', en: 'Bakery'},
-  {key: 'Mięso i wędliny', en: 'Meat & deli'},
-  {key: 'Ryby', en: 'Fish'},
-  {key: 'Mrożonki', en: 'Frozen'},
   {key: 'Napoje', en: 'Drinks'},
-  {key: 'Słodycze i przekąski', en: 'Sweets & snacks'},
-  {key: 'Chemia domowa', en: 'Household'},
-  {key: 'Higiena osobista', en: 'Personal care'},
+  {key: 'Przekąski', en: 'Snacks'},
+  {key: 'Mrożonki', en: 'Frozen'},
+  {key: 'Chemia', en: 'Household'},
   {key: 'Inne', en: 'Other'},
 ];
+
+// Categories this function used to return before it was aligned with the client.
+// Existing item data still holds them, and the AI may echo one back, so fold
+// them into the current keys instead of dropping the item into 'Inne'.
+const LEGACY_CATEGORY_ALIASES = {
+  'mięso i wędliny': 'Mięso i ryby',
+  'meat & deli': 'Mięso i ryby',
+  'ryby': 'Mięso i ryby',
+  'fish': 'Mięso i ryby',
+  'słodycze i przekąski': 'Przekąski',
+  'sweets & snacks': 'Przekąski',
+  'chemia domowa': 'Chemia',
+  'higiena osobista': 'Chemia',
+  'personal care': 'Chemia',
+};
 
 const CATEGORIES = CATEGORY_DEFS.map((d) => d.key);
 
@@ -39,9 +55,41 @@ function toCategoryKey(raw, userCategories) {
     (d) => d.key.toLowerCase() === lower || d.en.toLowerCase() === lower,
   );
   if (def) return def.key;
+  const legacy = LEGACY_CATEGORY_ALIASES[lower];
+  if (legacy) return legacy;
   const custom = userCategories.find((c) => c.toLowerCase() === lower);
   if (custom) return custom;
   return 'Inne';
+}
+
+// Canonical unit keys mirror the client's UNITS constant — Polish strings, the
+// same Option A rule as categories. In English mode the AI answers with "pcs" /
+// "pack", so map the answer back before storing; otherwise a PL user opening a
+// shared list would see "pcs" where the picker writes "szt".
+const UNIT_DEFS = [
+  {key: 'szt', aliases: ['szt', 'szt.', 'sztuka', 'sztuki', 'sztuk', 'pcs', 'pc', 'pcs.', 'piece', 'pieces', 'item', 'items']},
+  {key: 'opak', aliases: ['opak', 'opak.', 'opakowanie', 'pack', 'packs', 'package', 'packet', 'pkg']},
+  {key: 'kg', aliases: ['kg', 'kilo', 'kilogram', 'kilograms', 'kilogramy']},
+  {key: 'g', aliases: ['g', 'gr', 'gram', 'grams', 'gramy']},
+  {key: 'dag', aliases: ['dag', 'deka', 'dekagram', 'dekagramy']},
+  {key: 'l', aliases: ['l', 'litr', 'litry', 'litrow', 'liter', 'liters', 'litre', 'litres']},
+  {key: 'ml', aliases: ['ml', 'mililitr', 'mililitry', 'milliliter', 'milliliters', 'millilitre']},
+  {key: 'm', aliases: ['m', 'metr', 'metry', 'meter', 'meters', 'metre']},
+  {key: 'cm', aliases: ['cm', 'centymetr', 'centymetry', 'centimeter', 'centimeters', 'centimetre']},
+];
+
+const UNIT_ALIASES = new Map();
+for (const def of UNIT_DEFS) {
+  for (const alias of def.aliases) UNIT_ALIASES.set(alias, def.key);
+}
+
+// Map a unit returned by the AI back to the canonical stored key. Unknown units
+// are kept verbatim (trimmed) rather than dropped — the UI falls back to them.
+function toUnitKey(raw) {
+  if (typeof raw !== 'string') return undefined;
+  const trimmed = raw.trim();
+  if (!trimmed) return undefined;
+  return UNIT_ALIASES.get(trimmed.toLowerCase()) ?? trimmed.slice(0, 20);
 }
 
 // Localized system prompt. `categories` = comma-joined labels the AI chooses from.
@@ -375,8 +423,7 @@ exports.parseItemsWithAI = onCall({secrets: [geminiApiKey]}, async (request) => 
 
         const quantity =
           typeof raw.quantity === 'number' && raw.quantity > 0 ? raw.quantity : 1;
-        const unit =
-          typeof raw.unit === 'string' && raw.unit.trim() ? raw.unit.trim() : undefined;
+        const unit = toUnitKey(raw.unit);
 
         const rawCategory = typeof raw.category === 'string' ? raw.category.trim() : '';
         const category = toCategoryKey(rawCategory, userCategories);
@@ -385,7 +432,7 @@ exports.parseItemsWithAI = onCall({secrets: [geminiApiKey]}, async (request) => 
         return {
           name: name.slice(0, 100),
           quantity,
-          unit: unit?.slice(0, 20),
+          unit,
           category,
           confidence: known ? 0.9 : 0.5,
         };

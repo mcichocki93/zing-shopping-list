@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { saveTemplate, getTemplates, deleteTemplate } from '../../../services/firebase/templates';
+import i18n from '../../../i18n';
 import { useAuth } from '../../auth/hooks';
 import type { ListTemplate, TemplateItem } from '../../../types/template';
 
@@ -17,7 +18,7 @@ export function useTemplates({ load = true }: { load?: boolean } = {}) {
       const data = await getTemplates(user.id);
       setTemplates(data);
     } catch {
-      setError('Nie udało się załadować szablonów.');
+      setError(i18n.t('errors.loadTemplates'));
     } finally {
       setIsLoading(false);
     }
@@ -34,7 +35,7 @@ export function useTemplates({ load = true }: { load?: boolean } = {}) {
       return id;
     } catch (err) {
       console.error('[useTemplates] handleSave failed:', err);
-      setError('Nie udało się zapisać szablonu.');
+      setError(i18n.t('errors.saveTemplate'));
       return null;
     }
   }, [user]);
@@ -45,7 +46,7 @@ export function useTemplates({ load = true }: { load?: boolean } = {}) {
       await deleteTemplate(user.id, templateId);
       setTemplates((prev) => prev.filter((t) => t.id !== templateId));
     } catch {
-      setError('Nie udało się usunąć szablonu.');
+      setError(i18n.t('errors.deleteTemplate'));
     }
   }, [user]);
 

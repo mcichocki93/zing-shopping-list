@@ -7,6 +7,7 @@ import {
   arrayUnion,
   serverTimestamp,
 } from 'firebase/firestore';
+import i18n from '../../i18n';
 import { db } from './config';
 import { COLLECTIONS } from '../../constants';
 import type { Invite } from '../../types/shoppingList';
@@ -46,7 +47,7 @@ export async function createInvite(
   } while (attempts < 5);
 
   if (attempts >= 5) {
-    throw new Error('Nie udało się wygenerować kodu. Spróbuj ponownie.');
+    throw new Error(i18n.t('errors.inviteCode'));
   }
 
   await setDoc(inviteDoc(code), {

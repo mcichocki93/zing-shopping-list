@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, Share, Alert, StyleSheet, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AIInputBar, type ManualItemData } from '../../aiInput/components/AIInputBar';
 import { PreviewModal } from '../../aiInput/components/PreviewModal';
@@ -14,6 +14,7 @@ import { PixelButton } from '../../../components/ui';
 import { OfflineBanner } from '../../../components/OfflineBanner';
 import { AnchoredAdBanner, adContentPad } from '../../ads';
 import { ThemePickerModal } from '../../../components/ThemePickerModal';
+import { SaveTemplateModal } from '../../templates';
 import { CategorySection } from '../components/CategorySection';
 import { EditItemModal } from '../components/EditItemModal';
 import { COLORS, SPACING, BORDERS, TOUCH, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
@@ -25,11 +26,11 @@ import { categoryLabel } from '../../../constants/categoryLabels';
 import { HardShadow, SegmentProgress, CategoryCard, ComposeBar, PixelIcon, MembersModal } from '../../../components/ui-pixelpop';
 import type { CategoryGroup } from '../hooks/useShoppingList';
 import { useAuth } from '../../auth/hooks';
-import { isExpoGo } from '../../../utils/platform';
+import { isExpoGo, supportsDragList } from '../../../utils/platform';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const DraggableFlatList = !isExpoGo ? require('react-native-draggable-flatlist').default : null;
-const ScaleDecorator = !isExpoGo ? require('react-native-draggable-flatlist').ScaleDecorator : null;
+const DraggableFlatList = supportsDragList ? require('react-native-draggable-flatlist').default : null;
+const ScaleDecorator = supportsDragList ? require('react-native-draggable-flatlist').ScaleDecorator : null;
 import { createInvite } from '../../../services/firebase/invites';
 import type { ShoppingListsStackParamList } from '../../../types/navigation';
 import type { ShoppingItem } from '../../../types/shoppingList';
@@ -68,6 +69,7 @@ export function ListDetailScreen({ route, navigation }: Props) {
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
   const [inputCollapsed, setInputCollapsed] = useState(false);
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const showPreview = parsedItems.length > 0;
 
   useEffect(() => {
@@ -177,6 +179,8 @@ export function ListDetailScreen({ route, navigation }: Props) {
         onRemove={handleRemoveItem}
         onEdit={onEditItem}
         onSetCategoryOrder={handleSetCategoryOrder}
+        onSaveTemplate={() => (isPremium ? setShowSaveTemplate(true) : setShowPremiumModal(true))}
+        onReorderCategory={handleReorderCategory}
         isParsing={isParsing}
         onParse={parse}
         onAddManual={onAddManual}
@@ -209,6 +213,12 @@ export function ListDetailScreen({ route, navigation }: Props) {
           limitReached={limitReached}
         />
         <ThemePickerModal visible={showThemePicker} onClose={() => setShowThemePicker(false)} />
+        <SaveTemplateModal
+          visible={showSaveTemplate}
+          defaultName={list.title}
+          items={list.items.map((i) => ({ name: i.name, quantity: i.quantity, unit: i.unit, category: i.category }))}
+          onClose={() => setShowSaveTemplate(false)}
+        />
       </PixelPopDetailView>
     );
   }
@@ -343,7 +353,7 @@ export function ListDetailScreen({ route, navigation }: Props) {
             <Text style={styles.emptyText}>Lista jest pusta.</Text>
             <Text style={styles.emptyHint}>Użyj zakładki RĘCZNIE lub AI TEKST aby dodać produkty.</Text>
           </View>
-        ) : !isExpoGo && DraggableFlatList ? (
+        ) : supportsDragList && DraggableFlatList ? (
           <View style={styles.scroll}>
             <DraggableFlatList
               contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + SPACING.sm }]}
@@ -554,6 +564,8 @@ interface PixelPopDetailViewProps {
   onRemove: (id: string) => void;
   onEdit: (id: string) => void;
   onSetCategoryOrder: (cats: string[]) => void;
+  onSaveTemplate: () => void;
+  onReorderCategory: (category: string, direction: 'up' | 'down') => void;
   isParsing: boolean;
   onParse: (text: string) => void;
   onAddManual: (item: ManualItemData) => void;
@@ -579,7 +591,7 @@ interface PixelPopDetailViewProps {
 function PixelPopDetailView({
   list, groups, accent,
   onBack, onShare,
-  onToggle, onRemove, onEdit, onSetCategoryOrder,
+  onToggle, onRemove, onEdit, onSetCategoryOrder, onSaveTemplate, onReorderCategory,
   isParsing, onParse, onAddManual, onConfirmItems,
   parsedItems, clearPreview, removePreviewItem, inputClearTrigger, setInputClearTrigger,
   insets, allCompleted, onResetAll,
@@ -657,7 +669,9 @@ function PixelPopDetailView({
     id: i.id, name: i.name, quantity: i.quantity, unit: i.unit, isCompleted: i.isCompleted,
   }));
 
-  const renderCategoryCard = (g: CategoryGroup, drag?: () => void) => (
+  // `index` jest podawany tylko w wariancie bez przeciągania (web/Expo Go),
+  // gdzie kolejnością sterują strzałki w nagłówku kategorii.
+  const renderCategoryCard = (g: CategoryGroup, drag?: () => void, index?: number) => (
     <View key={g.category} style={{ paddingHorizontal: 16, marginBottom: 14 }}>
       <CategoryCard
         category={g.category}
@@ -667,6 +681,10 @@ function PixelPopDetailView({
         onEdit={onEdit}
         onRemove={onRemove}
         drag={drag}
+        onMoveUp={index === undefined ? undefined : () => onReorderCategory(g.category, 'up')}
+        onMoveDown={index === undefined ? undefined : () => onReorderCategory(g.category, 'down')}
+        canMoveUp={index !== undefined && index > 0}
+        canMoveDown={index !== undefined && index < groups.length - 1}
       />
     </View>
   );
@@ -731,6 +749,9 @@ function PixelPopDetailView({
             <PixelIcon name="chevronL" size={16} color={PP.ink} />
           </Pressable>
           <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Pressable onPress={onSaveTemplate} style={ppDetailStyles.iconBtn} accessibilityLabel={t('templates.saveA11y')}>
+              <PixelIcon name="template" size={14} color={PP.ink} />
+            </Pressable>
             <Pressable onPress={onShare} style={ppDetailStyles.iconBtn} accessibilityLabel={t('listDetail.shareShort')}>
               <PixelIcon name="share" size={14} color={PP.ink} />
             </Pressable>
@@ -782,7 +803,7 @@ function PixelPopDetailView({
       </View>
 
       {/* ── Scrollable list content ── */}
-      {!isExpoGo && DraggableFlatList && ScaleDecorator ? (
+      {supportsDragList && DraggableFlatList && ScaleDecorator ? (
         <View style={{ flex: 1 }}>
           <DraggableFlatList
             data={groups}
@@ -802,7 +823,7 @@ function PixelPopDetailView({
       ) : (
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: insets.bottom + adContentPad(isPremium) }}>
           {listHeaderContent}
-          {groups.map((g) => renderCategoryCard(g))}
+          {groups.map((g, i) => renderCategoryCard(g, undefined, i))}
         </ScrollView>
       )}
 

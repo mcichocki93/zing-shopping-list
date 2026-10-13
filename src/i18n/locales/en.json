@@ -12,7 +12,9 @@
     "info": "Info",
     "search": "Search",
     "offline": "Offline – changes will sync when you're back online",
-    "deleteUpper": "DELETE"
+    "deleteUpper": "DELETE",
+    "defaultUser": "User",
+    "quantity": "Quantity"
   },
   "settings": {
     "title": "Settings",
@@ -135,7 +137,15 @@
     "deleteConfirm": "Delete \"{{name}}\"?",
     "deleteA11y": "Delete template {{name}}",
     "items_one": "{{count}} item",
-    "items_other": "{{count}} items"
+    "items_other": "{{count}} items",
+    "pickerTitle": "CHOOSE TEMPLATE",
+    "pickA11y": "Create a list from template {{name}}",
+    "createFrom": "Create from template",
+    "saveTitle": "SAVE AS TEMPLATE",
+    "saveA11y": "Save the list as a template",
+    "namePlaceholder": "Template name",
+    "saved": "Template saved.",
+    "emptyList": "The list is empty — nothing to save."
   },
   "dashboard": {
     "yourLists": "Your lists",
@@ -200,7 +210,9 @@
     "dragCategory": "Drag category",
     "itemBought": "bought",
     "itemToBuy": "to buy",
-    "itemStateA11y": "{{name}}, {{state}}"
+    "itemStateA11y": "{{name}}, {{state}}",
+    "moveCategoryUp": "Move {{category}} up",
+    "moveCategoryDown": "Move {{category}} down"
   },
   "compose": {
     "ai": "✦ AI",
@@ -259,5 +271,35 @@
     "save": "Save",
     "unitA11y": "Unit: {{unit}}",
     "categoryA11y": "Category: {{category}}"
+  },
+  "nav": {
+    "lists": "Lists",
+    "templates": "Templates",
+    "profile": "Profile"
+  },
+  "errors": {
+    "renameList": "Could not rename the list.",
+    "addItem": "Could not add the product.",
+    "addItems": "Could not add the products.",
+    "updateItem": "Could not update the product.",
+    "toggleItem": "Could not change the status.",
+    "removeItem": "Could not delete the product.",
+    "reorder": "Could not change the order.",
+    "resetList": "Could not reset the list.",
+    "createList": "Could not create the list.",
+    "deleteList": "Could not delete the list.",
+    "leaveList": "Could not leave the list.",
+    "archiveList": "Could not archive the list.",
+    "restoreList": "Could not restore the list.",
+    "loadTemplates": "Could not load templates.",
+    "saveTemplate": "Could not save the template.",
+    "deleteTemplate": "Could not delete the template.",
+    "speechFailed": "Speech recognition failed. Please try again.",
+    "micPermission": "No microphone access. Enable it in phone Settings → Apps → Zing → Permissions.",
+    "micPermissionShort": "No microphone access.",
+    "inviteCode": "Could not generate a code. Please try again.",
+    "googleUnavailable": "Google Sign-In is unavailable in this build.",
+    "appleIosOnly": "Apple Sign-In is available on iOS only",
+    "unknown": "Unknown error."
   }
 }

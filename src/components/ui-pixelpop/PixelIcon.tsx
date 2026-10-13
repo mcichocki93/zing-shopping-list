@@ -8,6 +8,8 @@ import CartIcon from 'pixelarticons/svg/shopping-cart.svg';
 import CheckIcon from 'pixelarticons/svg/check.svg';
 import ChevronLIcon from 'pixelarticons/svg/chevron-left.svg';
 import ChevronRIcon from 'pixelarticons/svg/chevron-right.svg';
+import ChevronUpIcon from 'pixelarticons/svg/chevron-up.svg';
+import ChevronDownIcon from 'pixelarticons/svg/chevron-down.svg';
 import CloseIcon from 'pixelarticons/svg/close.svg';
 import CoffeeIcon from 'pixelarticons/svg/coffee.svg';
 import EditIcon from 'pixelarticons/svg/pen-square.svg';
@@ -39,6 +41,8 @@ const PA_ICONS: Record<string, React.FC<{ width?: number; height?: number; color
   check: CheckIcon,
   chevronL: ChevronLIcon,
   chevron: ChevronRIcon,
+  chevronUp: ChevronUpIcon,
+  chevronDown: ChevronDownIcon,
   close: CloseIcon,
   coffee: CoffeeIcon,
   edit: EditIcon,

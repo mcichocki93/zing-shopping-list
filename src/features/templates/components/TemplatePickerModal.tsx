@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, StyleSheet } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { PixelModal, PixelButton } from '../../../components/ui';
-import { COLORS, SPACING, BORDERS, FONT_SIZE, FONT_WEIGHT } from '../../../constants';
+import { useTranslation } from 'react-i18next';
+import { PP, PP_BORDER, PP_FONT, ppText } from '../../../constants/pixelPopTheme';
+import { PPModal, PixelIcon } from '../../../components/ui-pixelpop';
+import { useTheme } from '../../../contexts/ThemeContext';
 import { useTemplates } from '../hooks/useTemplates';
 import type { ListTemplate } from '../../../types/template';
 
@@ -13,79 +14,60 @@ interface Props {
 }
 
 export function TemplatePickerModal({ visible, onSelect, onClose }: Props) {
-  const { templates, isLoading, reload } = useTemplates();
+  const { t } = useTranslation();
+  const { pixelPopAccent } = useTheme();
+  const { templates, isLoading, reload } = useTemplates({ load: false });
 
   useEffect(() => {
     if (visible) reload();
   }, [visible, reload]);
 
   return (
-    <PixelModal visible={visible} onClose={onClose} title="Wybierz szablon">
+    <PPModal visible={visible} onClose={onClose} title={t('templates.pickerTitle')}>
       {isLoading ? (
-        <ActivityIndicator size="small" color={COLORS.primary} style={styles.loader} />
+        <ActivityIndicator size="small" color={pixelPopAccent} style={pp.loader} />
       ) : templates.length === 0 ? (
-        <Text style={styles.emptyText}>Brak szablonów. Zapisz listę jako szablon z ekranu listy.</Text>
+        <Text style={pp.emptyText}>{t('templates.empty')}</Text>
       ) : (
-        <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-          {templates.map((t) => (
+        <ScrollView style={pp.scroll} showsVerticalScrollIndicator={false}>
+          {templates.map((tpl) => (
             <Pressable
-              key={t.id}
-              onPress={() => { onSelect(t); onClose(); }}
-              style={styles.row}
+              key={tpl.id}
+              onPress={() => { onSelect(tpl); onClose(); }}
+              style={pp.row}
               accessibilityRole="button"
-              accessibilityLabel={`Utwórz listę z szablonu ${t.name}`}
+              accessibilityLabel={t('templates.pickA11y', { name: tpl.name })}
             >
-              <MaterialCommunityIcons name="file-outline" size={20} color={COLORS.primary} />
-              <View style={styles.rowInfo}>
-                <Text style={styles.rowName}>{t.name}</Text>
-                <Text style={styles.rowMeta}>{t.items.length} produktów</Text>
+              <PixelIcon name="template" size={16} color={PP.ink} />
+              <View style={pp.rowInfo}>
+                <Text style={ppText.rowBody}>{tpl.name}</Text>
+                <Text style={ppText.meta}>{t('templates.items', { count: tpl.items.length })}</Text>
               </View>
-              <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.disabled} />
+              <PixelIcon name="chevron" size={12} color={PP.muted} />
             </Pressable>
           ))}
         </ScrollView>
       )}
 
-      <PixelButton title="Anuluj" onPress={onClose} variant="accentMuted" style={styles.cancelBtn} />
-    </PixelModal>
+      <Pressable onPress={onClose} style={pp.closeBtn} accessibilityLabel={t('common.close')}>
+        <Text style={pp.closeBtnText}>{t('templates.close')}</Text>
+      </Pressable>
+    </PPModal>
   );
 }
 
-const styles = StyleSheet.create({
-  loader: {
-    marginVertical: SPACING.md,
-  },
-  scroll: {
-    maxHeight: 380,
-  },
-  emptyText: {
-    fontSize: FONT_SIZE.caption,
-    color: COLORS.disabled,
-    paddingVertical: SPACING.sm,
-    lineHeight: 20,
-  },
+const pp = StyleSheet.create({
+  loader: { marginVertical: 16 },
+  scroll: { maxHeight: 360 },
+  emptyText: { fontFamily: PP_FONT.uiSemi, fontSize: 12, color: PP.muted, paddingVertical: 12, lineHeight: 20 },
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: SPACING.sm,
-    gap: SPACING.sm,
-    borderBottomWidth: BORDERS.width,
-    borderBottomColor: COLORS.border,
+    flexDirection: 'row', alignItems: 'center', paddingVertical: 12,
+    gap: 10, borderBottomWidth: PP_BORDER.thin, borderBottomColor: PP.ink + '33',
   },
-  rowInfo: {
-    flex: 1,
+  rowInfo: { flex: 1 },
+  closeBtn: {
+    marginTop: 14, alignItems: 'center', paddingVertical: 12,
+    borderWidth: PP_BORDER.thick, borderColor: PP.ink, backgroundColor: PP.ink,
   },
-  rowName: {
-    fontSize: FONT_SIZE.body,
-    fontWeight: FONT_WEIGHT.bold,
-    color: COLORS.primary,
-  },
-  rowMeta: {
-    fontSize: FONT_SIZE.caption,
-    color: COLORS.disabled,
-    marginTop: 2,
-  },
-  cancelBtn: {
-    marginTop: SPACING.sm,
-  },
+  closeBtnText: { fontFamily: PP_FONT.display, fontSize: 9, color: PP.paper },
 });

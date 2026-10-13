@@ -23,7 +23,13 @@ interface CategoryCardProps {
   onToggle: (id: string) => void;
   onEdit?: (id: string) => void;
   onRemove?: (id: string) => void;
+  /** Uchwyt przeciągania — tylko tam, gdzie lista przeciągana działa (native). */
   drag?: () => void;
+  /** Strzałki kolejności — alternatywa dla przeciągania (web). */
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
 }
 
 function SwipeableRow({
@@ -96,9 +102,13 @@ function SwipeableRow({
   );
 }
 
-export function CategoryCard({ category, icon = 'apple', items, onToggle, onEdit, onRemove, drag }: CategoryCardProps) {
+export function CategoryCard({
+  category, icon = 'apple', items, onToggle, onEdit, onRemove,
+  drag, onMoveUp, onMoveDown, canMoveUp = true, canMoveDown = true,
+}: CategoryCardProps) {
   const { t } = useTranslation();
   const remaining = items.filter((i) => !i.isCompleted).length;
+  const showArrows = !drag && (onMoveUp || onMoveDown);
   return (
     <HardShadow offset={3}>
       <View style={styles.card}>
@@ -113,6 +123,32 @@ export function CategoryCard({ category, icon = 'apple', items, onToggle, onEdit
             <Pressable onLongPress={drag} hitSlop={6} accessibilityLabel={t('listDetail.dragCategory')} style={styles.dragBtn}>
               <PixelIcon name="drag" size={12} color={PP.ink} />
             </Pressable>
+          )}
+          {showArrows && (
+            <View style={styles.arrows}>
+              <Pressable
+                onPress={canMoveUp ? onMoveUp : undefined}
+                disabled={!canMoveUp}
+                hitSlop={4}
+                accessibilityRole="button"
+                accessibilityLabel={t('listDetail.moveCategoryUp', { category: categoryLabel(category) })}
+                accessibilityState={{ disabled: !canMoveUp }}
+                style={[styles.arrowBtn, !canMoveUp && styles.arrowDisabled]}
+              >
+                <PixelIcon name="chevronUp" size={12} color={PP.ink} />
+              </Pressable>
+              <Pressable
+                onPress={canMoveDown ? onMoveDown : undefined}
+                disabled={!canMoveDown}
+                hitSlop={4}
+                accessibilityRole="button"
+                accessibilityLabel={t('listDetail.moveCategoryDown', { category: categoryLabel(category) })}
+                accessibilityState={{ disabled: !canMoveDown }}
+                style={[styles.arrowBtn, !canMoveDown && styles.arrowDisabled]}
+              >
+                <PixelIcon name="chevronDown" size={12} color={PP.ink} />
+              </Pressable>
+            </View>
           )}
         </View>
         {/* wiersze */}
@@ -143,6 +179,12 @@ const styles = StyleSheet.create({
   qty: { fontFamily: PP_FONT.uiSemi, fontSize: 10, color: PP.muted, marginTop: 1 },
   editBtn: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
   dragBtn: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center', marginLeft: 4 },
+  arrows: { flexDirection: 'row', gap: 2, marginLeft: 4 },
+  arrowBtn: {
+    width: 24, height: 24, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: PP.paper, borderWidth: PP_BORDER.thin, borderColor: PP.ink,
+  },
+  arrowDisabled: { opacity: 0.35 },
   deleteAction: { backgroundColor: '#FF3B30', width: 72, alignItems: 'center', justifyContent: 'center' },
   deleteLabel: { fontFamily: PP_FONT.display, fontSize: 8, color: PP.panel, letterSpacing: 0.5 },
 });

@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Linking } from 'react-native';
+import i18n from '../../../i18n';
 import { isExpoGo } from '../../../utils/platform';
 
 // expo-speech-recognition requires a native build — not available in Expo Go
@@ -43,7 +44,7 @@ export function useSpeechInput(): UseSpeechInputReturn {
       if (text) setTranscript(text);
     });
     const subError = module.addListener('error', () => {
-      setError('Nie udało się rozpoznać mowy. Spróbuj ponownie.');
+      setError(i18n.t('errors.speechFailed'));
       setIsListening(false);
     });
 
@@ -63,15 +64,15 @@ export function useSpeechInput(): UseSpeechInputReturn {
       await SpeechModule.ExpoSpeechRecognitionModule.requestPermissionsAsync();
     if (!granted) {
       if (!canAskAgain) {
-        setError('Brak dostępu do mikrofonu. Włącz w Ustawieniach telefonu → Aplikacje → Zing → Uprawnienia.');
+        setError(i18n.t('errors.micPermission'));
         Linking.openSettings();
       } else {
-        setError('Brak dostępu do mikrofonu.');
+        setError(i18n.t('errors.micPermissionShort'));
       }
       return;
     }
     SpeechModule.ExpoSpeechRecognitionModule.start({
-      lang: 'pl-PL',
+      lang: i18n.language === 'en' ? 'en-US' : 'pl-PL',
       interimResults: true,
     });
   }, []);

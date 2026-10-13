@@ -12,7 +12,9 @@
     "info": "Info",
     "search": "Szukaj",
     "offline": "Offline – zmiany zsynchronizują się po powrocie",
-    "deleteUpper": "USUŃ"
+    "deleteUpper": "USUŃ",
+    "defaultUser": "Użytkownik",
+    "quantity": "Ilość"
   },
   "settings": {
     "title": "Ustawienia",
@@ -136,7 +138,15 @@
     "deleteA11y": "Usuń szablon {{name}}",
     "items_one": "{{count}} produkt",
     "items_few": "{{count}} produkty",
-    "items_many": "{{count}} produktów"
+    "items_many": "{{count}} produktów",
+    "pickerTitle": "WYBIERZ SZABLON",
+    "pickA11y": "Utwórz listę z szablonu {{name}}",
+    "createFrom": "Utwórz z szablonu",
+    "saveTitle": "ZAPISZ JAKO SZABLON",
+    "saveA11y": "Zapisz listę jako szablon",
+    "namePlaceholder": "Nazwa szablonu",
+    "saved": "Szablon zapisany.",
+    "emptyList": "Lista jest pusta — nie ma czego zapisać."
   },
   "dashboard": {
     "yourLists": "Twoje listy",
@@ -203,7 +213,9 @@
     "dragCategory": "Przeciągnij kategorię",
     "itemBought": "kupione",
     "itemToBuy": "do kupienia",
-    "itemStateA11y": "{{name}}, {{state}}"
+    "itemStateA11y": "{{name}}, {{state}}",
+    "moveCategoryUp": "Przenieś {{category}} w górę",
+    "moveCategoryDown": "Przenieś {{category}} w dół"
   },
   "compose": {
     "ai": "✦ AI",
@@ -263,5 +275,35 @@
     "save": "Zapisz",
     "unitA11y": "Jednostka: {{unit}}",
     "categoryA11y": "Kategoria: {{category}}"
+  },
+  "nav": {
+    "lists": "Listy",
+    "templates": "Szablony",
+    "profile": "Profil"
+  },
+  "errors": {
+    "renameList": "Nie udało się zmienić nazwy.",
+    "addItem": "Nie udało się dodać produktu.",
+    "addItems": "Nie udało się dodać produktów.",
+    "updateItem": "Nie udało się zaktualizować produktu.",
+    "toggleItem": "Nie udało się zmienić statusu.",
+    "removeItem": "Nie udało się usunąć produktu.",
+    "reorder": "Nie udało się zmienić kolejności.",
+    "resetList": "Nie udało się zresetować listy.",
+    "createList": "Nie udało się utworzyć listy.",
+    "deleteList": "Nie udało się usunąć listy.",
+    "leaveList": "Nie udało się opuścić listy.",
+    "archiveList": "Nie udało się zarchiwizować listy.",
+    "restoreList": "Nie udało się przywrócić listy.",
+    "loadTemplates": "Nie udało się załadować szablonów.",
+    "saveTemplate": "Nie udało się zapisać szablonu.",
+    "deleteTemplate": "Nie udało się usunąć szablonu.",
+    "speechFailed": "Nie udało się rozpoznać mowy. Spróbuj ponownie.",
+    "micPermission": "Brak dostępu do mikrofonu. Włącz w Ustawieniach telefonu → Aplikacje → Zing → Uprawnienia.",
+    "micPermissionShort": "Brak dostępu do mikrofonu.",
+    "inviteCode": "Nie udało się wygenerować kodu. Spróbuj ponownie.",
+    "googleUnavailable": "Google Sign-In niedostępny w tej wersji.",
+    "appleIosOnly": "Apple Sign-In dostępny tylko na iOS",
+    "unknown": "Nieznany błąd."
   }
 }
