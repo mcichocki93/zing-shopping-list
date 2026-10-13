@@ -60,4 +60,4 @@ EXPOSE 80
 # w CI wygląda jak awaria. -O /dev/null zamiast --spider, bo --spider nie jest
 # obecny w każdym buildzie busyboxowego wgeta.
 HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=3 \
-  CMD wget -q -O /dev/null http://localhost/health || exit 1
+  CMD wget -q -O /dev/null http://127.0.0.1/health || exit 1

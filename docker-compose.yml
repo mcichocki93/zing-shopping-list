@@ -18,7 +18,7 @@ services:
       # na port ze swojego zakresu.
       - "${ZING_PORT:-8087}:80"
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost/health"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/health"]
       interval: 10s
       timeout: 3s
       retries: 3

@@ -172,13 +172,18 @@ jobs:
 
           echo "zing-web nie zgłosił healthy w 90 s (ostatni status: ${STATUS:-nieznany})" >&2
           echo
-          # Odpytujemy nginx bezpośrednio w kontenerze. Jeśli to odpowie, problem
-          # jest w samym mechanizmie health checku, a nie w serwowaniu strony —
-          # bez tego rozróżnienia log nie mówi, czego szukać.
-          echo "--- bezpośrednie odpytanie nginxa w kontenerze ---"
-          docker exec zing-web wget -q -O- http://localhost/health \
-            && echo "  nginx ODPOWIADA — problem jest w health checku, nie w aplikacji" \
-            || echo "  nginx NIE odpowiada"
+          # Rozstrzygamy trzy różne przyczyny, które dają ten sam objaw
+          # "unhealthy": brak wgeta w obrazie, nginx nasłuchujący tylko na IPv4
+          # przy localhost rozwiązywanym na ::1, albo faktycznie leżący nginx.
+          echo "--- diagnostyka wnętrza kontenera ---"
+          echo -n "  wget obecny:        "
+          docker exec zing-web sh -c 'command -v wget >/dev/null && echo tak || echo NIE — health check nie ma czym odpytać'
+          echo -n "  GET 127.0.0.1:      "
+          docker exec zing-web wget -q -O- http://127.0.0.1/health 2>&1 | head -1 || echo "bez odpowiedzi"
+          echo -n "  GET [::1]:          "
+          docker exec zing-web wget -q -O- 'http://[::1]/health' 2>&1 | head -1 || echo "bez odpowiedzi (nginx nie słucha na IPv6)"
+          echo "  nasłuchy nginxa:"
+          docker exec zing-web grep -nE '^\s*listen' /etc/nginx/conf.d/default.conf | sed 's/^/    /'
           echo
           echo "--- docker ps ---"
           docker ps -a --filter name=zing-web --format '{{.Status}}'
