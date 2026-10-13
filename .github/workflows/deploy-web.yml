@@ -82,18 +82,40 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
+      # Potrzebny po to, by wysłać na serwer docker-compose.yml z repo — wersja
+      # na serwerze nie może się rozjechać z tą, która jest w historii.
+      - uses: actions/checkout@v4
+
       - name: Set up SSH
         env:
           SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_PORT: ${{ secrets.VPS_PORT }}
         run: |
+          if [ -z "${VPS_HOST:-}" ]; then
+            echo "::error::Sekret VPS_HOST jest pusty — ustaw go w Settings → Secrets → Actions"
+            exit 1
+          fi
           mkdir -p ~/.ssh && chmod 700 ~/.ssh
           printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy
           chmod 600 ~/.ssh/id_deploy
           # TOFU: pobieramy klucz hosta przy każdym wdrożeniu. Mocniejszy
           # wariant opisany w docs/deployment-web.md (sekcja Bezpieczeństwo).
           ssh-keyscan -p "${VPS_PORT:-22}" -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Ship compose file
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          VPS_PATH: ${{ secrets.VPS_PATH }}
+        run: |
+          TARGET="${VPS_PATH:-/opt/zing}"
+          echo "Katalog docelowy: $TARGET"
+          ssh -i ~/.ssh/id_deploy -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" \
+            "mkdir -p '$TARGET'"
+          scp -i ~/.ssh/id_deploy -P "${VPS_PORT:-22}" \
+            docker-compose.yml "$VPS_USER@$VPS_HOST:$TARGET/docker-compose.yml"
 
       - name: Pull and restart
         env:
@@ -108,13 +130,17 @@ jobs:
         run: |
           ssh -i ~/.ssh/id_deploy -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" \
             ZING_IMAGE="$IMAGE:$SHA" \
-            VPS_PATH="$VPS_PATH" \
+            TARGET="${VPS_PATH:-/opt/zing}" \
             REGISTRY_USER="$REGISTRY_USER" \
             REGISTRY_TOKEN="$REGISTRY_TOKEN" \
             'bash -se' <<'REMOTE'
           set -euo pipefail
           echo "$REGISTRY_TOKEN" | docker login ghcr.io -u "$REGISTRY_USER" --password-stdin
-          cd "$VPS_PATH"
+          cd "$TARGET"
+          if [ ! -f docker-compose.yml ]; then
+            echo "BŁĄD: brak docker-compose.yml w $TARGET" >&2
+            exit 1
+          fi
           # Przypinamy konkretny SHA, żeby rollback był jedną zmianą zmiennej.
           export ZING_IMAGE
           docker compose pull web

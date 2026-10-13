@@ -137,13 +137,19 @@ ssh-keygen -t ed25519 -f ~/.ssh/zing-deploy -C "github-actions-zing"
 ssh-copy-id -i ~/.ssh/zing-deploy.pub user@vps
 # zawartość ~/.ssh/zing-deploy → sekret VPS_SSH_KEY
 
-# 2. katalog i compose (na serwerze)
-mkdir -p /opt/zing && cd /opt/zing
-# skopiuj tu docker-compose.yml z repo
-echo "ZING_PORT=8087" > .env
+# 2. na serwerze wystarczy Docker — katalog i docker-compose.yml
+#    workflow zakłada i wysyła sam (krok "Ship compose file"),
+#    żeby wersja na serwerze nie rozjechała się z repo
+docker --version && docker compose version
 ```
 
-Na tym etapie **nie uruchamiaj** `docker compose up` — obraz jeszcze nie istnieje w GHCR. Pierwszy obraz powstaje przy pierwszym przejściu workflow. Weryfikuj po nim:
+Port domyślny (8087) jest w `docker-compose.yml`, więc `.env` na serwerze jest **opcjonalny** — zakładaj go tylko, gdy chcesz inny port:
+
+```bash
+mkdir -p /opt/zing && echo "ZING_PORT=9000" > /opt/zing/.env
+```
+
+Na tym etapie **nie uruchamiaj** `docker compose up` — obraz jeszcze nie istnieje w GHCR. Powstaje przy pierwszym przejściu workflow. Weryfikuj po nim:
 
 ```bash
 curl -f localhost:8087/health
