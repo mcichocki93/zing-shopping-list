@@ -134,14 +134,18 @@ const userCallCounts = new Map();
 const BURST_LIMIT = 20;
 const BURST_WINDOW = 60 * 60 * 1000; // 1 hour
 
-function checkBurstLimit(userId) {
+// `bucket` daje osobny licznik per rodzaj wywołania. Dyktowanie to dwa
+// wywołania (transkrypcja + parsowanie), więc wspólny licznik zjadałby budżet
+// parsowania dwa razy szybciej i limit uderzałby po ~10 dyktowaniach.
+function checkBurstLimit(userId, bucket = 'ai') {
+  const key = `${bucket}:${userId}`;
   const now = Date.now();
-  const entry = userCallCounts.get(userId);
+  const entry = userCallCounts.get(key);
   if (entry && entry.resetTime > now) {
     if (entry.count >= BURST_LIMIT) return false;
     entry.count++;
   } else {
-    userCallCounts.set(userId, {count: 1, resetTime: now + BURST_WINDOW});
+    userCallCounts.set(key, {count: 1, resetTime: now + BURST_WINDOW});
   }
   return true;
 }
@@ -464,6 +468,122 @@ exports.parseItemsWithAI = onCall({secrets: [geminiApiKey]}, async (request) => 
     }
 
     console.error('AI parsing error:', err);
+    throw new HttpsError('internal', 'Błąd AI. Spróbuj ponownie.');
+  }
+});
+
+// ─── Transcription ───────────────────────────────────────────────────────────
+
+// Maksymalny rozmiar base64 w payloadzie. Callable ma limit ~10 MB, a klient
+// wysyła WAV 16 kHz mono (~32 kB/s), więc 8 MB to grubo ponad minutę nagrania.
+const MAX_AUDIO_BASE64 = 8 * 1024 * 1024;
+
+// Formaty, które Gemini przyjmuje jako inlineData. Klient konwertuje wszystko
+// do WAV właśnie po to, by nie zależeć od tego, co dana przeglądarka nagrywa:
+// Chrome daje webm/opus, Safari mp4/aac, a tego pierwszego nie ma na liście.
+const ALLOWED_AUDIO_MIME = new Set([
+  'audio/wav',
+  'audio/mpeg',
+  'audio/mp3',
+  'audio/aac',
+  'audio/ogg',
+  'audio/flac',
+  'audio/aiff',
+]);
+
+function buildTranscriptionPrompt(language) {
+  if (language === 'en') {
+    return `Transcribe this audio verbatim. The speaker is dictating a shopping list, so expect product names, quantities and units.
+
+Rules:
+- Return ONLY the transcription, nothing else
+- No quotes, no commentary, no markdown, no leading or trailing whitespace
+- Keep the speaker's wording; do not tidy it up, reorder it or add items
+- Write numbers as digits ("2 kg apples", not "two kilograms of apples")
+- If the audio contains no speech, return an empty response`;
+  }
+  return `Przepisz to nagranie dosłownie. Mówiący dyktuje listę zakupów, więc spodziewaj się nazw produktów, ilości i jednostek.
+
+Zasady:
+- Zwróć WYŁĄCZNIE transkrypcję, nic więcej
+- Bez cudzysłowów, komentarzy, markdownu i spacji na początku ani na końcu
+- Zachowaj sformułowania mówiącego; nie poprawiaj ich, nie zmieniaj kolejności, nie dodawaj produktów
+- Liczby zapisuj cyframi ("2 kg jabłek", nie "dwa kilogramy jabłek")
+- Jeśli w nagraniu nie ma mowy, zwróć pustą odpowiedź`;
+}
+
+/**
+ * Zamienia nagranie na tekst przez Gemini.
+ *
+ * Istnieje, bo Web Speech API nie jest realną opcją na webie: Firefox go nie ma,
+ * Safari na iOS jest zawodne, a Chrome i tak wysyła dźwięk do Google. Nagranie
+ * plus Gemini daje jedną, przewidywalną jakość w każdej przeglądarce — w tym na
+ * iOS, który był całym powodem wersji PWA.
+ *
+ * Wywołanie kosztuje, więc jest za bramką Premium, tak samo jak parseItemsWithAI.
+ * Darmowi użytkownicy na webie dostają Web Speech API tam, gdzie istnieje.
+ */
+exports.transcribeAudio = onCall({secrets: [geminiApiKey]}, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Musisz być zalogowany, aby użyć AI.');
+  }
+
+  const userId = request.auth.uid;
+
+  if (!checkBurstLimit(userId, 'transcribe')) {
+    throw new HttpsError('resource-exhausted', 'Za dużo żądań. Spróbuj za chwilę.');
+  }
+
+  await requirePremium(userId);
+
+  const {audio, mimeType} = request.data ?? {};
+  const language = request.data?.language === 'en' ? 'en' : 'pl';
+
+  if (typeof audio !== 'string' || !audio) {
+    throw new HttpsError('invalid-argument', 'Brak nagrania.');
+  }
+  if (audio.length > MAX_AUDIO_BASE64) {
+    throw new HttpsError('invalid-argument', 'Nagranie jest za długie.');
+  }
+  if (typeof mimeType !== 'string' || !ALLOWED_AUDIO_MIME.has(mimeType)) {
+    throw new HttpsError('invalid-argument', `Nieobsługiwany format audio: ${mimeType}`);
+  }
+
+  try {
+    const genAI = new GoogleGenerativeAI(geminiApiKey.value());
+    const model = genAI.getGenerativeModel({model: 'gemini-2.5-flash-lite'});
+
+    const result = await model.generateContent([
+      {inlineData: {mimeType, data: audio}},
+      {text: buildTranscriptionPrompt(language)},
+    ]);
+
+    // Model instruowany, by zwrócić czysty tekst, ale bywa, że owinie go
+    // w cudzysłowy albo blok kodu — zdejmujemy to, zanim trafi do pola tekstowego.
+    const transcript = result.response.text()
+      .replace(/^```[a-z]*\s*/i, '')
+      .replace(/\s*```$/i, '')
+      .replace(/^["'\u201e\u201d]+|["'\u201e\u201d]+$/g, '')
+      .trim()
+      .slice(0, 500);
+
+    await admin
+      .firestore()
+      .collection('aiUsageLogs')
+      .add({
+        userId,
+        kind: 'transcribe',
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        audioBytes: Math.round((audio.length * 3) / 4),
+        outputLength: transcript.length,
+      });
+
+    return {transcript, language};
+  } catch (err) {
+    if (err instanceof HttpsError) {
+      throw err;
+    }
+    console.error('Transcription error:', err);
     throw new HttpsError('internal', 'Błąd AI. Spróbuj ponownie.');
   }
 });

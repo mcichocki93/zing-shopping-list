@@ -606,7 +606,7 @@ function PixelPopDetailView({
   const [composeText, setComposeText] = useState('');
   const [showMembers, setShowMembers] = useState(false);
   const [manualCategory, setManualCategory] = useState<string>(allCategories[0] ?? 'Inne');
-  const { isListening, transcript, startListening, stopListening, clearTranscript, isSupported: isSpeechSupported, error: speechError } = useSpeechInput();
+  const { isListening, isTranscribing, transcript, startListening, stopListening, clearTranscript, isSupported: isSpeechSupported, error: speechError } = useSpeechInput();
   const sessionBaseRef = useRef('');
   const showPreview = parsedItems.length > 0;
 
@@ -767,9 +767,9 @@ function PixelPopDetailView({
           onMicPress={handleMicPress}
           isListening={isListening}
           micDisabled={!isSpeechSupported}
-          isParsing={isParsing}
+          isParsing={isParsing || isTranscribing}
           accent={accent}
-          placeholder={mode === 0 ? (isListening ? t('listDetail.listening') : t('listDetail.composeAiPlaceholder')) : t('listDetail.composeManualPlaceholder')}
+          placeholder={mode === 0 ? (isListening ? t('listDetail.listening') : isTranscribing ? t('listDetail.transcribing') : t('listDetail.composeAiPlaceholder')) : t('listDetail.composeManualPlaceholder')}
           floating={false}
           style={{ position: 'relative' }}
         />

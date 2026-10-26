@@ -215,7 +215,8 @@
     "itemToBuy": "do kupienia",
     "itemStateA11y": "{{name}}, {{state}}",
     "moveCategoryUp": "Przenieś {{category}} w górę",
-    "moveCategoryDown": "Przenieś {{category}} w dół"
+    "moveCategoryDown": "Przenieś {{category}} w dół",
+    "transcribing": "Rozpoznaję nagranie..."
   },
   "compose": {
     "ai": "✦ AI",
@@ -304,6 +305,12 @@
     "inviteCode": "Nie udało się wygenerować kodu. Spróbuj ponownie.",
     "googleUnavailable": "Google Sign-In niedostępny w tej wersji.",
     "appleIosOnly": "Apple Sign-In dostępny tylko na iOS",
-    "unknown": "Nieznany błąd."
+    "unknown": "Nieznany błąd.",
+    "noSpeech": "Nie usłyszałem nic. Spróbuj ponownie.",
+    "micMissing": "Nie znaleziono mikrofonu.",
+    "speechNetwork": "Rozpoznawanie mowy wymaga połączenia z internetem.",
+    "recordingUnsupported": "Ta przeglądarka nie obsługuje dyktowania.",
+    "transcribeFailed": "Nie udało się rozpoznać nagrania. Spróbuj ponownie.",
+    "transcribePremium": "Dyktowanie przez AI jest dostępne w Premium."
   }
 }

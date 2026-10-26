@@ -212,7 +212,8 @@
     "itemToBuy": "to buy",
     "itemStateA11y": "{{name}}, {{state}}",
     "moveCategoryUp": "Move {{category}} up",
-    "moveCategoryDown": "Move {{category}} down"
+    "moveCategoryDown": "Move {{category}} down",
+    "transcribing": "Transcribing..."
   },
   "compose": {
     "ai": "✦ AI",
@@ -300,6 +301,12 @@
     "inviteCode": "Could not generate a code. Please try again.",
     "googleUnavailable": "Google Sign-In is unavailable in this build.",
     "appleIosOnly": "Apple Sign-In is available on iOS only",
-    "unknown": "Unknown error."
+    "unknown": "Unknown error.",
+    "noSpeech": "I did not hear anything. Please try again.",
+    "micMissing": "No microphone found.",
+    "speechNetwork": "Speech recognition needs an internet connection.",
+    "recordingUnsupported": "This browser does not support dictation.",
+    "transcribeFailed": "Could not transcribe the recording. Please try again.",
+    "transcribePremium": "AI dictation is available with Premium."
   }
 }

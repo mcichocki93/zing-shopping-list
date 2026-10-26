@@ -18,6 +18,12 @@ interface SpeechResultEvent {
 
 interface UseSpeechInputReturn {
   isListening: boolean;
+  /**
+   * Trwa zamiana nagrania na tekst. Na natywnych platformach zawsze false —
+   * rozpoznawanie idzie strumieniowo na urządzeniu. Wariant webowy
+   * (useSpeechInput.web.ts) nagrywa i wysyła nagranie, więc ma tu realny stan.
+   */
+  isTranscribing: boolean;
   transcript: string;
   error: string | null;
   isSupported: boolean;
@@ -88,6 +94,7 @@ export function useSpeechInput(): UseSpeechInputReturn {
 
   return {
     isListening,
+    isTranscribing: false,
     transcript,
     error,
     isSupported: SpeechModule !== null,

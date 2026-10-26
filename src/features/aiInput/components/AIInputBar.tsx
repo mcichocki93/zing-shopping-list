@@ -45,7 +45,7 @@ export function AIInputBar({ onParse, onAddManual, isParsing, disabled = false, 
 
   // AI tab state
   const [aiText, setAiText] = useState('');
-  const { isListening, transcript, error: speechError, isSupported: isSpeechSupported, startListening, stopListening, clearTranscript } = useSpeechInput();
+  const { isListening, isTranscribing, transcript, error: speechError, isSupported: isSpeechSupported, startListening, stopListening, clearTranscript } = useSpeechInput();
 
   // Captures the text already in the field before a new dictation session starts
   const sessionBaseRef = useRef('');
@@ -112,9 +112,9 @@ export function AIInputBar({ onParse, onAddManual, isParsing, disabled = false, 
         onMicPress={async () => { if (isListening) { stopListening(); } else { sessionBaseRef.current = aiText; clearTranscript(); await startListening(); } }}
         isListening={isListening}
         micDisabled={!isSpeechSupported}
-        isParsing={isParsing}
+        isParsing={isParsing || isTranscribing}
         accent={pixelPopAccent}
-        placeholder={isListening ? t('listDetail.listening') : t('listDetail.composeAiPlaceholder')}
+        placeholder={isListening ? t('listDetail.listening') : isTranscribing ? t('listDetail.transcribing') : t('listDetail.composeAiPlaceholder')}
       />
     );
   }
