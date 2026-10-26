@@ -258,6 +258,9 @@ export function useSpeechInput(): UseSpeechInputReturn {
 
     recorder.onstop = async () => {
       releaseStream();
+      // Zużyty MediaRecorder nie jest już do niczego potrzebny, a zostawianie
+      // go w referencji myli kontrolę stanu przy następnym nagraniu.
+      if (recorderRef.current === recorder) recorderRef.current = null;
       if (!mountedRef.current) return;
       setIsListening(false);
 
@@ -303,6 +306,22 @@ export function useSpeechInput(): UseSpeechInputReturn {
       return;
     }
 
+    // Chrome potrafi wystartować nową instancję, ale nie przekazać jej dźwięku,
+    // jeśli poprzednia nie została jawnie porzucona. Objawia się tak, że
+    // dyktowanie działa raz, a każda kolejna próba "nie słyszy" — bez błędu.
+    // Samo nadpisanie referencji nie wystarcza, trzeba abort() i odpięcie
+    // handlerów.
+    const previous = recognitionRef.current;
+    if (previous) {
+      previous.onresult = null;
+      previous.onerror = null;
+      previous.onend = null;
+      try {
+        previous.abort();
+      } catch { /* już zakończona */ }
+      recognitionRef.current = null;
+    }
+
     const recognition = new Recognition();
     recognitionRef.current = recognition;
     recognition.lang = i18n.language === 'en' ? 'en-US' : 'pl-PL';
@@ -325,6 +344,9 @@ export function useSpeechInput(): UseSpeechInputReturn {
       setIsListening(false);
     };
     recognition.onend = () => {
+      // Zwalniamy referencję, żeby następny start nie musiał sprzątać po
+      // zakończonej sesji — i żeby nie porzucać instancji, która już nie żyje.
+      if (recognitionRef.current === recognition) recognitionRef.current = null;
       if (mountedRef.current) setIsListening(false);
     };
 
