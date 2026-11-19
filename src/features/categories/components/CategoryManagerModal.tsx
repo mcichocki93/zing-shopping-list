@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Pressable, TextInput, StyleSheet, Alert } from 'react-native';
+import { Alert } from '../../../utils/alert';
+import { View, Text, ScrollView, Pressable, TextInput, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { PixelModal, PixelButton } from '../../../components/ui';

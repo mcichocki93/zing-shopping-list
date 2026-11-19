@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Text, ScrollView, Pressable, View, StyleSheet, KeyboardAvoidingView, Platform, Alert, TextInput } from 'react-native';
+import { Alert } from '../../../utils/alert';
+import { Text, ScrollView, Pressable, View, StyleSheet, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';

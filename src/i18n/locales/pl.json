@@ -311,6 +311,8 @@
     "speechNetwork": "Rozpoznawanie mowy wymaga połączenia z internetem.",
     "recordingUnsupported": "Ta przeglądarka nie obsługuje dyktowania.",
     "transcribeFailed": "Nie udało się rozpoznać nagrania. Spróbuj ponownie.",
-    "transcribePremium": "Dyktowanie przez AI jest dostępne w Premium."
+    "transcribePremium": "Dyktowanie przez AI jest dostępne w Premium.",
+    "googlePopupBlocked": "Przeglądarka zablokowała okno logowania. Zezwól na wyskakujące okna i spróbuj ponownie.",
+    "googleUnauthorizedDomain": "Ta domena nie jest autoryzowana w Firebase."
   }
 }

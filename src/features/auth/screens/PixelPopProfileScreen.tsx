@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, Alert, Linking } from 'react-native';
+import { Alert } from '../../../utils/alert';
+import { View, Text, StyleSheet, Pressable, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { PP, PP_BORDER, PP_FONT, ppText } from '../../../constants/pixelPopTheme';

@@ -6,7 +6,6 @@ import {
   onAuthStateChanged,
   updateProfile,
   signInWithCredential,
-  GoogleAuthProvider,
   OAuthProvider,
   type User as FirebaseUser,
   type Unsubscribe,
@@ -14,19 +13,9 @@ import {
 import { httpsCallable } from 'firebase/functions';
 import i18n from '../../i18n';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
-// Defensive import — native module may not be registered in older dev builds
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let GoogleSignin: any = null;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let isSuccessResponse: ((response: any) => boolean) | null = null;
-try {
-  const mod = require('@react-native-google-signin/google-signin');
-  GoogleSignin = mod.GoogleSignin;
-  isSuccessResponse = mod.isSuccessResponse;
-} catch { /* native module not available */ }
+import { googleSignIn, googleSignOut } from './googleSignIn';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { Platform } from 'react-native';
-import Constants from 'expo-constants';
 import { auth, db, functions } from './config';
 import { sanitizeString } from './validation';
 import { COLLECTIONS } from '../../constants';
@@ -103,19 +92,10 @@ export async function signIn(
 }
 
 export async function signInWithGoogle(): Promise<User> {
-  if (!GoogleSignin || !isSuccessResponse) throw new Error(i18n.t('errors.googleUnavailable'));
-  const webClientId = Constants.expoConfig?.extra?.googleWebClientId as string | undefined;
-  GoogleSignin.configure({ webClientId });
-  await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-  const response = await GoogleSignin.signIn();
-  if (!isSuccessResponse(response)) {
-    throw new Error('Google sign-in cancelled');
-  }
-  const { idToken } = response.data;
-  if (!idToken) throw new Error('Brak tokenu Google');
-  const credential = GoogleAuthProvider.credential(idToken);
-  const result = await signInWithCredential(auth, credential);
-  return getOrCreateProfile(result.user, result.user.displayName ?? '');
+  // googleSignIn ma wariant .web.ts — natywnie idzie przez moduł Google,
+  // w przeglądarce przez signInWithPopup. Tutaj to bez różnicy.
+  const firebaseUser = await googleSignIn();
+  return getOrCreateProfile(firebaseUser, firebaseUser.displayName ?? '');
 }
 
 export async function signInWithApple(): Promise<User> {
@@ -139,8 +119,8 @@ export async function signInWithApple(): Promise<User> {
 
 export async function signOut(): Promise<void> {
   await firebaseSignOut(auth);
-  // Also sign out from Google if active
-  try { await GoogleSignin?.signOut(); } catch { /* not signed in via Google */ }
+  // Sesja Google żyje osobno od sesji Firebase — wariant webowy to no-op.
+  await googleSignOut();
 }
 
 export async function resetPassword(email: string): Promise<void> {

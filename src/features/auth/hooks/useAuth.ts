@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { Alert } from 'react-native';
+import { Alert } from '../../../utils/alert';
 import type { User, AuthState, CustomCategory } from '../../../types/user';
 import i18n from '../../../i18n';
 import { signUp, signIn, signInWithGoogle, signInWithApple, signOut, onAuthChanged, resetPassword, deleteAccount, saveCustomCategories, saveListOrder, subscribeToUserProfile } from '../services';

@@ -22,7 +22,29 @@ const HEAD = `${MARKER}
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Zing" />
-    <meta name="mobile-web-app-capable" content="yes" />`;
+    <meta name="mobile-web-app-capable" content="yes" />
+    <style>
+      /*
+       * Safari na iOS sam przybliża stronę, gdy zaznaczone pole ma czcionkę
+       * mniejszą niż 16 px — i po wpisaniu tekstu zostawia użytkownika
+       * przybliżonego, bo nie oddala z powrotem. Nasze pola w stylu Pixel Pop
+       * mają 13 px, więc łapały to przy każdym wpisywaniu produktu.
+       *
+       * Rozwiązaniem NIE jest maximum-scale ani user-scalable=no: to odbiera
+       * możliwość przybliżania w ogóle, czyli psuje dostępność, a nowsze iOS
+       * i tak to ignoruje. Jedyne pewne wyjście to 16 px w polach.
+       *
+       * @supports (-webkit-touch-callout: none) trafia wyłącznie w WebKita na
+       * iOS, więc na desktopie i Androidzie projekt zostaje bez zmian.
+       */
+      @supports (-webkit-touch-callout: none) {
+        input,
+        textarea,
+        select {
+          font-size: 16px !important;
+        }
+      }
+    </style>`;
 
 // Rejestrację odpalamy po 'load', żeby nie konkurowała o pasmo z bundlem.
 const BODY = `    <script>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { Alert } from '../../../utils/alert';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { PixelModal } from '../../../components/ui/PixelModal';
 import { PixelButton } from '../../../components/ui/PixelButton';

@@ -307,6 +307,8 @@
     "speechNetwork": "Speech recognition needs an internet connection.",
     "recordingUnsupported": "This browser does not support dictation.",
     "transcribeFailed": "Could not transcribe the recording. Please try again.",
-    "transcribePremium": "AI dictation is available with Premium."
+    "transcribePremium": "AI dictation is available with Premium.",
+    "googlePopupBlocked": "The browser blocked the sign-in window. Allow pop-ups and try again.",
+    "googleUnauthorizedDomain": "This domain is not authorized in Firebase."
   }
 }

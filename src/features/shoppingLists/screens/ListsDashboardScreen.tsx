@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Alert } from '../../../utils/alert';
 import {
   View,
   Text,
@@ -6,7 +7,6 @@ import {
   ActivityIndicator,
   ScrollView,
   StyleSheet,
-  Alert,
   Linking,
 } from 'react-native';
 import DraggableFlatList, { RenderItemParams, ScaleDecorator } from 'react-native-draggable-flatlist';
