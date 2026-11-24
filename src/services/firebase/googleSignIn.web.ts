@@ -9,7 +9,12 @@
 // Settings → Authorized domains. Bez tego popup zamyka się z auth/unauthorized-
 // domain, nawet gdy wszystko inne jest poprawne.
 
-import { GoogleAuthProvider, signInWithPopup, type User as FirebaseUser } from 'firebase/auth';
+import {
+  GoogleAuthProvider,
+  signInWithPopup,
+  browserPopupRedirectResolver,
+  type User as FirebaseUser,
+} from 'firebase/auth';
 import i18n from '../../i18n';
 import { auth } from './config';
 
@@ -20,7 +25,12 @@ export async function googleSignIn(): Promise<FirebaseUser> {
   provider.setCustomParameters({ prompt: 'select_account' });
 
   try {
-    const result = await signInWithPopup(auth, provider);
+    // Resolver MUSI być podany jawnie. config.ts tworzy instancję przez
+    // initializeAuth (żeby ustawić persistence per platforma), a initializeAuth
+    // — w odróżnieniu od getAuth() — nie dołącza obsługi popupów i redirectów.
+    // Bez tego trzeciego argumentu signInWithPopup rzuca auth/argument-error,
+    // co nie mówi nic o prawdziwej przyczynie.
+    const result = await signInWithPopup(auth, provider, browserPopupRedirectResolver);
     return result.user;
   } catch (err: unknown) {
     const code = (err as { code?: string })?.code ?? '';
